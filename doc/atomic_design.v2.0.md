@@ -2663,7 +2663,7 @@ Follow the project's Rust documentation comment standards:
 ///
 /// # Author
 ///
-/// Hu Haixing
+/// Haixing Hu
 pub struct AtomicI32 {
     inner: std::sync::atomic::AtomicI32,
 }
