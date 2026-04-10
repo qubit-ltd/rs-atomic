@@ -55,7 +55,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-qubit-atomic = "0.7.0"
+qubit-atomic = "0.7.1"
 ```
 
 ## Quick Start
@@ -481,4 +481,3 @@ More Rust libraries from Qubit are published under the [qubit-ltd](https://githu
 ---
 
 Repository: [https://github.com/qubit-ltd/rust-atomic](https://github.com/qubit-ltd/rust-atomic)
-
