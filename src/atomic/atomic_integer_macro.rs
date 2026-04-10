@@ -1029,6 +1029,7 @@ macro_rules! impl_atomic_number {
         }
 
         impl fmt::Debug for $name {
+            #[inline]
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 f.debug_struct(stringify!($name))
                     .field("value", &self.load())
@@ -1037,6 +1038,7 @@ macro_rules! impl_atomic_number {
         }
 
         impl fmt::Display for $name {
+            #[inline]
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(f, "{}", self.load())
             }

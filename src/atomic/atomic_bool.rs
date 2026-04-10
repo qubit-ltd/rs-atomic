@@ -697,6 +697,7 @@ impl From<bool> for AtomicBool {
 }
 
 impl fmt::Debug for AtomicBool {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AtomicBool")
             .field("value", &self.load())
@@ -705,6 +706,7 @@ impl fmt::Debug for AtomicBool {
 }
 
 impl fmt::Display for AtomicBool {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.load())
     }

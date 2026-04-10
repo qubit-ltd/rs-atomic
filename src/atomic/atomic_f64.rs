@@ -571,6 +571,7 @@ impl From<f64> for AtomicF64 {
 }
 
 impl fmt::Debug for AtomicF64 {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AtomicF64")
             .field("value", &self.load())
@@ -579,6 +580,7 @@ impl fmt::Debug for AtomicF64 {
 }
 
 impl fmt::Display for AtomicF64 {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.load())
     }

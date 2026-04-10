@@ -577,12 +577,14 @@ impl<T> Clone for AtomicRef<T> {
     ///
     /// Creates a new `AtomicRef` that initially points to the same value as
     /// the original, but subsequent atomic operations are independent.
+    #[inline]
     fn clone(&self) -> Self {
         Self::new(self.load())
     }
 }
 
 impl<T> Drop for AtomicRef<T> {
+    #[inline]
     fn drop(&mut self) {
         let ptr = self.inner.load(Ordering::Acquire);
         unsafe {
@@ -597,6 +599,7 @@ unsafe impl<T: Send + Sync> Send for AtomicRef<T> {}
 unsafe impl<T: Send + Sync> Sync for AtomicRef<T> {}
 
 impl<T: fmt::Debug> fmt::Debug for AtomicRef<T> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AtomicRef")
             .field("value", &self.load())
@@ -605,6 +608,7 @@ impl<T: fmt::Debug> fmt::Debug for AtomicRef<T> {
 }
 
 impl<T: fmt::Display> fmt::Display for AtomicRef<T> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.load())
     }

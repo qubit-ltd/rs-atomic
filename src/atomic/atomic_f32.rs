@@ -702,6 +702,7 @@ impl From<f32> for AtomicF32 {
 }
 
 impl fmt::Debug for AtomicF32 {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AtomicF32")
             .field("value", &self.load())
@@ -710,6 +711,7 @@ impl fmt::Debug for AtomicF32 {
 }
 
 impl fmt::Display for AtomicF32 {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.load())
     }
