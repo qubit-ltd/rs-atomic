@@ -2,7 +2,7 @@
 name = "qubit-atomic"
 version = "0.7.2"
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.94"
 authors = ["Haixing Hu <starfish.hu@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/qubit-ltd/rs-atomic"

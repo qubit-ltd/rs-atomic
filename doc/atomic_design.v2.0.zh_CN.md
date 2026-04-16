@@ -2840,7 +2840,7 @@ let success = counter.compare_and_set(10, 20).is_ok();
 
 ### 14.3 兼容性考虑
 
-- **Rust 版本**：最低支持 Rust 1.70+
+- **Rust 版本**：最低支持 Rust 1.94+
 - **no_std 支持**：核心功能应支持 `no_std` 环境
 - **WASM 支持**：确保在 WebAssembly 环境中正常工作
 

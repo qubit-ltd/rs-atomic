@@ -2784,7 +2784,7 @@ This design document includes complete design for all the following types:
 
 ### 12.3 Compatibility Considerations
 
-- **Rust Version**: Minimum support Rust 1.70+
+- **Rust Version**: Minimum support Rust 1.94+
 - **no_std Support**: Core functionality should support `no_std` environment
 - **WASM Support**: Ensure proper functioning in WebAssembly environment
 
