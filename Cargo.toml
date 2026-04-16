@@ -27,6 +27,7 @@ name = "qubit_atomic"
 doctest = false
 
 [dependencies]
+arc-swap = "1"
 
 [dev-dependencies]
 # For concurrent testing

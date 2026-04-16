@@ -16,9 +16,8 @@
 //!
 //! Haixing Hu
 
+use arc_swap::ArcSwap;
 use std::fmt;
-use std::sync::atomic::AtomicPtr;
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 use crate::atomic::traits::Atomic;
@@ -28,29 +27,11 @@ use crate::atomic::traits::Atomic;
 /// Provides easy-to-use atomic operations on references with automatic memory
 /// ordering selection. Uses `Arc<T>` for thread-safe reference counting.
 ///
-/// # Memory Ordering Strategy
-///
-/// This type uses the same memory ordering strategy as other atomic types:
-///
-/// - **Read operations** (`load`): Use `Acquire` ordering to ensure that
-///   all writes from other threads that happened before a `Release` store
-///   are visible after this load.
-///
-/// - **Write operations** (`store`): Use `Release` ordering to ensure that
-///   all prior writes in this thread are visible to other threads that
-///   perform an `Acquire` load.
-///
-/// - **Read-Modify-Write operations** (`swap`, `compare_set`): Use
-///   `AcqRel` ordering to combine both `Acquire` and `Release` semantics.
-///
-/// - **CAS failure**: Use `Acquire` ordering on failure to observe the
-///   actual value written by another thread.
-///
 /// # Implementation Details
 ///
-/// This type stores an `Arc<T>` as a raw pointer in `AtomicPtr<T>`. All
-/// operations properly manage reference counts to prevent memory leaks or
-/// use-after-free errors.
+/// This type is backed by `arc_swap::ArcSwap<T>`, which provides lock-free,
+/// memory-safe atomic replacement and loading of `Arc<T>` values without
+/// exposing raw-pointer lifetime hazards.
 ///
 /// # Features
 ///
@@ -93,7 +74,7 @@ use crate::atomic::traits::Atomic;
 ///
 /// Haixing Hu
 pub struct AtomicRef<T> {
-    inner: AtomicPtr<T>,
+    inner: ArcSwap<T>,
 }
 
 impl<T> AtomicRef<T> {
@@ -115,19 +96,12 @@ impl<T> AtomicRef<T> {
     /// ```
     #[inline]
     pub fn new(value: Arc<T>) -> Self {
-        let ptr = Arc::into_raw(value) as *mut T;
         Self {
-            inner: AtomicPtr::new(ptr),
+            inner: ArcSwap::from(value),
         }
     }
 
     /// Gets the current reference.
-    ///
-    /// # Memory Ordering
-    ///
-    /// Uses `Acquire` ordering. This ensures that all writes from other
-    /// threads that happened before a `Release` store are visible after
-    /// this load.
     ///
     /// # Returns
     ///
@@ -145,22 +119,10 @@ impl<T> AtomicRef<T> {
     /// ```
     #[inline]
     pub fn load(&self) -> Arc<T> {
-        let ptr = self.inner.load(Ordering::Acquire);
-        unsafe {
-            // Increment reference count but don't drop the original pointer
-            let arc = Arc::from_raw(ptr);
-            let cloned = arc.clone();
-            let _ = Arc::into_raw(arc); // Prevent dropping
-            cloned
-        }
+        self.inner.load_full()
     }
 
     /// Sets a new reference.
-    ///
-    /// # Memory Ordering
-    ///
-    /// Uses `Release` ordering. This ensures that all prior writes in this
-    /// thread are visible to other threads that perform an `Acquire` load.
     ///
     /// # Parameters
     ///
@@ -178,23 +140,11 @@ impl<T> AtomicRef<T> {
     /// ```
     #[inline]
     pub fn store(&self, value: Arc<T>) {
-        let new_ptr = Arc::into_raw(value) as *mut T;
-        let old_ptr = self.inner.swap(new_ptr, Ordering::AcqRel);
-        unsafe {
-            if !old_ptr.is_null() {
-                // Drop the old value
-                Arc::from_raw(old_ptr);
-            }
-        }
+        self.inner.store(value);
     }
 
     /// Swaps the current reference with a new reference, returning the old
     /// reference.
-    ///
-    /// # Memory Ordering
-    ///
-    /// Uses `AcqRel` ordering. This provides full synchronization for this
-    /// read-modify-write operation.
     ///
     /// # Parameters
     ///
@@ -217,9 +167,7 @@ impl<T> AtomicRef<T> {
     /// ```
     #[inline]
     pub fn swap(&self, value: Arc<T>) -> Arc<T> {
-        let new_ptr = Arc::into_raw(value) as *mut T;
-        let old_ptr = self.inner.swap(new_ptr, Ordering::AcqRel);
-        unsafe { Arc::from_raw(old_ptr) }
+        self.inner.swap(value)
     }
 
     /// Compares and sets the reference atomically.
@@ -227,13 +175,6 @@ impl<T> AtomicRef<T> {
     /// If the current reference equals `current` (by pointer equality), sets
     /// it to `new` and returns `Ok(())`. Otherwise, returns `Err(actual)`
     /// where `actual` is the current reference.
-    ///
-    /// # Memory Ordering
-    ///
-    /// - **Success**: Uses `AcqRel` ordering to ensure full synchronization
-    ///   when the exchange succeeds.
-    /// - **Failure**: Uses `Acquire` ordering to observe the actual value
-    ///   written by another thread.
     ///
     /// # Parameters
     ///
@@ -262,31 +203,18 @@ impl<T> AtomicRef<T> {
     /// ```
     #[inline]
     pub fn compare_set(&self, current: &Arc<T>, new: Arc<T>) -> Result<(), Arc<T>> {
-        let current_ptr = Arc::as_ptr(current) as *mut T;
-        let new_ptr = Arc::into_raw(new) as *mut T;
-
-        match self
-            .inner
-            .compare_exchange(current_ptr, new_ptr, Ordering::AcqRel, Ordering::Acquire)
-        {
-            Ok(_) => Ok(()),
-            Err(actual_ptr) => unsafe {
-                // CAS failed, need to restore the new Arc and return actual
-                let _new_arc = Arc::from_raw(new_ptr);
-                let actual_arc = Arc::from_raw(actual_ptr);
-                let cloned = actual_arc.clone();
-                let _ = Arc::into_raw(actual_arc); // Prevent dropping
-                Err(cloned)
-            },
+        let prev = Arc::clone(&*self.inner.compare_and_swap(current, new));
+        if Arc::ptr_eq(&prev, current) {
+            Ok(())
+        } else {
+            Err(prev)
         }
     }
 
     /// Weak version of compare-and-set.
     ///
-    /// May spuriously fail even when the comparison succeeds. Should be used
-    /// in a loop.
-    ///
-    /// Uses `AcqRel` ordering on success and `Acquire` ordering on failure.
+    /// This implementation currently delegates to the same lock-free CAS as
+    /// `compare_set`, so it does not introduce extra spurious failures.
     ///
     /// # Parameters
     ///
@@ -315,25 +243,7 @@ impl<T> AtomicRef<T> {
     /// ```
     #[inline]
     pub fn compare_set_weak(&self, current: &Arc<T>, new: Arc<T>) -> Result<(), Arc<T>> {
-        let current_ptr = Arc::as_ptr(current) as *mut T;
-        let new_ptr = Arc::into_raw(new) as *mut T;
-
-        match self.inner.compare_exchange_weak(
-            current_ptr,
-            new_ptr,
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
-            Ok(_) => Ok(()),
-            Err(actual_ptr) => unsafe {
-                // CAS failed, need to restore the new Arc and return actual
-                let _new_arc = Arc::from_raw(new_ptr);
-                let actual_arc = Arc::from_raw(actual_ptr);
-                let cloned = actual_arc.clone();
-                let _ = Arc::into_raw(actual_arc); // Prevent dropping
-                Err(cloned)
-            },
-        }
+        self.compare_set(current, new)
     }
 
     /// Compares and exchanges the reference atomically, returning the
@@ -342,8 +252,6 @@ impl<T> AtomicRef<T> {
     /// If the current reference equals `current` (by pointer equality), sets
     /// it to `new` and returns the old reference. Otherwise, returns the
     /// actual current reference.
-    ///
-    /// Uses `AcqRel` ordering on success and `Acquire` ordering on failure.
     ///
     /// # Parameters
     ///
@@ -373,31 +281,14 @@ impl<T> AtomicRef<T> {
     /// ```
     #[inline]
     pub fn compare_and_exchange(&self, current: &Arc<T>, new: Arc<T>) -> Arc<T> {
-        let current_ptr = Arc::as_ptr(current) as *mut T;
-        let new_ptr = Arc::into_raw(new) as *mut T;
-
-        match self
-            .inner
-            .compare_exchange(current_ptr, new_ptr, Ordering::AcqRel, Ordering::Acquire)
-        {
-            Ok(prev_ptr) => unsafe { Arc::from_raw(prev_ptr) },
-            Err(actual_ptr) => unsafe {
-                // CAS failed, need to restore the new Arc and return actual
-                let _ = Arc::from_raw(new_ptr);
-                let actual_arc = Arc::from_raw(actual_ptr);
-                let cloned = actual_arc.clone();
-                let _ = Arc::into_raw(actual_arc); // Prevent dropping
-                cloned
-            },
-        }
+        Arc::clone(&*self.inner.compare_and_swap(current, new))
     }
 
     /// Weak version of compare-and-exchange.
     ///
-    /// May spuriously fail even when the comparison succeeds. Should be used
-    /// in a loop.
-    ///
-    /// Uses `AcqRel` ordering on success and `Acquire` ordering on failure.
+    /// This implementation currently delegates to the same lock-free CAS as
+    /// `compare_and_exchange`, so it does not introduce extra spurious
+    /// failures.
     ///
     /// # Parameters
     ///
@@ -428,34 +319,12 @@ impl<T> AtomicRef<T> {
     /// ```
     #[inline]
     pub fn compare_and_exchange_weak(&self, current: &Arc<T>, new: Arc<T>) -> Arc<T> {
-        let current_ptr = Arc::as_ptr(current) as *mut T;
-        let new_ptr = Arc::into_raw(new) as *mut T;
-
-        match self.inner.compare_exchange_weak(
-            current_ptr,
-            new_ptr,
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
-            Ok(prev_ptr) => unsafe { Arc::from_raw(prev_ptr) },
-            Err(actual_ptr) => unsafe {
-                // CAS failed, need to restore the new Arc and return actual
-                let _ = Arc::from_raw(new_ptr);
-                let actual_arc = Arc::from_raw(actual_ptr);
-                let cloned = actual_arc.clone();
-                let _ = Arc::into_raw(actual_arc); // Prevent dropping
-                cloned
-            },
-        }
+        self.compare_and_exchange(current, new)
     }
 
     /// Updates the reference using a function, returning the old reference.
     ///
-    /// # Memory Ordering
-    ///
-    /// Internally uses a CAS loop with `compare_set_weak`, which uses
-    /// `AcqRel` on success and `Acquire` on failure. The loop ensures
-    /// eventual consistency even under high contention.
+    /// Internally uses a CAS loop until the update succeeds.
     ///
     /// # Parameters
     ///
@@ -492,29 +361,16 @@ impl<T> AtomicRef<T> {
         }
     }
 
-    /// Gets a reference to the underlying standard library atomic type.
+    /// Gets a reference to the underlying `ArcSwap`.
     ///
-    /// This allows direct access to the standard library's atomic operations
-    /// for advanced use cases that require fine-grained control over memory
-    /// ordering.
-    ///
-    /// # Memory Ordering
-    ///
-    /// When using the returned reference, you have full control over memory
-    /// ordering. Choose the appropriate ordering based on your specific
-    /// synchronization requirements.
+    /// This allows advanced users to access lower-level `ArcSwap` APIs for
+    /// custom synchronization strategies.
     ///
     /// # Returns
     ///
-    /// A reference to the underlying `std::sync::atomic::AtomicPtr<T>`.
-    ///
-    /// # Warning
-    ///
-    /// Direct manipulation of the underlying pointer requires careful
-    /// management of Arc reference counts to avoid memory leaks or
-    /// use-after-free bugs.
+    /// A reference to the underlying `arc_swap::ArcSwap<T>`.
     #[inline]
-    pub fn inner(&self) -> &AtomicPtr<T> {
+    pub fn inner(&self) -> &ArcSwap<T> {
         &self.inner
     }
 }
@@ -580,18 +436,6 @@ impl<T> Clone for AtomicRef<T> {
     #[inline]
     fn clone(&self) -> Self {
         Self::new(self.load())
-    }
-}
-
-impl<T> Drop for AtomicRef<T> {
-    #[inline]
-    fn drop(&mut self) {
-        let ptr = self.inner.load(Ordering::Acquire);
-        unsafe {
-            if !ptr.is_null() {
-                Arc::from_raw(ptr);
-            }
-        }
     }
 }
 

@@ -411,24 +411,21 @@ fn test_compare_and_exchange_weak() {
 
 #[test]
 fn test_inner() {
-    use std::sync::atomic::Ordering;
-
     let data = Arc::new(TestData {
         value: 42,
         name: "test".to_string(),
     });
     let atomic = AtomicRef::new(data.clone());
 
-    let ptr = atomic.inner().load(Ordering::Relaxed);
-    assert!(!ptr.is_null());
+    let snapshot = atomic.inner().load_full();
+    assert_eq!(snapshot.value, 42);
+    assert_eq!(snapshot.name, "test");
 
     let new_data = Arc::new(TestData {
         value: 100,
         name: "new".to_string(),
     });
-    atomic
-        .inner()
-        .store(Arc::into_raw(new_data.clone()) as *mut _, Ordering::Release);
+    atomic.inner().store(new_data.clone());
 
     let retrieved = atomic.load();
     assert_eq!(retrieved.value, 100);
@@ -560,21 +557,13 @@ fn test_compare_and_exchange_weak_in_loop() {
 
 #[test]
 fn test_inner_compare_exchange() {
-    use std::sync::atomic::Ordering;
-
     let data = Arc::new(42);
     let atomic = AtomicRef::new(data.clone());
 
-    let current_ptr = atomic.inner().load(Ordering::Relaxed);
+    let current = atomic.inner().load_full();
     let new_data = Arc::new(100);
-    let new_ptr = Arc::into_raw(new_data.clone()) as *mut _;
-
-    let result =
-        atomic
-            .inner()
-            .compare_exchange(current_ptr, new_ptr, Ordering::AcqRel, Ordering::Acquire);
-
-    assert!(result.is_ok());
+    let prev = atomic.inner().compare_and_swap(&current, new_data.clone());
+    assert!(Arc::ptr_eq(&prev, &current));
     assert_eq!(*atomic.load(), 100);
 }
 
@@ -714,50 +703,26 @@ fn test_compare_and_exchange_weak_failure_path() {
 
 #[test]
 fn test_inner_compare_exchange_failure() {
-    use std::sync::atomic::Ordering;
-
     let data = Arc::new(42);
     let atomic = AtomicRef::new(data.clone());
 
-    let wrong_ptr = std::ptr::null_mut();
+    let wrong = Arc::new(999);
     let new_data = Arc::new(100);
-    let new_ptr = Arc::into_raw(new_data) as *mut _;
-
-    let result =
-        atomic
-            .inner()
-            .compare_exchange(wrong_ptr, new_ptr, Ordering::AcqRel, Ordering::Acquire);
-
-    assert!(result.is_err());
-    // Clean up the new_ptr since CAS failed
-    unsafe {
-        let _ = Arc::from_raw(new_ptr);
-    }
+    let prev = atomic.inner().compare_and_swap(&wrong, new_data);
+    assert_eq!(**prev, 42);
+    assert_eq!(*atomic.load(), 42);
 }
 
 #[test]
 fn test_inner_compare_exchange_weak_failure() {
-    use std::sync::atomic::Ordering;
-
     let data = Arc::new(42);
     let atomic = AtomicRef::new(data.clone());
 
-    let wrong_ptr = std::ptr::null_mut();
+    let wrong = Arc::new(999);
     let new_data = Arc::new(100);
-    let new_ptr = Arc::into_raw(new_data) as *mut _;
-
-    let result = atomic.inner().compare_exchange_weak(
-        wrong_ptr,
-        new_ptr,
-        Ordering::AcqRel,
-        Ordering::Acquire,
-    );
-
-    assert!(result.is_err());
-    // Clean up the new_ptr since CAS failed
-    unsafe {
-        let _ = Arc::from_raw(new_ptr);
-    }
+    let prev = atomic.inner().compare_and_swap(&wrong, new_data);
+    assert_eq!(**prev, 42);
+    assert_eq!(*atomic.load(), 42);
 }
 
 #[test]
