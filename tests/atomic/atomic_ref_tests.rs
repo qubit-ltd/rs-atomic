@@ -11,11 +11,11 @@ use qubit_atomic::atomic::{
     Atomic,
     AtomicRef,
 };
-use std::sync::Arc;
 use std::sync::atomic::{
     AtomicUsize,
     Ordering,
 };
+use std::sync::Arc;
 use std::thread;
 
 #[derive(Debug, Clone, PartialEq)]

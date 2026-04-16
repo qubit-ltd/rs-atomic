@@ -7,12 +7,12 @@
  *
  ******************************************************************************/
 
-use loom::sync::Arc;
 use loom::sync::atomic::{
     AtomicBool,
     AtomicUsize,
     Ordering,
 };
+use loom::sync::Arc;
 use loom::thread;
 
 /// Performs one increment with the same weak-CAS retry pattern used by this
@@ -21,12 +21,7 @@ fn increment_once(counter: &AtomicUsize) {
     let mut current = counter.load(Ordering::Acquire);
     loop {
         let new = current + 1;
-        match counter.compare_exchange_weak(
-            current,
-            new,
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
+        match counter.compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire) {
             Ok(_) => return,
             Err(actual) => current = actual,
         }
