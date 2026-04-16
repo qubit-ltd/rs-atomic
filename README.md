@@ -55,7 +55,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-qubit-atomic = "0.7.1"
+qubit-atomic = "0.7.2"
 ```
 
 ## Quick Start
@@ -267,7 +267,7 @@ fn main() {
         let sum = sum.clone();
         let handle = thread::spawn(move || {
             for _ in 0..100 {
-                sum.add(0.01);
+                sum.fetch_add(0.01);
             }
         });
         handles.push(handle);
@@ -299,7 +299,7 @@ fn main() {
 | `compare_and_exchange(current, new)` | CAS operation, return actual value | AcqRel/Acquire |
 | `compare_and_exchange_weak(current, new)` | Weak CAS, return actual value | AcqRel/Acquire |
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
-| `inner()` | Access underlying std type | - |
+| `inner()` | Access underlying backend type | - |
 
 ### Integer Operations
 

@@ -71,7 +71,7 @@ use crate::atomic::traits::AtomicNumber;
 /// use qubit_atomic::AtomicF64;
 ///
 /// let atomic = AtomicF64::new(3.14159);
-/// atomic.add(1.0);
+/// atomic.fetch_add(1.0);
 /// assert_eq!(atomic.load(), 4.14159);
 /// ```
 ///

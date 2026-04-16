@@ -342,7 +342,7 @@ impl<T> AtomicRef<T> {
     /// use std::sync::Arc;
     ///
     /// let atomic = AtomicRef::new(Arc::new(10));
-    /// let old = atomic.fetch_update(|x| Arc::new(*x * 2));
+    /// let old = atomic.fetch_update(|x| Arc::new(**x * 2));
     /// assert_eq!(*old, 10);
     /// assert_eq!(*atomic.load(), 20);
     /// ```

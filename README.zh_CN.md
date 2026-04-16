@@ -55,7 +55,7 @@ Qubit Atomic 是一个全面的原子操作库，提供易于使用的原子类�
 
 ```toml
 [dependencies]
-qubit-atomic = "0.7.1"
+qubit-atomic = "0.7.2"
 ```
 
 ## 快速开始
@@ -267,7 +267,7 @@ fn main() {
         let sum = sum.clone();
         let handle = thread::spawn(move || {
             for _ in 0..100 {
-                sum.add(0.01);
+                sum.fetch_add(0.01);
             }
         });
         handles.push(handle);
@@ -299,7 +299,7 @@ fn main() {
 | `compare_and_exchange(current, new)` | CAS 操作，返回实际值 | AcqRel/Acquire |
 | `compare_and_exchange_weak(current, new)` | 弱 CAS，返回实际值 | AcqRel/Acquire |
 | `fetch_update(f)` | 函数式更新，返回旧值 | AcqRel/Acquire |
-| `inner()` | 访问底层标准库类型 | - |
+| `inner()` | 访问底层后端类型 | - |
 
 ### 整数操作
 

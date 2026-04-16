@@ -80,7 +80,7 @@ macro_rules! impl_atomic_number {
         /// for _ in 0..10 {
         ///     let counter = counter.clone();
         ///     let handle = thread::spawn(move || {
-        ///         for _ in 0..100 {
+        ///         for _ in 0..10 {
         ///             counter.fetch_inc();
         ///         }
         ///     });
@@ -91,7 +91,7 @@ macro_rules! impl_atomic_number {
         ///     handle.join().unwrap();
         /// }
         ///
-        /// assert_eq!(counter.load(), 1000);
+        /// assert_eq!(counter.load(), 100);
         /// ```
         ///
         /// # Author
@@ -724,10 +724,11 @@ macro_rules! impl_atomic_number {
             /// ```rust
             #[doc = concat!("use qubit_atomic::", stringify!($name), ";")]
             ///
-            #[doc = concat!("let atomic = ", stringify!($name), "::new(0b1010_0101);")]
+            #[doc = concat!("let value: ", stringify!($value_type), " = 42;")]
+            #[doc = concat!("let atomic = ", stringify!($name), "::new(value);")]
             /// let old = atomic.fetch_not();
-            /// assert_eq!(old, 0b1010_0101);
-            #[doc = concat!("assert_eq!(atomic.load(), !0b1010_0101_", stringify!($value_type), ");")]
+            /// assert_eq!(old, value);
+            /// assert_eq!(atomic.load(), !value);
             /// ```
             ///
             /// # Note

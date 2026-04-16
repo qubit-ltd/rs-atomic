@@ -79,7 +79,7 @@ use crate::atomic::traits::AtomicNumber;
 ///     let sum = sum.clone();
 ///     let handle = thread::spawn(move || {
 ///         for _ in 0..100 {
-///             sum.add(0.1);
+///             sum.fetch_add(0.1);
 ///         }
 ///     });
 ///     handles.push(handle);
