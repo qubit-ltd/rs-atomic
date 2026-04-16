@@ -553,9 +553,6 @@ impl AtomicNumber for AtomicF64 {
     }
 }
 
-unsafe impl Send for AtomicF64 {}
-unsafe impl Sync for AtomicF64 {}
-
 impl Default for AtomicF64 {
     #[inline]
     fn default() -> Self {

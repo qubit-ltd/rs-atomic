@@ -433,9 +433,6 @@ impl<T> Clone for AtomicRef<T> {
     }
 }
 
-unsafe impl<T: Send + Sync> Send for AtomicRef<T> {}
-unsafe impl<T: Send + Sync> Sync for AtomicRef<T> {}
-
 impl<T: fmt::Debug> fmt::Debug for AtomicRef<T> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

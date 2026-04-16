@@ -684,9 +684,6 @@ impl AtomicNumber for AtomicF32 {
     }
 }
 
-unsafe impl Send for AtomicF32 {}
-unsafe impl Sync for AtomicF32 {}
-
 impl Default for AtomicF32 {
     #[inline]
     fn default() -> Self {

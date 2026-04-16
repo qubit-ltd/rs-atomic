@@ -679,9 +679,6 @@ impl Atomic for AtomicBool {
     }
 }
 
-unsafe impl Send for AtomicBool {}
-unsafe impl Sync for AtomicBool {}
-
 impl Default for AtomicBool {
     #[inline]
     fn default() -> Self {

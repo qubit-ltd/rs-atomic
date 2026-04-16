@@ -1019,9 +1019,6 @@ macro_rules! impl_atomic_number {
             }
         }
 
-        unsafe impl Send for $name {}
-        unsafe impl Sync for $name {}
-
         impl Default for $name {
             #[inline]
             fn default() -> Self {
