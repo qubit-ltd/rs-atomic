@@ -47,16 +47,16 @@ mod traits;
 pub use atomic_bool::AtomicBool;
 pub use atomic_f32::AtomicF32;
 pub use atomic_f64::AtomicF64;
+pub use atomic_i8::AtomicI8;
 pub use atomic_i16::AtomicI16;
 pub use atomic_i32::AtomicI32;
 pub use atomic_i64::AtomicI64;
-pub use atomic_i8::AtomicI8;
 pub use atomic_isize::AtomicIsize;
 pub use atomic_ref::AtomicRef;
+pub use atomic_u8::AtomicU8;
 pub use atomic_u16::AtomicU16;
 pub use atomic_u32::AtomicU32;
 pub use atomic_u64::AtomicU64;
-pub use atomic_u8::AtomicU8;
 pub use atomic_usize::AtomicUsize;
 pub use traits::{
     Atomic,

@@ -13,9 +13,9 @@ macro_rules! test_atomic_integer {
     ($atomic_type:ident, $value_type:ty, $test_mod:ident) => {
         mod $test_mod {
             use qubit_atomic::atomic::{
-                $atomic_type,
                 Atomic,
                 AtomicNumber,
+                $atomic_type,
             };
             use std::sync::Arc;
             use std::thread;
