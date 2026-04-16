@@ -537,7 +537,11 @@ macro_rules! impl_atomic_number {
 
             /// Multiplies the value by a factor, returning the old value.
             ///
-            /// Uses `Relaxed` ordering for the operation.
+            /// # Memory Ordering
+            ///
+            /// Internally uses a CAS loop via `compare_set`, which uses
+            /// `AcqRel` ordering on success and `Acquire` ordering on
+            /// failure.
             ///
             /// # Parameters
             ///
@@ -571,7 +575,11 @@ macro_rules! impl_atomic_number {
 
             /// Divides the value by a divisor, returning the old value.
             ///
-            /// Uses `Relaxed` ordering for the operation.
+            /// # Memory Ordering
+            ///
+            /// Internally uses a CAS loop via `compare_set`, which uses
+            /// `AcqRel` ordering on success and `Acquire` ordering on
+            /// failure.
             ///
             /// # Parameters
             ///
