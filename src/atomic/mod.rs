@@ -29,6 +29,7 @@
 mod atomic_integer_macro;
 
 mod atomic_bool;
+mod atomic_counter;
 mod atomic_f32;
 mod atomic_f64;
 mod atomic_i16;
@@ -37,6 +38,7 @@ mod atomic_i64;
 mod atomic_i8;
 mod atomic_isize;
 mod atomic_ref;
+mod atomic_signed_counter;
 mod atomic_u16;
 mod atomic_u32;
 mod atomic_u64;
@@ -45,6 +47,7 @@ mod atomic_usize;
 mod traits;
 
 pub use atomic_bool::AtomicBool;
+pub use atomic_counter::AtomicCounter;
 pub use atomic_f32::AtomicF32;
 pub use atomic_f64::AtomicF64;
 pub use atomic_i8::AtomicI8;
@@ -53,6 +56,7 @@ pub use atomic_i32::AtomicI32;
 pub use atomic_i64::AtomicI64;
 pub use atomic_isize::AtomicIsize;
 pub use atomic_ref::AtomicRef;
+pub use atomic_signed_counter::AtomicSignedCounter;
 pub use atomic_u8::AtomicU8;
 pub use atomic_u16::AtomicU16;
 pub use atomic_u32::AtomicU32;

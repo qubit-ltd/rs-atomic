@@ -30,6 +30,12 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 - **Rich Operations**: increment, decrement, add, subtract, multiply, divide, bitwise operations, max/min
 - **Functional Updates**: `fetch_update`, `fetch_accumulate`
 
+### 🔢 **Synchronized Counter Types**
+- **AtomicCounter**: non-negative counter for active tasks, in-flight requests, and resource usage
+- **AtomicSignedCounter**: signed counter for deltas, balances, backlog, and offsets
+- **No-Wrap Semantics**: checked updates that panic or return `None` instead of wrapping
+- **Zero-Transition Logic**: `inc`, `dec`, `add`, and `sub` return the new value
+
 ### 🔘 **Atomic Boolean Type**
 - **AtomicBool**: Boolean atomic operations
 - **Special Operations**: set, clear, negate, logical AND/OR/XOR
@@ -55,7 +61,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-qubit-atomic = "0.8.0"
+qubit-atomic = "0.9.0"
 ```
 
 ## Quick Start
@@ -90,6 +96,34 @@ fn main() {
     // Verify result
     assert_eq!(counter.load(), 10000);
     println!("Final count: {}", counter.load());
+}
+```
+
+### Synchronized Counters
+
+Use regular atomic integers for pure metrics. Use `AtomicCounter` when the
+count is part of concurrent state, such as active work or termination checks.
+
+```rust
+use qubit_atomic::{
+    AtomicCounter,
+    AtomicSignedCounter,
+};
+
+fn main() {
+    let active_tasks = AtomicCounter::zero();
+
+    active_tasks.inc();
+    assert!(!active_tasks.is_zero());
+
+    if active_tasks.dec() == 0 {
+        println!("all active tasks are finished");
+    }
+
+    let backlog_delta = AtomicSignedCounter::zero();
+    assert_eq!(backlog_delta.add(5), 5);
+    assert_eq!(backlog_delta.sub(8), -3);
+    assert!(backlog_delta.is_negative());
 }
 ```
 
@@ -320,6 +354,24 @@ fn main() {
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
 | `fetch_accumulate(x, f)` | Accumulate, return old | AcqRel/Acquire |
 
+### Counter Operations
+
+| Method | `AtomicCounter` | `AtomicSignedCounter` | Description |
+|--------|-----------------|-----------------------|-------------|
+| `new(value)` | `usize` | `isize` | Create a counter |
+| `zero()` | Yes | Yes | Create a zero counter |
+| `get()` | `usize` | `isize` | Read the current value |
+| `is_zero()` | Yes | Yes | Check whether the value is zero |
+| `is_positive()` | Yes | Yes | Check whether the value is positive |
+| `is_negative()` | No | Yes | Check whether the value is negative |
+| `inc()` | Yes | Yes | Increment by one, return new value |
+| `dec()` | Panic on underflow | Allows negative values | Decrement by one, return new value |
+| `add(delta)` | Panic on overflow | Panic on overflow | Add delta, return new value |
+| `sub(delta)` | Panic on underflow | Panic on overflow | Subtract delta, return new value |
+| `try_add(delta)` | `None` on overflow | `None` on overflow | Checked add |
+| `try_dec()` | `None` at zero | No | Checked decrement |
+| `try_sub(delta)` | `None` on underflow | `None` on overflow | Checked subtract |
+
 ### Boolean Operations
 
 | Method | Description | Memory Ordering |
@@ -351,6 +403,7 @@ fn main() {
 | **Pure Write** (`store()`) | `Release` | Ensure write visibility |
 | **Read-Modify-Write** (`swap()`, CAS) | `AcqRel` | Ensure both read and write correctness |
 | **Counter Operations** (`fetch_inc()`, `fetch_add()`) | `Relaxed` | Pure counting, no need to sync other data |
+| **Synchronized Counters** (`inc()`, `dec()`) | CAS loop | Counts are used as state signals |
 | **Bitwise Operations** (`fetch_and()`, `fetch_or()`) | `AcqRel` | Usually used for flag synchronization |
 | **Max/Min Operations** (`fetch_max()`, `fetch_min()`) | `AcqRel` | Often used with threshold checks |
 | **Functional Updates** (`fetch_update()`) | `AcqRel` / `Acquire` | CAS loop standard semantics |
@@ -377,10 +430,11 @@ atomic.inner().store(42, Ordering::Release);
 
 | Feature | JDK | Qubit Atomic | Notes |
 |---------|-----|---------------|-------|
-| **Basic Types** | 3 types | 13 types | Rust supports more integer types |
+| **Basic Types** | 3 types | 15 types | Rust supports more integer and counter types |
 | **Memory Ordering** | Implicit (volatile) | Default + `inner()` optional | Rust more flexible |
 | **Weak CAS** | `weakCompareAndSet` | `compare_and_set_weak` | Equivalent |
 | **Reference Type** | `AtomicReference<V>` | `AtomicRef<T>` | Rust uses `Arc<T>` |
+| **Synchronized Counters** | Manual composition | `AtomicCounter` | Non-negative counter for state tracking |
 | **Nullability** | Allows `null` | Use `Option<Arc<T>>` | Rust no null pointers |
 | **Bitwise Operations** | Partial support | Full support | Rust more powerful |
 | **Max/Min Operations** | Java 9+ support | Supported | Equivalent |

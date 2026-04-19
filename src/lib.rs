@@ -27,6 +27,7 @@
 //! - Integer atomic types: `AtomicI8`, `AtomicU8`, `AtomicI16`, `AtomicU16`,
 //!   `AtomicI32`, `AtomicU32`, `AtomicI64`, `AtomicU64`, `AtomicIsize`,
 //!   `AtomicUsize`
+//! - Counter atomic types: `AtomicCounter`, `AtomicSignedCounter`
 //! - Floating-point atomic types: `AtomicF32`, `AtomicF64`
 //! - Reference atomic type: `AtomicRef<T>`
 //!
@@ -76,6 +77,7 @@ pub mod atomic;
 pub use atomic::{
     Atomic,
     AtomicBool,
+    AtomicCounter,
     AtomicF32,
     AtomicF64,
     AtomicI8,
@@ -85,6 +87,7 @@ pub use atomic::{
     AtomicIsize,
     AtomicNumber,
     AtomicRef,
+    AtomicSignedCounter,
     AtomicU8,
     AtomicU16,
     AtomicU32,

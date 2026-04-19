@@ -11,6 +11,7 @@
 mod integer_test_macro;
 
 mod atomic_bool_tests;
+mod atomic_counter_tests;
 mod atomic_f32_tests;
 mod atomic_f64_tests;
 mod atomic_i16_tests;
@@ -19,6 +20,7 @@ mod atomic_i64_tests;
 mod atomic_i8_tests;
 mod atomic_isize_tests;
 mod atomic_ref_tests;
+mod atomic_signed_counter_tests;
 mod atomic_u16_tests;
 mod atomic_u32_tests;
 mod atomic_u64_tests;
