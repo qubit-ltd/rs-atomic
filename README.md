@@ -42,10 +42,17 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 - **Reference Updates**: Atomic swap and CAS operations
 - **Functional Updates**: Transform references atomically
 
+### 🤝 **Shared-Owner Convenience Wrappers**
+- **`ArcAtomic<T>`**: convenience newtype around `Arc<Atomic<T>>`
+- **`ArcAtomicRef<T>`**: convenience newtype around `Arc<AtomicRef<T>>`
+- **`ArcAtomicCount` / `ArcAtomicSignedCount`**: shared-owner wrappers for the count types
+- **Shared Container Clone**: cloning an `ArcAtomic*` value shares the same atomic container
+
 ### 🎯 **Focused Public API**
 - **Atomic<T>**: Generic entry point for primitive atomic values
 - **AtomicRef<T>**: Atomic `Arc<T>` reference wrapper
 - **`AtomicCount` / `AtomicSignedCount`**: checked state-oriented semantics (no silent wrap)
+- **`ArcAtomic*` wrappers**: ergonomic shared ownership without spelling `Arc<...>` at every use site
 
 ## Installation
 
@@ -132,6 +139,51 @@ fn main() {
     assert_eq!(backlog_delta.add(5), 5);
     assert_eq!(backlog_delta.sub(8), -3);
     assert!(backlog_delta.is_negative());
+}
+```
+
+### Shared-owner wrappers
+
+Use the `ArcAtomic*` wrappers when the atomic container itself is shared across
+threads or components. Their `clone()` operation clones the outer `Arc`, so all
+clones observe and update the same container.
+
+```rust
+use qubit_atomic::{
+    ArcAtomic,
+    ArcAtomicCount,
+    ArcAtomicRef,
+    ArcAtomicSignedCount,
+};
+use std::sync::Arc;
+use std::thread;
+
+fn main() {
+    let requests = ArcAtomic::new(0usize);
+    let worker_requests = requests.clone();
+
+    let handle = thread::spawn(move || {
+        worker_requests.fetch_inc();
+    });
+    handle.join().expect("worker should finish");
+
+    assert_eq!(requests.load(), 1);
+    assert_eq!(requests.strong_count(), 1);
+
+    let active_tasks = ArcAtomicCount::zero();
+    let shared_tasks = active_tasks.clone();
+    assert_eq!(shared_tasks.inc(), 1);
+    assert_eq!(active_tasks.get(), 1);
+
+    let backlog = ArcAtomicSignedCount::zero();
+    let shared_backlog = backlog.clone();
+    assert_eq!(shared_backlog.sub(3), -3);
+    assert_eq!(backlog.get(), -3);
+
+    let config = ArcAtomicRef::from_value(String::from("v1"));
+    let same_config = config.clone();
+    same_config.store(Arc::new(String::from("v2")));
+    assert_eq!(config.load().as_str(), "v2");
 }
 ```
 
@@ -380,6 +432,25 @@ fn main() {
 | `try_dec()` | `None` at zero | No | Checked decrement |
 | `try_sub(delta)` | `None` on underflow | `None` on overflow | Checked subtract |
 
+### Shared-owner wrapper operations
+
+The `ArcAtomic*` wrappers dereference to their underlying atomic container, so
+you can call operations such as `load`, `fetch_inc`, `store`, `inc`, and `sub`
+directly on the wrapper.
+
+| Method | Available On | Description |
+|--------|--------------|-------------|
+| `new(value)` | `ArcAtomic<T>`, `ArcAtomicCount`, `ArcAtomicSignedCount` | Create a new shared wrapper from an initial value |
+| `new(Arc<T>)` | `ArcAtomicRef<T>` | Create a shared atomic reference from an existing `Arc<T>` |
+| `from_value(value)` | `ArcAtomicRef<T>` | Create a shared atomic reference from an owned value |
+| `from_atomic(...)` | `ArcAtomic<T>` | Wrap an existing `Atomic<T>` |
+| `from_atomic_ref(...)` | `ArcAtomicRef<T>` | Wrap an existing `AtomicRef<T>` |
+| `from_count(...)` | `ArcAtomicCount`, `ArcAtomicSignedCount` | Wrap an existing count container |
+| `from_arc(arc)` | All `ArcAtomic*` wrappers | Wrap an existing `Arc<...>` container |
+| `as_arc()` | All `ArcAtomic*` wrappers | Borrow the underlying `Arc<...>` |
+| `into_arc()` | All `ArcAtomic*` wrappers | Consume the wrapper and return the underlying `Arc<...>` |
+| `strong_count()` | All `ArcAtomic*` wrappers | Return the number of strong `Arc` owners |
+
 ### Boolean Operations
 
 | Method | Description | Memory Ordering |
@@ -443,6 +514,7 @@ atomic.inner().store(42, Ordering::Release);
 | **Weak CAS** | `weakCompareAndSet` | `compare_set_weak` | Equivalent |
 | **Reference Type** | `AtomicReference<V>` | `AtomicRef<T>` | Rust uses `Arc<T>` |
 | **`AtomicCount` / `AtomicSignedCount`** | Manual composition | `AtomicCount`, `AtomicSignedCount` | Non-negative / signed counts for state tracking |
+| **Shared Ownership** | Usually object references | `ArcAtomic<T>`, `ArcAtomicRef<T>`, `ArcAtomicCount`, `ArcAtomicSignedCount` | Convenience wrappers for shared atomic containers |
 | **Nullability** | Allows `null` | Use `Option<Arc<T>>` | Rust no null pointers |
 | **Bitwise Operations** | Partial support | Full support | Rust more powerful |
 | **Max/Min Operations** | Java 9+ support | Supported | Equivalent |
