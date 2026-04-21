@@ -24,36 +24,28 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 
 ## Features
 
-### 🔢 **Atomic Integer Types**
-- **Signed Integers**: `AtomicI8`, `AtomicI16`, `AtomicI32`, `AtomicI64`, `AtomicIsize`
-- **Unsigned Integers**: `AtomicU8`, `AtomicU16`, `AtomicU32`, `AtomicU64`, `AtomicUsize`
+### 🔢 **Generic Atomic Primitive Types**
+- **Integer Specializations**: `Atomic<i8>`, `Atomic<u8>`, `Atomic<i16>`, `Atomic<u16>`, `Atomic<i32>`, `Atomic<u32>`, `Atomic<i64>`, `Atomic<u64>`, `Atomic<i128>`, `Atomic<u128>`, `Atomic<isize>`, `Atomic<usize>`
+- **Boolean Specialization**: `Atomic<bool>` with set, clear, negate, logical AND/OR/XOR, and conditional CAS helpers
+- **Floating-Point Specializations**: `Atomic<f32>` and `Atomic<f64>` with arithmetic operations implemented through CAS loops
 - **Rich Operations**: increment, decrement, add, subtract, multiply, divide, bitwise operations, max/min
 - **Functional Updates**: `fetch_update`, `fetch_accumulate`
 
-### 🔢 **Synchronized Counter Types**
-- **AtomicCounter**: non-negative counter for active tasks, in-flight requests, and resource usage
-- **AtomicSignedCounter**: signed counter for deltas, balances, backlog, and offsets
+### 🔢 **`AtomicCount` and `AtomicSignedCount`**
+- **`AtomicCount`**: non-negative count for active tasks, in-flight requests, and resource usage
+- **`AtomicSignedCount`**: signed count for deltas, balances, backlog, and offsets
 - **No-Wrap Semantics**: checked updates that panic or return `None` instead of wrapping
 - **Zero-Transition Logic**: `inc`, `dec`, `add`, and `sub` return the new value
-
-### 🔘 **Atomic Boolean Type**
-- **AtomicBool**: Boolean atomic operations
-- **Special Operations**: set, clear, negate, logical AND/OR/XOR
-- **Conditional CAS**: `set_if_false`, `set_if_true`
-
-### 🔢 **Atomic Floating-Point Types**
-- **AtomicF32/AtomicF64**: 32-bit and 64-bit floating-point atomics
-- **Arithmetic Operations**: `fetch_add`, `fetch_sub`, `fetch_mul`, `fetch_div` (via CAS loop)
-- **Functional Updates**: Custom operations via closures
 
 ### 🔗 **Atomic Reference Type**
 - **AtomicRef<T>**: Thread-safe atomic reference using `Arc<T>`
 - **Reference Updates**: Atomic swap and CAS operations
 - **Functional Updates**: Transform references atomically
 
-### 🎯 **Trait Abstractions**
-- **Atomic**: Common atomic operations trait (includes `fetch_update`)
-- **AtomicNumber**: Arithmetic operations trait for numeric types (integers and floats)
+### 🎯 **Focused Public API**
+- **Atomic<T>**: Generic entry point for primitive atomic values
+- **AtomicRef<T>**: Atomic `Arc<T>` reference wrapper
+- **`AtomicCount` / `AtomicSignedCount`**: checked state-oriented semantics (no silent wrap)
 
 ## Installation
 
@@ -61,20 +53,36 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-qubit-atomic = "0.9.0"
+qubit-atomic = "0.10.0"
 ```
 
 ## Quick Start
 
-### Basic Counter
+### Specifying the value type `T`
+
+`Atomic<T>` is generic over the primitive value type. Rust usually infers `T` from the argument to [`Atomic::new`](https://docs.rs/qubit-atomic/latest/qubit_atomic/struct.Atomic.html#method.new), but literals such as `0` can be ambiguous across integer widths.
+
+In those cases, pick `T` explicitly using a [turbofish](https://doc.rust-lang.org/book/appendix-02-operators.html#the-turbofish) on the constructor, or by annotating the variable:
 
 ```rust
-use qubit_atomic::AtomicI32;
+use qubit_atomic::Atomic;
+
+let wide: Atomic<u64> = Atomic::new(0);
+assert_eq!(wide.load(), 0u64);
+
+let narrow = Atomic::<i16>::new(0);
+assert_eq!(narrow.load(), 0i16);
+```
+
+### Example: concurrent `Atomic<i32>`
+
+```rust
+use qubit_atomic::Atomic;
 use std::sync::Arc;
 use std::thread;
 
 fn main() {
-    let counter = Arc::new(AtomicI32::new(0));
+    let counter = Arc::new(Atomic::<i32>::new(0));
     let mut handles = vec![];
 
     // Spawn 10 threads, each increments counter 1000 times
@@ -99,19 +107,19 @@ fn main() {
 }
 ```
 
-### Synchronized Counters
+### `AtomicCount` and `AtomicSignedCount`
 
-Use regular atomic integers for pure metrics. Use `AtomicCounter` when the
+Use `Atomic<T>` for pure metrics. Use `AtomicCount` when the
 count is part of concurrent state, such as active work or termination checks.
 
 ```rust
 use qubit_atomic::{
-    AtomicCounter,
-    AtomicSignedCounter,
+    AtomicCount,
+    AtomicSignedCount,
 };
 
 fn main() {
-    let active_tasks = AtomicCounter::zero();
+    let active_tasks = AtomicCount::zero();
 
     active_tasks.inc();
     assert!(!active_tasks.is_zero());
@@ -120,7 +128,7 @@ fn main() {
         println!("all active tasks are finished");
     }
 
-    let backlog_delta = AtomicSignedCounter::zero();
+    let backlog_delta = AtomicSignedCount::zero();
     assert_eq!(backlog_delta.add(5), 5);
     assert_eq!(backlog_delta.sub(8), -3);
     assert!(backlog_delta.is_negative());
@@ -130,9 +138,9 @@ fn main() {
 ### CAS Loop
 
 ```rust
-use qubit_atomic::AtomicI32;
+use qubit_atomic::Atomic;
 
-fn increment_even_only(atomic: &AtomicI32) -> Result<i32, &'static str> {
+fn increment_even_only(atomic: &Atomic<i32>) -> Result<i32, &'static str> {
     let mut current = atomic.load();
     loop {
         // Only increment even values
@@ -149,7 +157,7 @@ fn increment_even_only(atomic: &AtomicI32) -> Result<i32, &'static str> {
 }
 
 fn main() {
-    let atomic = AtomicI32::new(10);
+    let atomic = Atomic::<i32>::new(10);
     match increment_even_only(&atomic) {
         Ok(new_value) => println!("Successfully incremented to: {}", new_value),
         Err(e) => println!("Failed: {}", e),
@@ -161,10 +169,10 @@ fn main() {
 ### Functional Updates
 
 ```rust
-use qubit_atomic::AtomicI32;
+use qubit_atomic::Atomic;
 
 fn main() {
-    let atomic = AtomicI32::new(10);
+    let atomic = Atomic::<i32>::new(10);
 
     // Update using a function (returns old value)
     let old_value = atomic.fetch_update(|x| {
@@ -233,17 +241,17 @@ fn main() {
 ### Boolean Flag
 
 ```rust
-use qubit_atomic::AtomicBool;
+use qubit_atomic::Atomic;
 use std::sync::Arc;
 
 struct Service {
-    running: Arc<AtomicBool>,
+    running: Arc<Atomic<bool>>,
 }
 
 impl Service {
     fn new() -> Self {
         Self {
-            running: Arc::new(AtomicBool::new(false)),
+            running: Arc::new(Atomic::<bool>::new(false)),
         }
     }
 
@@ -288,12 +296,12 @@ fn main() {
 ### Floating-Point Atomics
 
 ```rust
-use qubit_atomic::AtomicF32;
+use qubit_atomic::Atomic;
 use std::sync::Arc;
 use std::thread;
 
 fn main() {
-    let sum = Arc::new(AtomicF32::new(0.0));
+    let sum = Arc::new(Atomic::<f32>::new(0.0));
     let mut handles = vec![];
 
     // Spawn 10 threads, each adds 100 times
@@ -354,12 +362,12 @@ fn main() {
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
 | `fetch_accumulate(x, f)` | Accumulate, return old | AcqRel/Acquire |
 
-### Counter Operations
+### `AtomicCount` / `AtomicSignedCount` operations
 
-| Method | `AtomicCounter` | `AtomicSignedCounter` | Description |
+| Method | `AtomicCount` | `AtomicSignedCount` | Description |
 |--------|-----------------|-----------------------|-------------|
-| `new(value)` | `usize` | `isize` | Create a counter |
-| `zero()` | Yes | Yes | Create a zero counter |
+| `new(value)` | `usize` | `isize` | Create a count |
+| `zero()` | Yes | Yes | Create a zero value |
 | `get()` | `usize` | `isize` | Read the current value |
 | `is_zero()` | Yes | Yes | Check whether the value is zero |
 | `is_positive()` | Yes | Yes | Check whether the value is positive |
@@ -402,21 +410,21 @@ fn main() {
 | **Pure Read** (`load()`) | `Acquire` | Ensure reading latest value |
 | **Pure Write** (`store()`) | `Release` | Ensure write visibility |
 | **Read-Modify-Write** (`swap()`, CAS) | `AcqRel` | Ensure both read and write correctness |
-| **Counter Operations** (`fetch_inc()`, `fetch_add()`) | `Relaxed` | Pure counting, no need to sync other data |
-| **Synchronized Counters** (`inc()`, `dec()`) | CAS loop | Counts are used as state signals |
+| **`Atomic<T>` integer ops** (`fetch_inc()`, `fetch_add()`) | `Relaxed` | Pure metrics; no need to sync other data |
+| **`AtomicCount` / `AtomicSignedCount`** (`inc()`, `dec()`) | CAS loop | Values used as concurrent state signals |
 | **Bitwise Operations** (`fetch_and()`, `fetch_or()`) | `AcqRel` | Usually used for flag synchronization |
 | **Max/Min Operations** (`fetch_max()`, `fetch_min()`) | `AcqRel` | Often used with threshold checks |
 | **Functional Updates** (`fetch_update()`) | `AcqRel` / `Acquire` | CAS loop standard semantics |
 
 ### Advanced Usage: Direct Access to Underlying Types
 
-For scenarios requiring fine-grained memory ordering control (approximately 1% of use cases), use `inner()` to access the underlying standard library type:
+For scenarios requiring fine-grained memory ordering control (approximately 1% of use cases), use `inner()` to access the underlying backend type:
 
 ```rust
 use std::sync::atomic::Ordering;
-use qubit_atomic::AtomicI32;
+use qubit_atomic::Atomic;
 
-let atomic = AtomicI32::new(0);
+let atomic = Atomic::<i32>::new(0);
 
 // 99% of scenarios: use simple API
 let value = atomic.load();
@@ -430,11 +438,11 @@ atomic.inner().store(42, Ordering::Release);
 
 | Feature | JDK | Qubit Atomic | Notes |
 |---------|-----|---------------|-------|
-| **Basic Types** | 3 types | 15 types | Rust supports more integer and counter types |
+| **Basic Types** | 3 types | `Atomic<T>` specializations | Rust supports more integer, floating-point, boolean, and counter use cases |
 | **Memory Ordering** | Implicit (volatile) | Default + `inner()` optional | Rust more flexible |
-| **Weak CAS** | `weakCompareAndSet` | `compare_and_set_weak` | Equivalent |
+| **Weak CAS** | `weakCompareAndSet` | `compare_set_weak` | Equivalent |
 | **Reference Type** | `AtomicReference<V>` | `AtomicRef<T>` | Rust uses `Arc<T>` |
-| **Synchronized Counters** | Manual composition | `AtomicCounter` | Non-negative counter for state tracking |
+| **`AtomicCount` / `AtomicSignedCount`** | Manual composition | `AtomicCount`, `AtomicSignedCount` | Non-negative / signed counts for state tracking |
 | **Nullability** | Allows `null` | Use `Option<Arc<T>>` | Rust no null pointers |
 | **Bitwise Operations** | Partial support | Full support | Rust more powerful |
 | **Max/Min Operations** | Java 9+ support | Supported | Equivalent |
@@ -444,11 +452,11 @@ atomic.inner().store(42, Ordering::Release);
 
 ### Zero-Cost Abstraction
 
-All wrapper types use `#[repr(transparent)]` and `#[inline]` to ensure zero overhead after compilation:
+Primitive wrappers use `#[repr(transparent)]` and `#[inline]` so the generic API compiles down to the backend atomic operations:
 
 ```rust
 // Our wrapper
-let atomic = AtomicI32::new(0);
+let atomic = Atomic::<i32>::new(0);
 let value = atomic.load();
 
 // Compiles to the same code as
@@ -463,7 +471,7 @@ let value = atomic.load(Ordering::Acquire);
 **1% of scenarios**: Use `inner()` only when:
 - Extreme performance optimization (need `Relaxed` ordering)
 - Complex lock-free algorithms (need precise memory ordering control)
-- Interoperating with code that directly uses standard library types
+- Interoperating with code that directly uses standard library or `portable-atomic` backend types
 
 **Golden Rule**: Default API first, `inner()` as last resort.
 
@@ -493,7 +501,10 @@ See [COVERAGE.md](COVERAGE.md) for detailed coverage statistics.
 
 ## Dependencies
 
-This crate has **zero dependencies** for the core functionality, relying only on Rust's standard library.
+Runtime dependencies are intentionally small:
+
+- `arc-swap` powers `AtomicRef<T>`.
+- `portable-atomic` provides the stable backend for `Atomic<i128>` and `Atomic<u128>`.
 
 ## License
 
