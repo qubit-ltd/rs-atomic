@@ -9,7 +9,10 @@
 
 use std::sync::Arc;
 
-use qubit_atomic::{ArcAtomicRef, AtomicRef};
+use qubit_atomic::{
+    ArcAtomicRef,
+    AtomicRef,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 struct TestData {

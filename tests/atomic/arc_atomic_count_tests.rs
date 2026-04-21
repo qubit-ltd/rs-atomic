@@ -9,7 +9,10 @@
 
 use std::sync::Arc;
 
-use qubit_atomic::{ArcAtomicCount, AtomicCount};
+use qubit_atomic::{
+    ArcAtomicCount,
+    AtomicCount,
+};
 
 #[test]
 fn test_arc_atomic_count_shared_owner() {
