@@ -11,6 +11,7 @@
 //! Benchmarks for atomic operations to measure performance.
 
 use qubit_atomic::Atomic;
+use std::hint::black_box;
 use std::sync::Arc;
 use std::thread;
 
@@ -22,7 +23,7 @@ fn main() {
     let counter = Atomic::<i32>::new(0);
     let start = std::time::Instant::now();
     for _ in 0..1_000_000 {
-        counter.fetch_inc();
+        black_box(counter.fetch_inc());
     }
     let duration = start.elapsed();
     println!("   Time: {:?}", duration);
@@ -30,6 +31,7 @@ fn main() {
         "   Operations/sec: {:.2}",
         1_000_000.0 / duration.as_secs_f64()
     );
+    println!("   Final value: {}", black_box(counter.load()));
 
     // Benchmark 2: Multi-threaded increment
     println!("\n2. Multi-threaded Increment (10 threads, 100,000 ops each):");
@@ -41,7 +43,7 @@ fn main() {
         let counter = counter.clone();
         let handle = thread::spawn(move || {
             for _ in 0..100_000 {
-                counter.fetch_inc();
+                black_box(counter.fetch_inc());
             }
         });
         handles.push(handle);
@@ -64,7 +66,7 @@ fn main() {
     let counter = Atomic::<i32>::new(0);
     let start = std::time::Instant::now();
     for i in 0..1_000_000 {
-        while counter.compare_set(i, i + 1).is_err() {
+        while black_box(counter.compare_set(i, i + 1)).is_err() {
             // Retry on failure
         }
     }
@@ -74,13 +76,14 @@ fn main() {
         "   Operations/sec: {:.2}",
         1_000_000.0 / duration.as_secs_f64()
     );
+    println!("   Final value: {}", black_box(counter.load()));
 
     // Benchmark 4: Functional update
     println!("\n4. Functional Update (1,000,000 operations):");
     let counter = Atomic::<i32>::new(0);
     let start = std::time::Instant::now();
     for _ in 0..1_000_000 {
-        counter.fetch_update(|x| x + 1);
+        black_box(counter.fetch_update(|x| black_box(x + 1)));
     }
     let duration = start.elapsed();
     println!("   Time: {:?}", duration);
@@ -88,6 +91,7 @@ fn main() {
         "   Operations/sec: {:.2}",
         1_000_000.0 / duration.as_secs_f64()
     );
+    println!("   Final value: {}", black_box(counter.load()));
 
     // Benchmark 5: Read operations
     println!("\n5. Read Operations (10,000,000 operations):");
@@ -95,7 +99,7 @@ fn main() {
     let start = std::time::Instant::now();
     let mut sum = 0i64;
     for _ in 0..10_000_000 {
-        sum += counter.load() as i64;
+        sum = black_box(sum + black_box(&counter).load() as i64);
     }
     let duration = start.elapsed();
     println!("   Time: {:?}", duration);

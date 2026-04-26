@@ -12,7 +12,7 @@
 # Run this script before committing code to ensure it passes all CircleCI checks
 #
 
-set -e  # Exit immediately on error
+set -euo pipefail  # Exit immediately on error, unset vars, and pipeline failures
 
 # Color definitions
 RED='\033[0;31m'
@@ -68,16 +68,19 @@ echo ""
 
 # Check 2: Clippy linting
 print_step "2/6 Running Clippy checks (cargo +nightly clippy)..."
-if cargo +nightly clippy --all-targets --all-features -- -D warnings 2>&1 | tee /tmp/clippy-output.txt | grep -q "warning\|error"; then
+set +e
+cargo +nightly clippy --all-targets --all-features -- -D warnings 2>&1 | tee /tmp/clippy-output.txt
+CLIPPY_EXIT=${PIPESTATUS[0]}
+set -e
+if [ "$CLIPPY_EXIT" -ne 0 ]; then
     print_error "Clippy found issues"
     cat /tmp/clippy-output.txt
     echo ""
     echo "Please try to auto-fix with:"
     echo "  cargo +nightly clippy --fix --all-targets --all-features"
     exit 1
-else
-    print_success "Clippy checks passed"
 fi
+print_success "Clippy checks passed"
 echo ""
 
 # Check 3: Build project
@@ -231,4 +234,3 @@ echo ""
 
 # Clean up temporary files
 rm -f /tmp/clippy-output.txt
-

@@ -29,7 +29,7 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 - **Boolean Specialization**: `Atomic<bool>` with set, clear, negate, logical AND/OR/XOR, and conditional CAS helpers
 - **Floating-Point Specializations**: `Atomic<f32>` and `Atomic<f64>` with arithmetic operations implemented through CAS loops
 - **Rich Operations**: increment, decrement, add, subtract, multiply, divide, bitwise operations, max/min
-- **Functional Updates**: `fetch_update`, `fetch_accumulate`
+- **Functional Updates**: `fetch_update`, `try_update`, `fetch_accumulate`
 
 ### 🔢 **`AtomicCount` and `AtomicSignedCount`**
 - **`AtomicCount`**: non-negative count for active tasks, in-flight requests, and resource usage
@@ -40,7 +40,8 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 ### 🔗 **Atomic Reference Type**
 - **AtomicRef<T>**: Thread-safe atomic reference using `Arc<T>`
 - **Reference Updates**: Atomic swap and CAS operations
-- **Functional Updates**: Transform references atomically
+- **Guarded Loads**: `load_guard()` for short-lived reads without cloning on the fast path
+- **Functional Updates**: Transform references atomically with `fetch_update` or conditionally with `try_update`
 
 ### 🤝 **Shared-Owner Convenience Wrappers**
 - **`ArcAtomic<T>`**: convenience newtype around `Arc<Atomic<T>>`
@@ -287,6 +288,19 @@ fn main() {
 
     println!("Previous config: {:?}", old);
     println!("Updated config: {:?}", atomic_config.load());
+
+    // Short-lived read without cloning the Arc on the fast path
+    let snapshot = atomic_config.load_guard();
+    println!("Snapshot config: {:?}", snapshot);
+
+    // Conditional update; returns None without changing the value if rejected
+    let accepted = atomic_config.try_update(|current| {
+        (current.timeout < 10_000).then_some(Arc::new(Config {
+            timeout: current.timeout + 1000,
+            max_retries: current.max_retries,
+        }))
+    });
+    assert!(accepted.is_some());
 }
 ```
 
@@ -393,6 +407,7 @@ fn main() {
 | `compare_and_exchange(current, new)` | CAS operation, return actual value | AcqRel/Acquire |
 | `compare_and_exchange_weak(current, new)` | Weak CAS, return actual value | AcqRel/Acquire |
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
+| `try_update(f)` | Conditional functional update, return `Option<old>` | AcqRel/Acquire |
 | `inner()` | Access underlying backend type | - |
 
 ### Integer Operations
@@ -412,7 +427,12 @@ fn main() {
 | `fetch_max(value)` | Atomic max, return old | AcqRel |
 | `fetch_min(value)` | Atomic min, return old | AcqRel |
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
+| `try_update(f)` | Conditional functional update, return `Option<old>` | AcqRel/Acquire |
 | `fetch_accumulate(x, f)` | Accumulate, return old | AcqRel/Acquire |
+
+Primitive integer operations intentionally use wrapping arithmetic on overflow
+and underflow, matching Rust atomic integer semantics. Use `AtomicCount` or
+`AtomicSignedCount` when overflow or underflow should be rejected.
 
 ### `AtomicCount` / `AtomicSignedCount` operations
 
@@ -426,11 +446,11 @@ fn main() {
 | `is_negative()` | No | Yes | Check whether the value is negative |
 | `inc()` | Yes | Yes | Increment by one, return new value |
 | `dec()` | Panic on underflow | Allows negative values | Decrement by one, return new value |
-| `add(delta)` | Panic on overflow | Panic on overflow | Add delta, return new value |
-| `sub(delta)` | Panic on underflow | Panic on overflow | Subtract delta, return new value |
-| `try_add(delta)` | `None` on overflow | `None` on overflow | Checked add |
+| `add(delta)` | Panic on overflow | Panic on overflow/underflow | Add delta, return new value |
+| `sub(delta)` | Panic on underflow | Panic on overflow/underflow | Subtract delta, return new value |
+| `try_add(delta)` | `None` on overflow | `None` on overflow/underflow | Checked add |
 | `try_dec()` | `None` at zero | No | Checked decrement |
-| `try_sub(delta)` | `None` on underflow | `None` on overflow | Checked subtract |
+| `try_sub(delta)` | `None` on underflow | `None` on overflow/underflow | Checked subtract |
 
 ### Shared-owner wrapper operations
 
@@ -473,6 +493,7 @@ directly on the wrapper.
 | `fetch_mul(factor)` | Atomic multiply, return old | AcqRel (CAS loop) |
 | `fetch_div(divisor)` | Atomic divide, return old | AcqRel (CAS loop) |
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
+| `try_update(f)` | Conditional functional update, return `Option<old>` | AcqRel/Acquire |
 
 ## Memory Ordering Strategy
 
@@ -485,7 +506,7 @@ directly on the wrapper.
 | **`AtomicCount` / `AtomicSignedCount`** (`inc()`, `dec()`) | CAS loop | Values used as concurrent state signals |
 | **Bitwise Operations** (`fetch_and()`, `fetch_or()`) | `AcqRel` | Usually used for flag synchronization |
 | **Max/Min Operations** (`fetch_max()`, `fetch_min()`) | `AcqRel` | Often used with threshold checks |
-| **Functional Updates** (`fetch_update()`) | `AcqRel` / `Acquire` | CAS loop standard semantics |
+| **Functional Updates** (`fetch_update()`, `try_update()`) | `AcqRel` / `Acquire` | CAS loop standard semantics |
 
 ### Advanced Usage: Direct Access to Underlying Types
 

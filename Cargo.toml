@@ -33,12 +33,9 @@ portable-atomic = "1"
 # For concurrent model checking
 loom = "0.7"
 
-# For performance benchmarking
-# criterion = "0.5"
-
-# [[bench]]
-# name = "atomic_bench"
-# harness = false
+[[bench]]
+name = "atomic_bench"
+harness = false
 
 [profile.release]
 opt-level = 3
