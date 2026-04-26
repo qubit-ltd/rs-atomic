@@ -12,6 +12,7 @@
 
 use qubit_atomic::Atomic;
 use std::hint::black_box;
+use std::process::Command;
 use std::sync::Arc;
 use std::thread;
 
@@ -76,7 +77,52 @@ fn is_list_arg(arg: &str) -> bool {
 
 /// Returns whether benchmark execution should be skipped in the test profile.
 fn should_skip_for_test_profile() -> bool {
-    cfg!(debug_assertions) && std::env::var_os(FORCE_RUN_ENV).is_none()
+    std::env::var_os(FORCE_RUN_ENV).is_none() && (cfg!(debug_assertions) || invoked_by_cargo_test())
+}
+
+/// Returns whether this executable was started by a Cargo test command.
+fn invoked_by_cargo_test() -> bool {
+    parent_command_line()
+        .as_deref()
+        .is_some_and(command_line_is_cargo_test)
+}
+
+/// Returns whether a command line looks like `cargo test ...`.
+fn command_line_is_cargo_test(command_line: &str) -> bool {
+    let tokens = command_line.split_whitespace().collect::<Vec<_>>();
+    tokens
+        .windows(2)
+        .any(|window| window[0].ends_with("cargo") && window[1] == "test")
+}
+
+/// Gets the parent process command line when the platform provides `ps`.
+fn parent_command_line() -> Option<String> {
+    let pid = std::process::id().to_string();
+    let ppid_output = Command::new("ps")
+        .args(["-o", "ppid=", "-p", &pid])
+        .output()
+        .ok()?;
+    if !ppid_output.status.success() {
+        return None;
+    }
+
+    let ppid = String::from_utf8(ppid_output.stdout).ok()?;
+    let ppid = ppid.trim();
+    if ppid.is_empty() {
+        return None;
+    }
+
+    let command_output = Command::new("ps")
+        .args(["-o", "command=", "-p", ppid])
+        .output()
+        .ok()?;
+    if !command_output.status.success() {
+        return None;
+    }
+
+    let command_line = String::from_utf8(command_output.stdout).ok()?;
+    let command_line = command_line.trim();
+    (!command_line.is_empty()).then(|| command_line.to_owned())
 }
 
 /// Prints usage information for this custom benchmark target.
@@ -88,7 +134,7 @@ fn print_help() {
     println!("  {RUN_COMMAND} -- --list");
     println!("  {RUN_COMMAND} -- --help");
     println!();
-    println!("Set {FORCE_RUN_ENV}=1 to force execution in debug/test profile.");
+    println!("Set {FORCE_RUN_ENV}=1 to force execution under cargo test or in debug profile.");
 }
 
 /// Prints the benchmark scenarios supported by this target.
@@ -103,7 +149,7 @@ fn print_benchmark_list() {
 
 /// Prints why this benchmark was skipped under `cargo test --all-targets`.
 fn print_test_profile_skip() {
-    println!("atomic_bench skipped in debug/test profile.");
+    println!("atomic_bench skipped under cargo test or in debug profile.");
     println!("Run `{RUN_COMMAND}` to execute benchmarks.");
 }
 
