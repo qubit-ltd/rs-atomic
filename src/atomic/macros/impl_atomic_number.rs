@@ -47,11 +47,16 @@ macro_rules! impl_atomic_number {
         ///   ensure writes are visible to other threads.
         /// - **Read-Modify-Write** (`swap`, CAS): Use `AcqRel` ordering
         ///   for both read and write synchronization.
-        /// - **Arithmetic operations** (`fetch_inc`, `fetch_add`, etc.):
-        ///   Use `Relaxed` ordering for optimal performance in pure
-        ///   counting scenarios where no other data needs synchronization.
-        ///   Arithmetic intentionally follows Rust integer atomic wrapping
-        ///   semantics on overflow and underflow.
+        /// - **Counter arithmetic** (`fetch_inc`, `fetch_dec`, `fetch_add`,
+        ///   `fetch_sub`): Use `Relaxed` ordering for optimal performance in
+        ///   pure counting scenarios where no other data needs
+        ///   synchronization.
+        ///   These operations intentionally follow Rust integer atomic
+        ///   wrapping semantics on overflow and underflow.
+        /// - **CAS-based arithmetic and updates** (`fetch_mul`, `fetch_div`,
+        ///   `fetch_update`, `try_update`, `fetch_accumulate`): Use `AcqRel`
+        ///   ordering on successful update and `Acquire` ordering on failed
+        ///   CAS attempts.
         /// - **Bit operations** (`fetch_and`, `fetch_or`, etc.): Use
         ///   `AcqRel` ordering as they typically synchronize flag states.
         /// - **Max/Min operations**: Use `AcqRel` ordering as they often
