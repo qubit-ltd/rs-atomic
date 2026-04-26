@@ -578,6 +578,12 @@ This project maintains comprehensive test coverage with detailed validation of a
 # Run all tests
 cargo test
 
+# Run benchmarks
+cargo bench --bench atomic_bench
+
+# List benchmark scenarios
+cargo bench --bench atomic_bench -- --list
+
 # Run with coverage report
 ./coverage.sh
 

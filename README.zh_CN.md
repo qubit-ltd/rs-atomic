@@ -575,6 +575,12 @@ let value = atomic.load(Ordering::Acquire);
 # 运行所有测试
 cargo test
 
+# 运行基准测试
+cargo bench --bench atomic_bench
+
+# 列出基准测试场景
+cargo bench --bench atomic_bench -- --list
+
 # 运行覆盖率报告
 ./coverage.sh
 
