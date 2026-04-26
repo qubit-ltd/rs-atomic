@@ -266,7 +266,7 @@ impl<T> AtomicRef<T> {
     /// ```
     #[inline]
     pub fn compare_set(&self, current: &Arc<T>, new: Arc<T>) -> Result<(), Arc<T>> {
-        let prev = Arc::clone(&*self.inner.compare_and_swap(current, new));
+        let prev = Guard::into_inner(self.inner.compare_and_swap(current, new));
         if Arc::ptr_eq(&prev, current) {
             Ok(())
         } else {
@@ -351,7 +351,7 @@ impl<T> AtomicRef<T> {
     /// ```
     #[inline]
     pub fn compare_and_exchange(&self, current: &Arc<T>, new: Arc<T>) -> Arc<T> {
-        Arc::clone(&*self.inner.compare_and_swap(current, new))
+        Guard::into_inner(self.inner.compare_and_swap(current, new))
     }
 
     /// Weak version of compare-and-exchange.
