@@ -8,4 +8,4 @@
  ******************************************************************************/
 
 #[macro_use]
-mod test_atomic_integer;
+mod atomic_integer_tests;
