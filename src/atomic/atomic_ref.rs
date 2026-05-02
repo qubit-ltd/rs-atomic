@@ -1,9 +1,10 @@
 /*******************************************************************************
  *
- *    Copyright (c) 2025 - 2026.
- *    Haixing Hu, Qubit Co. Ltd.
+ *    Copyright (c) 2025 - 2026 Haixing Hu.
  *
- *    All rights reserved.
+ *    SPDX-License-Identifier: Apache-2.0
+ *
+ *    Licensed under the Apache License, Version 2.0.
  *
  ******************************************************************************/
 
@@ -12,9 +13,6 @@
 //! Provides an easy-to-use atomic reference type with sensible default memory
 //! orderings. Uses `Arc<T>` for thread-safe reference counting.
 //!
-//! # Author
-//!
-//! Haixing Hu
 
 use arc_swap::{
     ArcSwap,
@@ -71,9 +69,6 @@ use std::sync::Arc;
 /// assert_eq!(atomic_config.load().timeout, 2000);
 /// ```
 ///
-/// # Author
-///
-/// Haixing Hu
 pub struct AtomicRef<T> {
     /// Lock-free atomic storage for the current shared reference.
     inner: ArcSwap<T>,

@@ -1,9 +1,10 @@
 /*******************************************************************************
  *
- *    Copyright (c) 2025 - 2026.
- *    Haixing Hu, Qubit Co. Ltd.
+ *    Copyright (c) 2025 - 2026 Haixing Hu.
  *
- *    All rights reserved.
+ *    SPDX-License-Identifier: Apache-2.0
+ *
+ *    Licensed under the Apache License, Version 2.0.
  *
  ******************************************************************************/
 
@@ -12,9 +13,6 @@
 //! Provides a non-negative atomic counter for values whose transitions are
 //! used as synchronization signals.
 //!
-//! # Author
-//!
-//! Haixing Hu
 
 use std::fmt;
 use std::sync::atomic::{
@@ -53,9 +51,6 @@ use std::sync::atomic::{
 /// }
 /// ```
 ///
-/// # Author
-///
-/// Haixing Hu
 #[repr(transparent)]
 pub struct AtomicCount {
     /// Standard-library atomic storage for the non-negative counter value.

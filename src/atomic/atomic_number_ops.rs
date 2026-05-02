@@ -1,9 +1,10 @@
 /*******************************************************************************
  *
- *    Copyright (c) 2025 - 2026.
- *    Haixing Hu, Qubit Co. Ltd.
+ *    Copyright (c) 2025 - 2026 Haixing Hu.
  *
- *    All rights reserved.
+ *    SPDX-License-Identifier: Apache-2.0
+ *
+ *    Licensed under the Apache License, Version 2.0.
  *
  ******************************************************************************/
 
@@ -12,9 +13,6 @@
 //! Defines the internal trait used by [`crate::Atomic<T>`] to delegate numeric
 //! operations to concrete backend implementations.
 //!
-//! # Author
-//!
-//! Haixing Hu
 
 use super::atomic_ops::AtomicOps;
 
@@ -33,9 +31,6 @@ use super::atomic_ops::AtomicOps;
 /// as convenient shortcuts for incrementing/decrementing by 1, but these
 /// are not part of this trait as they are integer-specific operations.
 ///
-/// # Author
-///
-/// Haixing Hu
 pub trait AtomicNumberOps: AtomicOps {
     /// Adds a delta to the value, returning the old value.
     ///

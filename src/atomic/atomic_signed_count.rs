@@ -1,9 +1,10 @@
 /*******************************************************************************
  *
- *    Copyright (c) 2025 - 2026.
- *    Haixing Hu, Qubit Co. Ltd.
+ *    Copyright (c) 2025 - 2026 Haixing Hu.
  *
- *    All rights reserved.
+ *    SPDX-License-Identifier: Apache-2.0
+ *
+ *    Licensed under the Apache License, Version 2.0.
  *
  ******************************************************************************/
 
@@ -12,9 +13,6 @@
 //! Provides an atomic counter for values that may legitimately become
 //! negative.
 //!
-//! # Author
-//!
-//! Haixing Hu
 
 use std::fmt;
 use std::sync::atomic::{
@@ -50,9 +48,6 @@ use std::sync::atomic::{
 /// assert!(backlog_delta.is_negative());
 /// ```
 ///
-/// # Author
-///
-/// Haixing Hu
 #[repr(transparent)]
 pub struct AtomicSignedCount {
     /// Standard-library atomic storage for the signed counter value.

@@ -1,9 +1,10 @@
 /*******************************************************************************
  *
- *    Copyright (c) 2025 - 2026.
- *    Haixing Hu, Qubit Co. Ltd.
+ *    Copyright (c) 2025 - 2026 Haixing Hu.
  *
- *    All rights reserved.
+ *    SPDX-License-Identifier: Apache-2.0
+ *
+ *    Licensed under the Apache License, Version 2.0.
  *
  ******************************************************************************/
 
@@ -12,18 +13,12 @@
 //! Defines the internal trait used by [`crate::Atomic<T>`] to delegate common
 //! operations to concrete backend implementations.
 //!
-//! # Author
-//!
-//! Haixing Hu
 
 /// Internal common trait for all backend atomic types.
 ///
 /// Provides basic atomic operations including load, store, swap,
 /// compare-and-set, and functional updates.
 ///
-/// # Author
-///
-/// Haixing Hu
 pub trait AtomicOps {
     /// The value type stored in the atomic.
     type Value;

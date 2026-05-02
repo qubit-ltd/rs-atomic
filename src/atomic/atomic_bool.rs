@@ -1,9 +1,10 @@
 /*******************************************************************************
  *
- *    Copyright (c) 2025 - 2026.
- *    Haixing Hu, Qubit Co. Ltd.
+ *    Copyright (c) 2025 - 2026 Haixing Hu.
  *
- *    All rights reserved.
+ *    SPDX-License-Identifier: Apache-2.0
+ *
+ *    Licensed under the Apache License, Version 2.0.
  *
  ******************************************************************************/
 
@@ -12,9 +13,6 @@
 //! Provides an easy-to-use atomic boolean type with sensible default memory
 //! orderings.
 //!
-//! # Author
-//!
-//! Haixing Hu
 
 use std::sync::atomic::AtomicBool as StdAtomicBool;
 use std::sync::atomic::Ordering;
@@ -73,9 +71,6 @@ use crate::atomic::atomic_ops::AtomicOps;
 /// assert_eq!(flag.load(), true);
 /// ```
 ///
-/// # Author
-///
-/// Haixing Hu
 #[repr(transparent)]
 pub struct AtomicBool {
     /// Standard-library atomic boolean used as the storage backend.
