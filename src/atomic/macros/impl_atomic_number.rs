@@ -1,9 +1,10 @@
 /*******************************************************************************
  *
- *    Copyright (c) 2025 - 2026.
- *    Haixing Hu, Qubit Co. Ltd.
+ *    Copyright (c) 2025 - 2026 Haixing Hu.
  *
- *    All rights reserved.
+ *    SPDX-License-Identifier: Apache-2.0
+ *
+ *    Licensed under the Apache License, Version 2.0.
  *
  ******************************************************************************/
 
@@ -12,9 +13,6 @@
 //! Provides a macro to generate atomic integer types with consistent
 //! implementations.
 //!
-//! # Author
-//!
-//! Haixing Hu
 
 /// Macro to generate atomic integer types.
 ///
@@ -101,9 +99,6 @@ macro_rules! impl_atomic_number {
         /// assert_eq!(counter.load(), 100);
         /// ```
         ///
-        /// # Author
-        ///
-        /// Haixing Hu
         #[repr(transparent)]
         pub struct $name {
             /// Backend atomic integer used to store the value.

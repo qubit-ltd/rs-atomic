@@ -1,9 +1,10 @@
 /*******************************************************************************
  *
- *    Copyright (c) 2025 - 2026.
- *    Haixing Hu, Qubit Co. Ltd.
+ *    Copyright (c) 2025 - 2026 Haixing Hu.
  *
- *    All rights reserved.
+ *    SPDX-License-Identifier: Apache-2.0
+ *
+ *    Licensed under the Apache License, Version 2.0.
  *
  ******************************************************************************/
 
@@ -12,9 +13,6 @@
 //! Provides an easy-to-use atomic 32-bit floating point type with sensible
 //! default memory orderings. Implemented using bit conversion with AtomicU32.
 //!
-//! # Author
-//!
-//! Haixing Hu
 
 use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering;
@@ -94,9 +92,6 @@ use crate::atomic::atomic_ops::AtomicOps;
 /// assert!((result - 100.0).abs() < 0.01);
 /// ```
 ///
-/// # Author
-///
-/// Haixing Hu
 #[repr(transparent)]
 pub struct AtomicF32 {
     /// Raw-bit atomic storage for the `f32` value.

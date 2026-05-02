@@ -1,9 +1,10 @@
 /*******************************************************************************
  *
- *    Copyright (c) 2025 - 2026.
- *    Haixing Hu, Qubit Co. Ltd.
+ *    Copyright (c) 2025 - 2026 Haixing Hu.
  *
- *    All rights reserved.
+ *    SPDX-License-Identifier: Apache-2.0
+ *
+ *    Licensed under the Apache License, Version 2.0.
  *
  ******************************************************************************/
 
@@ -11,9 +12,6 @@
 //!
 //! Provides the public [`Atomic<T>`] wrapper for supported primitive values.
 //!
-//! # Author
-//!
-//! Haixing Hu
 
 use std::fmt;
 
@@ -103,9 +101,6 @@ use super::atomic_value::AtomicValue;
 ///
 /// [turbofish]: https://doc.rust-lang.org/book/appendix-02-operators.html#the-turbofish
 ///
-/// # Author
-///
-/// Haixing Hu
 #[doc(alias = "AtomicBool")]
 #[doc(alias = "AtomicI8")]
 #[doc(alias = "AtomicU8")]
