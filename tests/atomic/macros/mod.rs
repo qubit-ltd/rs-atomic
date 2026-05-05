@@ -10,3 +10,7 @@
 
 #[macro_use]
 mod atomic_integer_tests;
+
+mod impl_atomic_integer_value_tests;
+mod impl_atomic_number_tests;
+mod impl_atomic_value_tests;
