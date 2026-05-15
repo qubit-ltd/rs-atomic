@@ -115,7 +115,7 @@ fn test_swap() {
 }
 
 #[test]
-fn test_compare_and_set_success() {
+fn test_compare_and_set_with_struct_success() {
     let data1 = Arc::new(TestData {
         value: 42,
         name: "first".to_string(),
@@ -133,7 +133,7 @@ fn test_compare_and_set_success() {
 }
 
 #[test]
-fn test_compare_and_set_failure() {
+fn test_compare_and_set_with_struct_failure() {
     let data1 = Arc::new(TestData {
         value: 42,
         name: "first".to_string(),
@@ -161,7 +161,7 @@ fn test_compare_and_set_failure() {
 }
 
 #[test]
-fn test_compare_and_exchange() {
+fn test_compare_and_exchange_with_struct() {
     let data1 = Arc::new(TestData {
         value: 42,
         name: "first".to_string(),
@@ -417,7 +417,7 @@ fn test_concurrent_cas() {
             let mut current = atomic.load();
             loop {
                 let new = Arc::new(*current + 1);
-                match atomic.compare_set_weak(&current, new) {
+                match atomic.compare_set(&current, new) {
                     Ok(_) => {
                         success_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                         break;
@@ -474,11 +474,11 @@ fn test_trait_atomic() {
 }
 
 #[test]
-fn test_trait_atomic_compare_set_weak() {
+fn test_trait_atomic_compare_set() {
     fn test_atomic(atomic: &AtomicRef<i32>) {
         atomic.store(Arc::new(10));
         let current = atomic.load();
-        assert!(atomic.compare_set_weak(&current, Arc::new(20)).is_ok());
+        assert!(atomic.compare_set(&current, Arc::new(20)).is_ok());
         assert_eq!(*atomic.load(), 20);
     }
 
@@ -506,36 +506,6 @@ fn test_trait_atomic_compare_exchange_failure() {
         atomic.store(Arc::new(10));
         let wrong = Arc::new(999);
         let prev = atomic.compare_and_exchange(&wrong, Arc::new(20));
-        assert_eq!(*prev, 10);
-        assert_eq!(*atomic.load(), 10);
-    }
-
-    let atomic = AtomicRef::new(Arc::new(0));
-    test_atomic(&atomic);
-}
-
-#[test]
-fn test_trait_atomic_compare_exchange_weak() {
-    fn test_atomic(atomic: &AtomicRef<i32>) {
-        atomic.store(Arc::new(10));
-        let current = atomic.load();
-        let prev = atomic.compare_and_exchange_weak(&current, Arc::new(20));
-        let prev = prev.expect("weak exchange should succeed");
-        assert!(Arc::ptr_eq(&prev, &current) || *prev == 10);
-        assert_eq!(*atomic.load(), 20);
-    }
-
-    let atomic = AtomicRef::new(Arc::new(0));
-    test_atomic(&atomic);
-}
-
-#[test]
-fn test_trait_atomic_compare_exchange_weak_failure() {
-    fn test_atomic(atomic: &AtomicRef<i32>) {
-        atomic.store(Arc::new(10));
-        let wrong = Arc::new(999);
-        let prev = atomic.compare_and_exchange_weak(&wrong, Arc::new(20));
-        let prev = prev.expect_err("weak exchange should fail");
         assert_eq!(*prev, 10);
         assert_eq!(*atomic.load(), 10);
     }
@@ -630,29 +600,7 @@ fn test_compare_set_success_no_arc_leak() {
 }
 
 #[test]
-fn test_compare_set_weak_success_no_arc_leak() {
-    let drops = Arc::new(AtomicUsize::new(0));
-    let initial = Arc::new(DropTracked {
-        drops: drops.clone(),
-    });
-    let atomic = AtomicRef::new(initial.clone());
-
-    const ITERATIONS: usize = 100;
-    for _ in 0..ITERATIONS {
-        let current = atomic.load();
-        let new_value = Arc::new(DropTracked {
-            drops: drops.clone(),
-        });
-        assert!(atomic.compare_set_weak(&current, new_value).is_ok());
-    }
-
-    drop(atomic);
-    drop(initial);
-    assert_eq!(drops.load(Ordering::Relaxed), ITERATIONS + 1);
-}
-
-#[test]
-fn test_compare_and_set_weak_success() {
+fn test_compare_and_set_success() {
     let data1 = Arc::new(TestData {
         value: 42,
         name: "first".to_string(),
@@ -665,12 +613,12 @@ fn test_compare_and_set_weak_success() {
     });
 
     let current = atomic.load();
-    assert!(atomic.compare_set_weak(&current, data2).is_ok());
+    assert!(atomic.compare_set(&current, data2).is_ok());
     assert_eq!(atomic.load().value, 100);
 }
 
 #[test]
-fn test_compare_and_set_weak_failure() {
+fn test_compare_and_set_failure() {
     let data1 = Arc::new(TestData {
         value: 42,
         name: "first".to_string(),
@@ -687,7 +635,7 @@ fn test_compare_and_set_weak_failure() {
         name: "wrong".to_string(),
     });
 
-    match atomic.compare_set_weak(&wrong_ref, data2) {
+    match atomic.compare_set(&wrong_ref, data2) {
         Ok(_) => panic!("Should fail"),
         Err(actual) => {
             assert_eq!(actual.value, 42);
@@ -697,7 +645,7 @@ fn test_compare_and_set_weak_failure() {
 }
 
 #[test]
-fn test_compare_and_exchange_weak() {
+fn test_compare_and_exchange() {
     let data1 = Arc::new(TestData {
         value: 42,
         name: "first".to_string(),
@@ -710,8 +658,7 @@ fn test_compare_and_exchange_weak() {
     });
 
     let current = atomic.load();
-    let prev = atomic.compare_and_exchange_weak(&current, data2);
-    let prev = prev.expect("weak exchange should succeed");
+    let prev = atomic.compare_and_exchange(&current, data2);
     assert!(Arc::ptr_eq(&prev, &current));
     assert_eq!(atomic.load().value, 100);
 }
@@ -824,7 +771,7 @@ fn test_update_with_closure() {
 }
 
 #[test]
-fn test_compare_and_set_weak_in_loop() {
+fn test_compare_and_set_in_loop() {
     let data = Arc::new(0);
     let atomic = AtomicRef::new(data);
 
@@ -832,30 +779,8 @@ fn test_compare_and_set_weak_in_loop() {
     for i in 0..10 {
         loop {
             let new_data = Arc::new(i + 1);
-            match atomic.compare_set_weak(&current, new_data) {
+            match atomic.compare_set(&current, new_data) {
                 Ok(_) => break,
-                Err(actual) => current = actual,
-            }
-        }
-        current = Arc::new(i + 1);
-    }
-    assert_eq!(*atomic.load(), 10);
-}
-
-#[test]
-fn test_compare_and_exchange_weak_in_loop() {
-    let data = Arc::new(0);
-    let atomic = AtomicRef::new(data);
-
-    let mut current = atomic.load();
-    for i in 0..10 {
-        loop {
-            let new_data = Arc::new(i + 1);
-            match atomic.compare_and_exchange_weak(&current, new_data) {
-                Ok(prev) => {
-                    assert!(Arc::ptr_eq(&prev, &current));
-                    break;
-                }
                 Err(actual) => current = actual,
             }
         }
@@ -979,46 +904,7 @@ fn test_compare_and_exchange_failure_path() {
 }
 
 #[test]
-fn test_compare_and_set_weak_failure_path() {
-    let data1 = Arc::new(42);
-    let data2 = Arc::new(100);
-    let wrong = Arc::new(999);
-    let atomic = AtomicRef::new(data1);
-
-    match atomic.compare_set_weak(&wrong, data2) {
-        Ok(_) => panic!("Should have failed"),
-        Err(actual) => assert_eq!(*actual, 42),
-    }
-    assert_eq!(*atomic.load(), 42);
-}
-
-#[test]
-fn test_compare_and_exchange_weak_failure_path() {
-    let data1 = Arc::new(42);
-    let data2 = Arc::new(100);
-    let wrong = Arc::new(999);
-    let atomic = AtomicRef::new(data1);
-
-    let prev = atomic.compare_and_exchange_weak(&wrong, data2);
-    let prev = prev.expect_err("weak exchange should fail");
-    assert_eq!(*prev, 42);
-    assert_eq!(*atomic.load(), 42);
-}
-
-#[test]
 fn test_inner_compare_exchange_failure() {
-    let data = Arc::new(42);
-    let atomic = AtomicRef::new(data.clone());
-
-    let wrong = Arc::new(999);
-    let new_data = Arc::new(100);
-    let prev = atomic.inner().compare_and_swap(&wrong, new_data);
-    assert_eq!(**prev, 42);
-    assert_eq!(*atomic.load(), 42);
-}
-
-#[test]
-fn test_inner_compare_exchange_weak_failure() {
     let data = Arc::new(42);
     let atomic = AtomicRef::new(data.clone());
 
@@ -1037,20 +923,6 @@ fn test_compare_and_exchange_success_path() {
     let current = atomic.load();
     let data2 = Arc::new(100);
     let prev = atomic.compare_and_exchange(&current, data2);
-
-    assert!(Arc::ptr_eq(&prev, &current));
-    assert_eq!(*atomic.load(), 100);
-}
-
-#[test]
-fn test_compare_and_exchange_weak_success_path() {
-    let data1 = Arc::new(42);
-    let atomic = AtomicRef::new(data1.clone());
-
-    let current = atomic.load();
-    let data2 = Arc::new(100);
-    let prev = atomic.compare_and_exchange_weak(&current, data2);
-    let prev = prev.expect("weak exchange should succeed");
 
     assert!(Arc::ptr_eq(&prev, &current));
     assert_eq!(*atomic.load(), 100);
@@ -1139,71 +1011,22 @@ fn test_direct_compare_and_exchange_with_simple_type() {
 }
 
 #[test]
-fn test_direct_compare_and_exchange_weak_success() {
-    let data1 = Arc::new(TestData {
-        value: 42,
-        name: "first".to_string(),
-    });
-    let atomic = AtomicRef::new(data1.clone());
-
-    let current = atomic.load();
-    let data2 = Arc::new(TestData {
-        value: 100,
-        name: "second".to_string(),
-    });
-
-    // Directly call compare_and_exchange_weak method (parameter is reference)
-    let prev = atomic.compare_and_exchange_weak(&current, data2);
-    let prev = prev.expect("weak exchange should succeed");
-    assert!(Arc::ptr_eq(&prev, &current));
-    assert_eq!(atomic.load().value, 100);
-}
-
-#[test]
-fn test_direct_compare_and_exchange_weak_failure() {
-    let data1 = Arc::new(TestData {
-        value: 42,
-        name: "first".to_string(),
-    });
-    let atomic = AtomicRef::new(data1.clone());
-
-    let wrong_ref = Arc::new(TestData {
-        value: 999,
-        name: "wrong".to_string(),
-    });
-    let data2 = Arc::new(TestData {
-        value: 100,
-        name: "second".to_string(),
-    });
-
-    // Directly call compare_and_exchange_weak method with wrong reference
-    let prev = atomic.compare_and_exchange_weak(&wrong_ref, data2);
-    let prev = prev.expect_err("weak exchange should fail");
-    assert_eq!(prev.value, 42);
-    assert_eq!(prev.name, "first");
-    assert_eq!(atomic.load().value, 42);
-}
-
-#[test]
-fn test_direct_compare_and_exchange_weak_in_loop() {
+fn test_direct_compare_and_exchange_in_loop() {
     let data = Arc::new(TestData {
         value: 0,
         name: "counter".to_string(),
     });
     let atomic = AtomicRef::new(data);
 
-    // Use compare_and_exchange_weak in loop for updates
+    // Use compare_set in loop for updates
     let mut current = atomic.load();
     loop {
         let new_data = Arc::new(TestData {
             value: current.value + 1,
             name: "updated".to_string(),
         });
-        match atomic.compare_and_exchange_weak(&current, new_data) {
-            Ok(prev) => {
-                assert!(Arc::ptr_eq(&prev, &current));
-                break;
-            }
+        match atomic.compare_set(&current, new_data) {
+            Ok(()) => break,
             Err(actual) => current = actual,
         }
     }

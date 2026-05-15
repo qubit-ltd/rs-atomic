@@ -108,6 +108,9 @@ for numerically stable accumulation in high-contention workloads.
 
 `AtomicRef<T>` is backed by `arc_swap::ArcSwap<T>` and stores `Arc<T>` values.
 Its CAS operations compare pointer identity, not `T: Eq` value equality.
+It exposes strong pointer CAS only. A weak alias would not provide distinct
+semantics over the `arc_swap` backend and would make weak-CAS retry rules look
+available where they are not.
 
 `AtomicRef<T>::clone()` creates a new atomic container initialized with the
 current reference. It does not create another handle to the same container. Use

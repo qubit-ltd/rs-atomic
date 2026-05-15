@@ -58,7 +58,7 @@ fn extract_rust_snippets(path: &Path) -> Vec<String> {
                 in_rust = false;
                 continue;
             }
-            in_rust = matches!(language.trim(), "rust" | "rs");
+            in_rust = is_rust_fence(language);
             continue;
         }
 
@@ -69,6 +69,15 @@ fn extract_rust_snippets(path: &Path) -> Vec<String> {
     }
 
     snippets
+}
+
+fn is_rust_fence(language: &str) -> bool {
+    let tag = language
+        .trim()
+        .split(|ch: char| ch == ',' || ch.is_whitespace())
+        .next()
+        .unwrap_or_default();
+    matches!(tag, "rust" | "rs")
 }
 
 fn compile_snippets(manifest_dir: &Path, output_dir: &Path, name: &str, snippets: &[String]) {

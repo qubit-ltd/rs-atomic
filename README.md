@@ -440,6 +440,10 @@ fn main() {
 
 ### Common Operations (All Types)
 
+The weak CAS methods apply to primitive `Atomic<T>` specializations. `AtomicRef<T>`
+exposes strong pointer CAS only; it does not provide weak aliases over the same
+`arc_swap` operation.
+
 | Method | Description | Memory Ordering |
 |--------|-------------|-----------------|
 | `new(value)` | Create new atomic | - |
@@ -601,7 +605,7 @@ atomic.inner().store(42, Ordering::Release);
 |---------|-----|---------------|-------|
 | **Basic Types** | 3 types | `Atomic<T>` specializations; `atomic::primitive::*` for const initialization | Rust supports more integer, floating-point, boolean, and counter use cases |
 | **Memory Ordering** | Implicit (volatile) | Defaults + ordered integer RMW helpers + `inner()` optional | Rust more flexible |
-| **Weak CAS** | `weakCompareAndSet` | `compare_set_weak` | Equivalent |
+| **Weak CAS** | `weakCompareAndSet` | `compare_set_weak` on primitive `Atomic<T>` | Equivalent |
 | **Reference Type** | `AtomicReference<V>` | `AtomicRef<T>` | Rust uses `Arc<T>` |
 | **`AtomicCount` / `AtomicSignedCount`** | Manual composition | `AtomicCount`, `AtomicSignedCount` | Non-negative / signed counts for state tracking |
 | **Shared Ownership** | Usually object references | `ArcAtomic<T>`, `ArcAtomicRef<T>`, `ArcAtomicCount`, `ArcAtomicSignedCount` | Convenience wrappers for shared atomic containers |

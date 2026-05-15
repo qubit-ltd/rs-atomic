@@ -12,6 +12,28 @@ use qubit_atomic::Atomic;
 use std::sync::Arc;
 use std::thread;
 
+fn compare_set_weak_until_success(atomic: &Atomic<bool>, current: bool, new: bool) {
+    for _ in 0..128 {
+        match atomic.compare_set_weak(current, new) {
+            Ok(()) => return,
+            Err(actual) if actual == current => continue,
+            Err(actual) => panic!("unexpected current value: {actual}"),
+        }
+    }
+    panic!("weak compare_set did not succeed after bounded retries");
+}
+
+fn compare_exchange_weak_until_success(atomic: &Atomic<bool>, current: bool, new: bool) -> bool {
+    for _ in 0..128 {
+        match atomic.compare_and_exchange_weak(current, new) {
+            Ok(previous) => return previous,
+            Err(actual) if actual == current => continue,
+            Err(actual) => panic!("unexpected current value: {actual}"),
+        }
+    }
+    panic!("weak compare_and_exchange did not succeed after bounded retries");
+}
+
 #[test]
 fn test_new() {
     let atomic = Atomic::<bool>::new(true);
@@ -229,7 +251,7 @@ fn test_debug_display() {
 #[test]
 fn test_compare_and_set_weak_success() {
     let atomic = Atomic::<bool>::new(false);
-    assert!(atomic.compare_set_weak(false, true).is_ok());
+    compare_set_weak_until_success(&atomic, false, true);
     assert!(atomic.load());
 }
 
@@ -246,8 +268,8 @@ fn test_compare_and_set_weak_failure() {
 #[test]
 fn test_compare_and_exchange_weak() {
     let atomic = Atomic::<bool>::new(false);
-    let prev = atomic.compare_and_exchange_weak(false, true);
-    assert_eq!(prev, Ok(false));
+    let prev = compare_exchange_weak_until_success(&atomic, false, true);
+    assert!(!prev);
     assert!(atomic.load());
 
     let prev = atomic.compare_and_exchange_weak(false, false);
@@ -380,7 +402,7 @@ fn test_trait_atomic_compare_and_exchange() {
 fn test_trait_atomic_compare_set_weak() {
     fn test_atomic(atomic: &Atomic<bool>) {
         atomic.store(false);
-        assert!(atomic.compare_set_weak(false, true).is_ok());
+        compare_set_weak_until_success(atomic, false, true);
         assert!(atomic.load());
     }
 
@@ -392,8 +414,8 @@ fn test_trait_atomic_compare_set_weak() {
 fn test_trait_atomic_compare_exchange_weak() {
     fn test_atomic(atomic: &Atomic<bool>) {
         atomic.store(false);
-        let prev = atomic.compare_and_exchange_weak(false, true);
-        assert_eq!(prev, Ok(false));
+        let prev = compare_exchange_weak_until_success(atomic, false, true);
+        assert!(!prev);
         assert!(atomic.load());
     }
 
