@@ -19,8 +19,10 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 - **Completeness**: Provides high-level operations similar to JDK atomic classes
 - **Safety**: Guarantees memory safety and thread safety
 - **Performance**: Zero-cost abstraction with no additional overhead
-- **Flexibility**: Exposes underlying types via `inner()` for advanced users
-- **Simplicity**: Minimal API surface without `_with_ordering` variants
+- **Flexibility**: Exposes narrowly scoped ordered integer RMW helpers and
+  `inner()` for advanced users
+- **Simplicity**: Default APIs keep common cases free of explicit ordering
+  parameters
 
 ## Features
 
@@ -63,7 +65,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-qubit-atomic = "0.12.0"
+qubit-atomic = "0.13.0"
 ```
 
 ## Quick Start
@@ -436,6 +438,10 @@ fn main() {
 | `fetch_dec()` | Post-decrement, return old | Relaxed |
 | `fetch_add(delta)` | Post-add, return old | Relaxed |
 | `fetch_sub(delta)` | Post-subtract, return old | Relaxed |
+| `fetch_inc_with_ordering(ordering)` | Post-increment, return old | Caller-provided |
+| `fetch_dec_with_ordering(ordering)` | Post-decrement, return old | Caller-provided |
+| `fetch_add_with_ordering(delta, ordering)` | Post-add, return old | Caller-provided |
+| `fetch_sub_with_ordering(delta, ordering)` | Post-subtract, return old | Caller-provided |
 | `fetch_mul(factor)` | Post-multiply, return old | AcqRel (CAS loop) |
 | `fetch_div(divisor)` | Post-divide, return old | AcqRel (CAS loop) |
 | `fetch_and(value)` | Bitwise AND, return old | AcqRel |
@@ -451,6 +457,9 @@ fn main() {
 Primitive integer operations intentionally use wrapping arithmetic on overflow
 and underflow, matching Rust atomic integer semantics. Use `AtomicCount` or
 `AtomicSignedCount` when overflow or underflow should be rejected.
+The `_with_ordering` variants are available only for integer read-modify-write
+counter arithmetic, for cases where the counter value is also used as a
+synchronization signal.
 
 ### `AtomicCount` / `AtomicSignedCount` operations
 
@@ -527,14 +536,16 @@ or compare `to_bits()` values yourself.
 | **Pure Write** (`store()`) | `Release` | Ensure write visibility |
 | **Read-Modify-Write** (`swap()`, CAS) | `AcqRel` | Ensure both read and write correctness |
 | **`Atomic<T>` counter arithmetic** (`fetch_inc()`, `fetch_dec()`, `fetch_add()`, `fetch_sub()`) | `Relaxed` | Pure metrics; no need to sync other data |
+| **Ordered integer counter arithmetic** (`fetch_*_with_ordering`) | Caller-provided | State-signal counters that need explicit synchronization |
 | **CAS-based arithmetic and updates** (`fetch_mul()`, `fetch_div()`, `fetch_update()`, `try_update()`, `fetch_accumulate()`) | `AcqRel` / `Acquire` | CAS loop standard semantics |
 | **`AtomicCount` / `AtomicSignedCount`** (`inc()`, `dec()`) | CAS loop | Values used as concurrent state signals |
 | **Bitwise Operations** (`fetch_and()`, `fetch_or()`) | `AcqRel` | Usually used for flag synchronization |
 | **Max/Min Operations** (`fetch_max()`, `fetch_min()`) | `AcqRel` | Often used with threshold checks |
 
-### Advanced Usage: Direct Access to Underlying Types
+### Advanced Usage: Explicit Ordering and Direct Access
 
-For scenarios requiring fine-grained memory ordering control (approximately 1% of use cases), use `inner()` to access the underlying backend type:
+For integer counter arithmetic that needs synchronization semantics, use the
+ordered variants before reaching for `inner()`:
 
 ```rust
 use std::sync::atomic::Ordering;
@@ -545,7 +556,10 @@ let atomic = Atomic::<i32>::new(0);
 // 99% of scenarios: use simple API
 let value = atomic.load();
 
-// 1% of scenarios: need fine-grained control
+// State-signal counter: keep the wrapper while choosing ordering explicitly
+atomic.fetch_add_with_ordering(1, Ordering::AcqRel);
+
+// Lowest-level escape hatch: direct backend access
 let value = atomic.inner().load(Ordering::Relaxed);
 atomic.inner().store(42, Ordering::Release);
 ```
@@ -555,7 +569,7 @@ atomic.inner().store(42, Ordering::Release);
 | Feature | JDK | Qubit Atomic | Notes |
 |---------|-----|---------------|-------|
 | **Basic Types** | 3 types | `Atomic<T>` specializations; `atomic::primitive::*` for const initialization | Rust supports more integer, floating-point, boolean, and counter use cases |
-| **Memory Ordering** | Implicit (volatile) | Default + `inner()` optional | Rust more flexible |
+| **Memory Ordering** | Implicit (volatile) | Defaults + ordered integer RMW helpers + `inner()` optional | Rust more flexible |
 | **Weak CAS** | `weakCompareAndSet` | `compare_set_weak` | Equivalent |
 | **Reference Type** | `AtomicReference<V>` | `AtomicRef<T>` | Rust uses `Arc<T>` |
 | **`AtomicCount` / `AtomicSignedCount`** | Manual composition | `AtomicCount`, `AtomicSignedCount` | Non-negative / signed counts for state tracking |
@@ -563,7 +577,7 @@ atomic.inner().store(42, Ordering::Release);
 | **Nullability** | Allows `null` | Use `Option<Arc<T>>` | Rust no null pointers |
 | **Bitwise Operations** | Partial support | Full support | Rust more powerful |
 | **Max/Min Operations** | Java 9+ support | Supported | Equivalent |
-| **API Count** | ~20 methods/type | ~25 methods/type | Rust provides more convenience methods |
+| **API Count** | ~20 methods/type | ~29 methods/type | Rust provides more convenience methods |
 
 ## Performance Considerations
 
