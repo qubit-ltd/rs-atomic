@@ -145,11 +145,9 @@ pub trait AtomicOps {
     ///
     /// # Returns
     ///
-    /// The value observed before the operation completed. Because this
-    /// operation may fail spuriously, a returned value equal to `current` does
-    /// not by itself prove that `new` was stored; use
-    /// [`compare_set_weak`](Self::compare_set_weak) when the caller needs an
-    /// explicit success indicator.
+    /// `Ok(previous)` when the value was replaced, or `Err(actual)` when the
+    /// comparison failed, including possible spurious failure. The returned
+    /// value preserves the observed value in both cases.
     fn compare_exchange_weak(
         &self,
         current: Self::Value,
