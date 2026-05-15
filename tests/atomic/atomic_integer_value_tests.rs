@@ -54,6 +54,10 @@ fn test_atomic_integer_value_accumulate_and_bitwise() {
     assert_eq!(old, 5);
     assert_eq!(atomic.load(), 50);
 
+    let new = atomic.accumulate_and_get(2, |a, b| a + b);
+    assert_eq!(new, 52);
+    assert_eq!(atomic.load(), 52);
+
     let atomic = Atomic::<i64>::new(0);
     atomic.fetch_inc();
     atomic.fetch_add(99);

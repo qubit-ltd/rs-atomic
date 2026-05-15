@@ -521,14 +521,18 @@ fn report_peak() {
 | Operation | Ordering | Use Case | Rationale |
 |------|--------|---------|---------|
 | `fetch_update(f)` | `AcqRel` / `Acquire` | Complex atomic updates | Standard CAS loop semantics |
+| `update_and_get(f)` | `AcqRel` / `Acquire` | Complex atomic updates that need the new value | Same as above |
+| `try_update(f)` | `AcqRel` / `Acquire` | Conditional functional updates | Same as above |
+| `try_update_and_get(f)` | `AcqRel` / `Acquire` | Conditional updates that need the new value | Same as above |
 | `fetch_accumulate(x, f)` | `AcqRel` / `Acquire` | Custom binary operations | Same as above |
+| `accumulate_and_get(x, f)` | `AcqRel` / `Acquire` | Custom binary operations that need the new value | Same as above |
 
 **Internal Implementation Uses CAS Loop**:
 
 ```rust
-pub fn fetch_update<F>(&self, f: F) -> i32
+pub fn fetch_update<F>(&self, mut f: F) -> i32
 where
-    F: Fn(i32) -> i32,
+    F: FnMut(i32) -> i32,
 {
     let mut current = self.load();  // Acquire
     loop {
@@ -557,6 +561,10 @@ Atomic booleans are typically used for **inter-thread flag communication**, so m
 | `fetch_and(v)` | `AcqRel` | Logical AND | Combine flag bits |
 | `fetch_or(v)` | `AcqRel` | Logical OR | Combine flag bits |
 | `fetch_xor(v)` | `AcqRel` | Logical XOR | Combine flag bits |
+| `fetch_update(f)` | `AcqRel` / `Acquire` | Functional flag update | CAS loop standard semantics |
+| `update_and_get(f)` | `AcqRel` / `Acquire` | Functional flag update that needs the new value | Same as above |
+| `try_update(f)` | `AcqRel` / `Acquire` | Conditional functional flag update | Same as above |
+| `try_update_and_get(f)` | `AcqRel` / `Acquire` | Conditional flag update that needs the new value | Same as above |
 
 **Typical Usage Pattern**:
 
@@ -603,6 +611,9 @@ used for atomic updates of shared immutable data:
 | `swap(value)` | ArcSwap default | Atomic exchange reference | Standard atomic replacement semantics |
 | `compare_set()` | ArcSwap CAS | CAS operation | Pointer equality via `Arc::ptr_eq` |
 | `fetch_update(f)` | ArcSwap CAS loop | Functional update | Retry loop around pointer-based CAS |
+| `update_and_get(f)` | ArcSwap CAS loop | Functional update that needs the new reference | Same as above |
+| `try_update(f)` | ArcSwap CAS loop | Conditional functional update | Same as above |
+| `try_update_and_get(f)` | ArcSwap CAS loop | Conditional update that needs the new reference | Same as above |
 
 **Typical Usage Pattern**:
 
@@ -924,7 +935,22 @@ impl AtomicI32 {
     /// Update value using function, return old value (using AcqRel ordering)
     pub fn fetch_update<F>(&self, f: F) -> i32
     where
-        F: Fn(i32) -> i32;
+        F: FnMut(i32) -> i32;
+
+    /// Update value using function, return new value (using AcqRel ordering)
+    pub fn update_and_get<F>(&self, f: F) -> i32
+    where
+        F: FnMut(i32) -> i32;
+
+    /// Conditionally update value using function, return old value
+    pub fn try_update<F>(&self, f: F) -> Option<i32>
+    where
+        F: FnMut(i32) -> Option<i32>;
+
+    /// Conditionally update value using function, return new value
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<i32>
+    where
+        F: FnMut(i32) -> Option<i32>;
 
     /// Get reference to underlying standard library type (for advanced scenarios requiring fine-grained memory ordering control)
     pub fn inner(&self) -> &std::sync::atomic::AtomicI32;
@@ -944,6 +970,9 @@ The following table shows the underlying `std::sync::atomic` functions used by e
 | `compare_and_exchange(current, new)` | `compare_exchange(current, new, success, failure)` | Success: `AcqRel`<br>Failure: `Acquire` | CAS operation, returns old value |
 | `compare_and_exchange_weak(current, new)` | `compare_exchange_weak(current, new, success, failure)` | Success: `AcqRel`<br>Failure: `Acquire` | Weak CAS, returns old value |
 | `fetch_update<F>(f)` | CAS loop + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | Functional update, returns old value |
+| `update_and_get<F>(f)` | CAS loop + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | Functional update, returns new value |
+| `try_update<F>(f)` | CAS loop + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | Conditional functional update, returns `Option<old_value>` |
+| `try_update_and_get<F>(f)` | CAS loop + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | Conditional functional update, returns `Option<new_value>` |
 | `inner()` | - | - | Get reference to underlying atomic type |
 
 ### 4.2 Advanced Operations for Integer Types
@@ -993,7 +1022,12 @@ impl AtomicI32 {
     /// Atomically accumulate value using given binary function, return old value (using AcqRel ordering, implemented through CAS loop)
     pub fn fetch_accumulate<F>(&self, x: i32, f: F) -> i32
     where
-        F: Fn(i32, i32) -> i32;
+        F: FnMut(i32, i32) -> i32;
+
+    /// Atomically accumulate value using given binary function, return new value (using AcqRel ordering, implemented through CAS loop)
+    pub fn accumulate_and_get<F>(&self, x: i32, f: F) -> i32
+    where
+        F: FnMut(i32, i32) -> i32;
 
     // ==================== Max/Min Operations ====================
 
@@ -1024,6 +1058,7 @@ The following table shows the underlying `std::sync::atomic` functions used by a
 | `fetch_not()` | `fetch_xor(!0, ordering)` | `AcqRel` | Bitwise NOT, return old value |
 | **Functional Update Operations** |
 | `fetch_accumulate(x, f)` | CAS loop + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | Accumulate using binary function, return old value |
+| `accumulate_and_get(x, f)` | CAS loop + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | Accumulate using binary function, return new value |
 | **Max/Min Operations** |
 | `fetch_max(value)` | `fetch_max(value, ordering)` | `AcqRel` | Take maximum, return old value |
 | `fetch_min(value)` | `fetch_min(value, ordering)` | `AcqRel` | Take minimum, return old value |
@@ -1059,7 +1094,22 @@ impl AtomicBool {
     /// Update value using function, return old value (using AcqRel ordering)
     pub fn fetch_update<F>(&self, f: F) -> bool
     where
-        F: Fn(bool) -> bool;
+        F: FnMut(bool) -> bool;
+
+    /// Update value using function, return new value (using AcqRel ordering)
+    pub fn update_and_get<F>(&self, f: F) -> bool
+    where
+        F: FnMut(bool) -> bool;
+
+    /// Conditionally update value using function, return old value on success
+    pub fn try_update<F>(&self, f: F) -> Option<bool>
+    where
+        F: FnMut(bool) -> Option<bool>;
+
+    /// Conditionally update value using function, return new value on success
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<bool>
+    where
+        F: FnMut(bool) -> Option<bool>;
 
     // ==================== Boolean Special Operations ====================
 
@@ -1106,6 +1156,9 @@ The following table shows the underlying `std::sync::atomic` functions used by b
 | `compare_and_exchange(current, new)` | `compare_exchange(current, new, success, failure)` | Success: `AcqRel`<br>Failure: `Acquire` | CAS operation, returns old value |
 | `compare_and_exchange_weak(current, new)` | `compare_exchange_weak(current, new, success, failure)` | Success: `AcqRel`<br>Failure: `Acquire` | Weak CAS, returns old value |
 | `fetch_update<F>(f)` | CAS loop + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | Functional update, returns old value |
+| `update_and_get<F>(f)` | CAS loop + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | Functional update, returns new value |
+| `try_update<F>(f)` | CAS loop + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | Conditional functional update, returns old value on success |
+| `try_update_and_get<F>(f)` | CAS loop + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | Conditional functional update, returns new value on success |
 | **Boolean Special Operations** |
 | `fetch_set()` | `swap(true, ordering)` | `AcqRel` | Set to true, return old value |
 | `fetch_clear()` | `swap(false, ordering)` | `AcqRel` | Set to false, return old value |
@@ -1162,12 +1215,22 @@ impl<T> AtomicRef<T> {
     /// Update reference using a function, returning the old reference (using AcqRel ordering)
     pub fn fetch_update<F>(&self, f: F) -> Arc<T>
     where
-        F: Fn(&Arc<T>) -> Arc<T>;
+        F: FnMut(&Arc<T>) -> Arc<T>;
+
+    /// Update reference using a function, returning the new reference
+    pub fn update_and_get<F>(&self, f: F) -> Arc<T>
+    where
+        F: FnMut(&Arc<T>) -> Arc<T>;
 
     /// Conditionally update reference using a function, returning the old reference
     pub fn try_update<F>(&self, f: F) -> Option<Arc<T>>
     where
-        F: Fn(&Arc<T>) -> Option<Arc<T>>;
+        F: FnMut(&Arc<T>) -> Option<Arc<T>>;
+
+    /// Conditionally update reference using a function, returning the new reference
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<Arc<T>>
+    where
+        F: FnMut(&Arc<T>) -> Option<Arc<T>>;
 
     /// Get reference to underlying ArcSwap backend
     pub fn inner(&self) -> &arc_swap::ArcSwap<T>;
@@ -1196,7 +1259,9 @@ The following table shows the reference type methods and their backing
 | `compare_and_exchange(current, new)` | `compare_and_swap(current, new)` | CAS operation, returns the observed reference |
 | `compare_and_exchange_weak(current, new)` | delegates to `compare_and_exchange` | Weak-shaped API; current backend does not add spurious failures |
 | `fetch_update(f)` | CAS loop + `compare_set_weak` | Update using function, return old reference |
+| `update_and_get(f)` | CAS loop + `compare_set_weak` | Update using function, return new reference |
 | `try_update(f)` | CAS loop + `compare_set_weak` | Conditional update, return `Option<old_reference>` |
+| `try_update_and_get(f)` | CAS loop + `compare_set_weak` | Conditional update, return `Option<new_reference>` |
 | `inner()` | - | Get reference to underlying `ArcSwap<T>` |
 
 **Note**: The underlying implementation of `AtomicRef<T>` is based on
@@ -1258,7 +1323,22 @@ impl AtomicF32 {
     /// Atomically update value using given function, returns old value (using AcqRel ordering, implemented via CAS loop)
     pub fn fetch_update<F>(&self, f: F) -> f32
     where
-        F: Fn(f32) -> f32;
+        F: FnMut(f32) -> f32;
+
+    /// Atomically update value using given function, returns new value (using AcqRel ordering, implemented via CAS loop)
+    pub fn update_and_get<F>(&self, f: F) -> f32
+    where
+        F: FnMut(f32) -> f32;
+
+    /// Conditionally update value using given function, returns old value
+    pub fn try_update<F>(&self, f: F) -> Option<f32>
+    where
+        F: FnMut(f32) -> Option<f32>;
+
+    /// Conditionally update value using given function, returns new value
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<f32>
+    where
+        F: FnMut(f32) -> Option<f32>;
 
     /// Get reference to underlying standard library type
     pub fn inner(&self) -> &std::sync::atomic::AtomicU32;
@@ -1284,6 +1364,9 @@ The following table shows the underlying `std::sync::atomic` functions used by `
 | `fetch_mul(factor)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Multiplication, returns old value |
 | `fetch_div(divisor)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Division, returns old value |
 | `fetch_update(f)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Update using function, returns old value |
+| `update_and_get(f)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Update using function, returns new value |
+| `try_update(f)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Conditional update, returns `Option<old_value>` |
+| `try_update_and_get(f)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Conditional update, returns `Option<new_value>` |
 | `inner()` | - | - | Get reference to underlying `AtomicU32` |
 
 **Notes**:
@@ -1343,7 +1426,22 @@ impl AtomicF64 {
     /// Atomically update value using given function, returns old value (using AcqRel ordering, implemented via CAS loop)
     pub fn fetch_update<F>(&self, f: F) -> f64
     where
-        F: Fn(f64) -> f64;
+        F: FnMut(f64) -> f64;
+
+    /// Atomically update value using given function, returns new value (using AcqRel ordering, implemented via CAS loop)
+    pub fn update_and_get<F>(&self, f: F) -> f64
+    where
+        F: FnMut(f64) -> f64;
+
+    /// Conditionally update value using given function, returns old value
+    pub fn try_update<F>(&self, f: F) -> Option<f64>
+    where
+        F: FnMut(f64) -> Option<f64>;
+
+    /// Conditionally update value using given function, returns new value
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<f64>
+    where
+        F: FnMut(f64) -> Option<f64>;
 
     /// Get reference to underlying standard library type
     pub fn inner(&self) -> &std::sync::atomic::AtomicU64;
@@ -1369,6 +1467,9 @@ The following table shows the underlying `std::sync::atomic` functions used by `
 | `fetch_mul(factor)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Multiplication, returns old value |
 | `fetch_div(divisor)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Division, returns old value |
 | `fetch_update(f)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Update using function, returns old value |
+| `update_and_get(f)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Update using function, returns new value |
+| `try_update(f)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Conditional update, returns `Option<old_value>` |
+| `try_update_and_get(f)` | CAS loop + `compare_exchange_weak` + bit conversion | Success: `AcqRel`<br>Failure: `Acquire` | Conditional update, returns `Option<new_value>` |
 | `inner()` | - | - | Get reference to underlying `AtomicU64` |
 
 **Notes**:
@@ -1484,7 +1585,22 @@ pub trait Atomic {
     /// Updates the value using a function, returning the old value (internally uses CAS loop).
     fn fetch_update<F>(&self, f: F) -> Self::Value
     where
-        F: Fn(Self::Value) -> Self::Value;
+        F: FnMut(Self::Value) -> Self::Value;
+
+    /// Updates the value using a function, returning the new value.
+    fn update_and_get<F>(&self, f: F) -> Self::Value
+    where
+        F: FnMut(Self::Value) -> Self::Value;
+
+    /// Conditionally updates the value using a function, returning the old value.
+    fn try_update<F>(&self, f: F) -> Option<Self::Value>
+    where
+        F: FnMut(Self::Value) -> Option<Self::Value>;
+
+    /// Conditionally updates the value using a function, returning the new value.
+    fn try_update_and_get<F>(&self, f: F) -> Option<Self::Value>
+    where
+        F: FnMut(Self::Value) -> Option<Self::Value>;
 }
 
 /// Trait for atomic numeric types that support arithmetic operations.
@@ -1577,13 +1693,13 @@ fn main() {
 ### 6.3 Functional Update
 
 ```rust
-use qubit_atomic::AtomicI32;
+use qubit_atomic::Atomic;
 
 fn main() {
-    let atomic = AtomicI32::new(10);
+    let atomic = Atomic::<i32>::new(10);
 
-    // Update using function
-    let new_value = atomic.fetch_update(|x| {
+    // Update using function and return the committed new value
+    let new_value = atomic.update_and_get(|x| {
         if x < 100 {
             x * 2
         } else {
@@ -1594,8 +1710,8 @@ fn main() {
     assert_eq!(new_value, 20);
     println!("Updated value: {}", new_value);
 
-    // Accumulate operation
-    let result = atomic.fetch_accumulate(5, |a, b| a + b);
+    // Accumulate operation and return the committed new value
+    let result = atomic.accumulate_and_get(5, |a, b| a + b);
     assert_eq!(result, 25);
     println!("Accumulated value: {}", result);
 }
@@ -1631,15 +1747,15 @@ fn main() {
     println!("Old config: {:?}", old_config);
     println!("New config: {:?}", atomic_config.load());
 
-    // Update using function
-    atomic_config.fetch_update(|current| {
+    // Update using function and return the committed new reference
+    let updated = atomic_config.update_and_get(|current| {
         Arc::new(Config {
             timeout: current.timeout * 2,
             max_retries: current.max_retries + 1,
         })
     });
 
-    println!("Updated config: {:?}", atomic_config.load());
+    println!("Updated config: {:?}", updated);
 }
 ```
 
@@ -1738,8 +1854,8 @@ fn float_accumulator_example() {
 fn float_custom_update_example() {
     let temperature = AtomicF32::new(20.0);
 
-    // Use fetch_update for custom logic
-    let new_temp = temperature.fetch_update(|current| {
+    // Use update_and_get for custom logic when the new value is needed
+    let new_temp = temperature.update_and_get(|current| {
         // Limit temperature between -50 and 50
         (current + 5.0).clamp(-50.0, 50.0)
     });
@@ -1889,9 +2005,9 @@ fn mixed_usage() {
 | | `compareAndExchange(int expect, int update)` (Java 9+) | `compare_and_exchange(current, new)` | ✅ | CAS, returns actual value |
 | | `weakCompareAndExchange(int expect, int update)` (Java 9+) | `compare_and_exchange_weak(current, new)` | ✅ | Weak CAS, returns actual value |
 | **Functional Updates** | `getAndUpdate(IntUnaryOperator f)` (Java 8+) | `fetch_update(f)` | ✅ | Function update, returns old value |
-| | `updateAndGet(IntUnaryOperator f)` (Java 8+) | - | ❌ | New-value functional variant is not exposed |
+| | `updateAndGet(IntUnaryOperator f)` (Java 8+) | `update_and_get(f)` | ✅ | Function update, returns new value |
 | | `getAndAccumulate(int x, IntBinaryOperator f)` (Java 8+) | `fetch_accumulate(x, f)` | ✅ | Accumulate, returns old value |
-| | `accumulateAndGet(int x, IntBinaryOperator f)` (Java 8+) | - | ❌ | New-value accumulate variant is not exposed |
+| | `accumulateAndGet(int x, IntBinaryOperator f)` (Java 8+) | `accumulate_and_get(x, f)` | ✅ | Accumulate, returns new value |
 | **Bitwise Operations** | - | `fetch_and(value)` | ✅ | Bitwise AND (Rust-specific) |
 | | - | `fetch_or(value)` | ✅ | Bitwise OR (Rust-specific) |
 | | - | `fetch_xor(value)` | ✅ | Bitwise XOR (Rust-specific) |
@@ -1944,7 +2060,7 @@ fn mixed_usage() {
 | | `compareAndExchange(V expect, V update)` (Java 9+) | `compare_and_exchange(&current, new)` | ✅ | CAS, returns actual reference |
 | | `weakCompareAndExchange(V expect, V update)` (Java 9+) | `compare_and_exchange_weak(&current, new)` | ✅ | Weak CAS, returns actual reference |
 | **Functional Updates** | `getAndUpdate(UnaryOperator<V> f)` (Java 8+) | `fetch_update(f)` | ✅ | Function update, returns old reference |
-| | `updateAndGet(UnaryOperator<V> f)` (Java 8+) | - | ❌ | New-reference functional variant is not exposed |
+| | `updateAndGet(UnaryOperator<V> f)` (Java 8+) | `update_and_get(f)` | ✅ | Function update, returns new reference |
 | | `getAndAccumulate(V x, BinaryOperator<V> f)` (Java 8+) | - | ❌ | Accumulate variant is not exposed |
 | | `accumulateAndGet(V x, BinaryOperator<V> f)` (Java 8+) | - | ❌ | Accumulate variant is not exposed |
 | **Other** | `toString()` | `Display` trait (if T: Display) | ✅ | Implement Display |

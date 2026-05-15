@@ -285,6 +285,14 @@ macro_rules! test_atomic_integer {
             }
 
             #[test]
+            fn test_update_and_get() {
+                let atomic = Atomic::<$value_type>::new(10);
+                let new = atomic.update_and_get(|x| x * 2);
+                assert_eq!(new, 20);
+                assert_eq!(atomic.load(), 20);
+            }
+
+            #[test]
             fn test_try_update_success_and_reject() {
                 let atomic = Atomic::<$value_type>::new(3);
                 let old = atomic.try_update(|x| (x % 2 == 1).then_some(x + 1));
@@ -297,10 +305,30 @@ macro_rules! test_atomic_integer {
             }
 
             #[test]
+            fn test_try_update_and_get_success_and_reject() {
+                let atomic = Atomic::<$value_type>::new(3);
+                let new = atomic.try_update_and_get(|x| (x % 2 == 1).then_some(x + 1));
+                assert_eq!(new, Some(4));
+                assert_eq!(atomic.load(), 4);
+
+                let rejected = atomic.try_update_and_get(|x| (x % 2 == 1).then_some(x + 1));
+                assert_eq!(rejected, None);
+                assert_eq!(atomic.load(), 4);
+            }
+
+            #[test]
             fn test_get_and_accumulate() {
                 let atomic = Atomic::<$value_type>::new(10);
                 let old = atomic.fetch_accumulate(5, |a, b| a + b);
                 assert_eq!(old, 10);
+                assert_eq!(atomic.load(), 15);
+            }
+
+            #[test]
+            fn test_accumulate_and_get() {
+                let atomic = Atomic::<$value_type>::new(10);
+                let new = atomic.accumulate_and_get(5, |a, b| a + b);
+                assert_eq!(new, 15);
                 assert_eq!(atomic.load(), 15);
             }
 

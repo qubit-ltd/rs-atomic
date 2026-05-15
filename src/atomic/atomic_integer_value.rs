@@ -191,7 +191,25 @@ pub trait AtomicIntegerValue: AtomicValue {
     /// CAS retries.
     fn fetch_accumulate<F>(primitive: &Self::Primitive, value: Self, f: F) -> Self
     where
-        F: Fn(Self, Self) -> Self;
+        F: FnMut(Self, Self) -> Self;
+
+    /// Accumulates a value and returns the committed new value.
+    ///
+    /// # Parameters
+    ///
+    /// * `primitive` - The primitive wrapper to update.
+    /// * `value` - The right-hand input passed to the accumulator.
+    /// * `f` - A function that combines the current value and `value`.
+    ///
+    /// # Returns
+    ///
+    /// The value committed by the successful update.
+    ///
+    /// The closure may be called more than once when concurrent updates cause
+    /// CAS retries.
+    fn accumulate_and_get<F>(primitive: &Self::Primitive, value: Self, f: F) -> Self
+    where
+        F: FnMut(Self, Self) -> Self;
 
     /// Replaces with the maximum value and returns the previous value.
     ///

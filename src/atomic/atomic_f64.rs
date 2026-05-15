@@ -446,9 +446,9 @@ impl AtomicF64 {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     #[inline]
-    pub fn fetch_update<F>(&self, f: F) -> f64
+    pub fn fetch_update<F>(&self, mut f: F) -> f64
     where
-        F: Fn(f64) -> f64,
+        F: FnMut(f64) -> f64,
     {
         let mut current = self.load();
         loop {
@@ -476,9 +476,9 @@ impl AtomicF64 {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     #[inline]
-    pub fn update_and_get<F>(&self, f: F) -> f64
+    pub fn update_and_get<F>(&self, mut f: F) -> f64
     where
-        F: Fn(f64) -> f64,
+        F: FnMut(f64) -> f64,
     {
         let mut current = self.load();
         loop {
@@ -508,9 +508,9 @@ impl AtomicF64 {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     #[inline]
-    pub fn try_update<F>(&self, f: F) -> Option<f64>
+    pub fn try_update<F>(&self, mut f: F) -> Option<f64>
     where
-        F: Fn(f64) -> Option<f64>,
+        F: FnMut(f64) -> Option<f64>,
     {
         let mut current = self.load();
         loop {
@@ -540,9 +540,9 @@ impl AtomicF64 {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     #[inline]
-    pub fn try_update_and_get<F>(&self, f: F) -> Option<f64>
+    pub fn try_update_and_get<F>(&self, mut f: F) -> Option<f64>
     where
-        F: Fn(f64) -> Option<f64>,
+        F: FnMut(f64) -> Option<f64>,
     {
         let mut current = self.load();
         loop {
@@ -616,7 +616,7 @@ impl AtomicOps for AtomicF64 {
     #[inline]
     fn fetch_update<F>(&self, f: F) -> f64
     where
-        F: Fn(f64) -> f64,
+        F: FnMut(f64) -> f64,
     {
         self.fetch_update(f)
     }
@@ -624,7 +624,7 @@ impl AtomicOps for AtomicF64 {
     #[inline]
     fn update_and_get<F>(&self, f: F) -> f64
     where
-        F: Fn(f64) -> f64,
+        F: FnMut(f64) -> f64,
     {
         self.update_and_get(f)
     }
@@ -632,7 +632,7 @@ impl AtomicOps for AtomicF64 {
     #[inline]
     fn try_update<F>(&self, f: F) -> Option<f64>
     where
-        F: Fn(f64) -> Option<f64>,
+        F: FnMut(f64) -> Option<f64>,
     {
         self.try_update(f)
     }
@@ -640,7 +640,7 @@ impl AtomicOps for AtomicF64 {
     #[inline]
     fn try_update_and_get<F>(&self, f: F) -> Option<f64>
     where
-        F: Fn(f64) -> Option<f64>,
+        F: FnMut(f64) -> Option<f64>,
     {
         self.try_update_and_get(f)
     }

@@ -169,7 +169,7 @@ pub trait AtomicOps {
     /// CAS retries.
     fn fetch_update<F>(&self, f: F) -> Self::Value
     where
-        F: Fn(Self::Value) -> Self::Value;
+        F: FnMut(Self::Value) -> Self::Value;
 
     /// Updates the value using a function, returning the new value.
     ///
@@ -188,7 +188,7 @@ pub trait AtomicOps {
     /// CAS retries.
     fn update_and_get<F>(&self, f: F) -> Self::Value
     where
-        F: Fn(Self::Value) -> Self::Value;
+        F: FnMut(Self::Value) -> Self::Value;
 
     /// Conditionally updates the value using a function.
     ///
@@ -207,7 +207,7 @@ pub trait AtomicOps {
     /// when concurrent updates cause CAS retries.
     fn try_update<F>(&self, f: F) -> Option<Self::Value>
     where
-        F: Fn(Self::Value) -> Option<Self::Value>;
+        F: FnMut(Self::Value) -> Option<Self::Value>;
 
     /// Conditionally updates the value using a function, returning the new value.
     ///
@@ -226,5 +226,5 @@ pub trait AtomicOps {
     /// when concurrent updates cause CAS retries.
     fn try_update_and_get<F>(&self, f: F) -> Option<Self::Value>
     where
-        F: Fn(Self::Value) -> Option<Self::Value>;
+        F: FnMut(Self::Value) -> Option<Self::Value>;
 }
