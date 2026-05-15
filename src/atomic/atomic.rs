@@ -59,8 +59,11 @@ use super::atomic_value::AtomicValue;
 /// [`compare_set_weak`](Self::compare_set_weak),
 /// [`compare_and_exchange`](Self::compare_and_exchange),
 /// [`compare_and_exchange_weak`](Self::compare_and_exchange_weak),
-/// [`fetch_update`](Self::fetch_update), [`try_update`](Self::try_update),
-/// and [`inner`](Self::inner).
+/// [`fetch_update`](Self::fetch_update),
+/// [`update_and_get`](Self::update_and_get),
+/// [`try_update`](Self::try_update),
+/// [`try_update_and_get`](Self::try_update_and_get), and
+/// [`inner`](Self::inner).
 ///
 /// Integer arithmetic operations intentionally follow Rust atomic integer
 /// semantics and wrap on overflow and underflow. Use [`crate::AtomicCount`] or
@@ -433,6 +436,36 @@ where
         AtomicOps::fetch_update(&self.primitive, f)
     }
 
+    /// Updates the value with a function and returns the new value.
+    ///
+    /// The update uses a CAS loop until it succeeds. The closure may be called
+    /// more than once under contention.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A function that maps the current value to the next value.
+    ///
+    /// # Returns
+    ///
+    /// The value committed by the successful update.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::Atomic;
+    ///
+    /// let atomic = Atomic::new(3);
+    /// assert_eq!(atomic.update_and_get(|x| x * 2), 6);
+    /// assert_eq!(atomic.load(), 6);
+    /// ```
+    #[inline]
+    pub fn update_and_get<F>(&self, f: F) -> T
+    where
+        F: Fn(T) -> T,
+    {
+        AtomicOps::update_and_get(&self.primitive, f)
+    }
+
     /// Conditionally updates the value with a function.
     ///
     /// The update uses a CAS loop until it succeeds or the closure rejects the
@@ -466,6 +499,47 @@ where
         F: Fn(T) -> Option<T>,
     {
         AtomicOps::try_update(&self.primitive, f)
+    }
+
+    /// Conditionally updates the value with a function and returns the new value.
+    ///
+    /// The update uses a CAS loop until it succeeds or the closure rejects the
+    /// observed current value by returning `None`. The closure may be called
+    /// more than once under contention.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A function that maps the current value to `Some(next)` to update
+    ///   the atomic, or `None` to leave it unchanged.
+    ///
+    /// # Returns
+    ///
+    /// `Some(new_value)` with the value committed by the successful update, or
+    /// `None` when `f` rejects the observed current value.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::Atomic;
+    ///
+    /// let atomic = Atomic::new(3);
+    /// assert_eq!(
+    ///     atomic.try_update_and_get(|x| (x % 2 == 1).then_some(x + 1)),
+    ///     Some(4),
+    /// );
+    /// assert_eq!(atomic.load(), 4);
+    /// assert_eq!(
+    ///     atomic.try_update_and_get(|x| (x % 2 == 1).then_some(x + 1)),
+    ///     None,
+    /// );
+    /// assert_eq!(atomic.load(), 4);
+    /// ```
+    #[inline]
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<T>
+    where
+        F: Fn(T) -> Option<T>,
+    {
+        AtomicOps::try_update_and_get(&self.primitive, f)
     }
 
     /// Returns the raw backend atomic value.

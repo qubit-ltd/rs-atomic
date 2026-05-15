@@ -429,6 +429,49 @@ impl<T> AtomicRef<T> {
         }
     }
 
+    /// Updates the reference using a function, returning the new reference.
+    ///
+    /// Internally uses a CAS loop until the update succeeds.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A function that takes the current reference and returns the
+    ///   new reference.
+    ///
+    /// # Returns
+    ///
+    /// The reference committed by the successful update.
+    ///
+    /// The closure may be called more than once when concurrent updates cause
+    /// CAS retries.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::AtomicRef;
+    /// use std::sync::Arc;
+    ///
+    /// let atomic = AtomicRef::new(Arc::new(10));
+    /// let new = atomic.update_and_get(|x| Arc::new(**x * 2));
+    /// assert_eq!(*new, 20);
+    /// assert_eq!(*atomic.load(), 20);
+    /// ```
+    #[inline]
+    pub fn update_and_get<F>(&self, f: F) -> Arc<T>
+    where
+        F: Fn(&Arc<T>) -> Arc<T>,
+    {
+        let mut current = self.load();
+        loop {
+            let new = f(&current);
+            let returned = Arc::clone(&new);
+            match self.compare_set_weak(&current, new) {
+                Ok(_) => return returned,
+                Err(actual) => current = actual,
+            }
+        }
+    }
+
     /// Conditionally updates the reference using a function.
     ///
     /// Internally uses a pointer-based CAS loop until the update succeeds or
@@ -476,6 +519,60 @@ impl<T> AtomicRef<T> {
             let new = f(&current)?;
             match self.compare_set_weak(&current, new) {
                 Ok(_) => return Some(current),
+                Err(actual) => current = actual,
+            }
+        }
+    }
+
+    /// Conditionally updates the reference using a function, returning the new
+    /// reference.
+    ///
+    /// Internally uses a pointer-based CAS loop until the update succeeds or
+    /// the closure rejects the current reference by returning `None`.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A function that takes the current reference and returns the new
+    ///   reference, or `None` to leave the current reference unchanged.
+    ///
+    /// # Returns
+    ///
+    /// `Some(new_reference)` when the update succeeds, or `None` when `f`
+    /// rejects the observed current reference.
+    ///
+    /// The closure may be called more than once when concurrent updates cause
+    /// CAS retries.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::AtomicRef;
+    /// use std::sync::Arc;
+    ///
+    /// let atomic = AtomicRef::new(Arc::new(3));
+    /// let new = atomic.try_update_and_get(|current| {
+    ///     (**current % 2 == 1).then_some(Arc::new(**current + 1))
+    /// });
+    /// assert_eq!(*new.unwrap(), 4);
+    /// assert_eq!(*atomic.load(), 4);
+    /// assert!(atomic
+    ///     .try_update_and_get(|current| {
+    ///         (**current % 2 == 1).then_some(Arc::new(**current + 1))
+    ///     })
+    ///     .is_none());
+    /// assert_eq!(*atomic.load(), 4);
+    /// ```
+    #[inline]
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<Arc<T>>
+    where
+        F: Fn(&Arc<T>) -> Option<Arc<T>>,
+    {
+        let mut current = self.load();
+        loop {
+            let new = f(&current)?;
+            let returned = Arc::clone(&new);
+            match self.compare_set_weak(&current, new) {
+                Ok(_) => return Some(returned),
                 Err(actual) => current = actual,
             }
         }

@@ -460,6 +460,36 @@ impl AtomicF64 {
         }
     }
 
+    /// Updates the value using a function, returning the new value.
+    ///
+    /// Internally uses a CAS loop until the update succeeds.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A function that takes the current value and returns the new
+    ///   value.
+    ///
+    /// # Returns
+    ///
+    /// The value committed by the successful update.
+    ///
+    /// The closure may be called more than once when concurrent updates cause
+    /// CAS retries.
+    #[inline]
+    pub fn update_and_get<F>(&self, f: F) -> f64
+    where
+        F: Fn(f64) -> f64,
+    {
+        let mut current = self.load();
+        loop {
+            let new = f(current);
+            match self.compare_set_weak(current, new) {
+                Ok(_) => return new,
+                Err(actual) => current = actual,
+            }
+        }
+    }
+
     /// Conditionally updates the value using a function.
     ///
     /// Internally uses a CAS loop until the update succeeds or the closure
@@ -487,6 +517,38 @@ impl AtomicF64 {
             let new = f(current)?;
             match self.compare_set_weak(current, new) {
                 Ok(_) => return Some(current),
+                Err(actual) => current = actual,
+            }
+        }
+    }
+
+    /// Conditionally updates the value using a function, returning the new value.
+    ///
+    /// Internally uses a CAS loop until the update succeeds or the closure
+    /// rejects the current value by returning `None`.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A function that takes the current value and returns the new
+    ///   value, or `None` to leave the value unchanged.
+    ///
+    /// # Returns
+    ///
+    /// `Some(new_value)` when the update succeeds, or `None` when `f` rejects
+    /// the observed current value.
+    ///
+    /// The closure may be called more than once when concurrent updates cause
+    /// CAS retries.
+    #[inline]
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<f64>
+    where
+        F: Fn(f64) -> Option<f64>,
+    {
+        let mut current = self.load();
+        loop {
+            let new = f(current)?;
+            match self.compare_set_weak(current, new) {
+                Ok(_) => return Some(new),
                 Err(actual) => current = actual,
             }
         }
@@ -560,11 +622,27 @@ impl AtomicOps for AtomicF64 {
     }
 
     #[inline]
+    fn update_and_get<F>(&self, f: F) -> f64
+    where
+        F: Fn(f64) -> f64,
+    {
+        self.update_and_get(f)
+    }
+
+    #[inline]
     fn try_update<F>(&self, f: F) -> Option<f64>
     where
         F: Fn(f64) -> Option<f64>,
     {
         self.try_update(f)
+    }
+
+    #[inline]
+    fn try_update_and_get<F>(&self, f: F) -> Option<f64>
+    where
+        F: Fn(f64) -> Option<f64>,
+    {
+        self.try_update_and_get(f)
     }
 }
 

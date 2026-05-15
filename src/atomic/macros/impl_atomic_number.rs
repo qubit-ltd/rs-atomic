@@ -946,6 +946,47 @@ macro_rules! impl_atomic_number {
                 }
             }
 
+            /// Updates the value using a function, returning the new value.
+            ///
+            /// Internally uses a CAS loop until the update succeeds.
+            ///
+            /// # Parameters
+            ///
+            /// * `f` - A function that takes the current value and returns
+            ///   the new value.
+            ///
+            /// # Returns
+            ///
+            /// The value committed by the successful update.
+            ///
+            /// The closure may be called more than once when concurrent
+            /// updates cause CAS retries.
+            ///
+            /// # Example
+            ///
+            /// ```rust
+            /// use qubit_atomic::Atomic;
+            ///
+            #[doc = concat!("let atomic = Atomic::<", stringify!($value_type), ">::new(10);")]
+            /// let new = atomic.update_and_get(|x| x * 2);
+            /// assert_eq!(new, 20);
+            /// assert_eq!(atomic.load(), 20);
+            /// ```
+            #[inline]
+            pub fn update_and_get<F>(&self, f: F) -> $value_type
+            where
+                F: Fn($value_type) -> $value_type,
+            {
+                let mut current = self.load();
+                loop {
+                    let new = f(current);
+                    match self.compare_set_weak(current, new) {
+                        Ok(_) => return new,
+                        Err(actual) => current = actual,
+                    }
+                }
+            }
+
             /// Conditionally updates the value using a function.
             ///
             /// Internally uses a CAS loop until the update succeeds or the
@@ -985,6 +1026,57 @@ macro_rules! impl_atomic_number {
                     let new = f(current)?;
                     match self.compare_set_weak(current, new) {
                         Ok(_) => return Some(current),
+                        Err(actual) => current = actual,
+                    }
+                }
+            }
+
+            /// Conditionally updates the value using a function, returning
+            /// the new value.
+            ///
+            /// Internally uses a CAS loop until the update succeeds or the
+            /// closure rejects the current value by returning `None`.
+            ///
+            /// # Parameters
+            ///
+            /// * `f` - A function that takes the current value and returns
+            ///   the new value, or `None` to leave the value unchanged.
+            ///
+            /// # Returns
+            ///
+            /// `Some(new_value)` when the update succeeds, or `None` when
+            /// `f` rejects the observed current value.
+            ///
+            /// The closure may be called more than once when concurrent
+            /// updates cause CAS retries.
+            ///
+            /// # Example
+            ///
+            /// ```rust
+            /// use qubit_atomic::Atomic;
+            ///
+            #[doc = concat!("let atomic = Atomic::<", stringify!($value_type), ">::new(3);")]
+            /// assert_eq!(
+            ///     atomic.try_update_and_get(|x| (x % 2 == 1).then_some(x + 1)),
+            ///     Some(4),
+            /// );
+            /// assert_eq!(atomic.load(), 4);
+            /// assert_eq!(
+            ///     atomic.try_update_and_get(|x| (x % 2 == 1).then_some(x + 1)),
+            ///     None,
+            /// );
+            /// assert_eq!(atomic.load(), 4);
+            /// ```
+            #[inline]
+            pub fn try_update_and_get<F>(&self, f: F) -> Option<$value_type>
+            where
+                F: Fn($value_type) -> Option<$value_type>,
+            {
+                let mut current = self.load();
+                loop {
+                    let new = f(current)?;
+                    match self.compare_set_weak(current, new) {
+                        Ok(_) => return Some(new),
                         Err(actual) => current = actual,
                     }
                 }
@@ -1201,11 +1293,27 @@ macro_rules! impl_atomic_number {
             }
 
             #[inline]
+            fn update_and_get<F>(&self, f: F) -> $value_type
+            where
+                F: Fn($value_type) -> $value_type,
+            {
+                self.update_and_get(f)
+            }
+
+            #[inline]
             fn try_update<F>(&self, f: F) -> Option<$value_type>
             where
                 F: Fn($value_type) -> Option<$value_type>,
             {
                 self.try_update(f)
+            }
+
+            #[inline]
+            fn try_update_and_get<F>(&self, f: F) -> Option<$value_type>
+            where
+                F: Fn($value_type) -> Option<$value_type>,
+            {
+                self.try_update_and_get(f)
             }
         }
 
