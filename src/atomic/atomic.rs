@@ -58,7 +58,6 @@ use super::atomic_value::AtomicValue;
 /// [`compare_set`](Self::compare_set),
 /// [`compare_set_weak`](Self::compare_set_weak),
 /// [`compare_and_exchange`](Self::compare_and_exchange),
-/// [`compare_and_exchange_weak`](Self::compare_and_exchange_weak),
 /// [`fetch_update`](Self::fetch_update),
 /// [`update_and_get`](Self::update_and_get),
 /// [`try_update`](Self::try_update),
@@ -372,11 +371,8 @@ where
     ///
     /// # Returns
     ///
-    /// The value observed before the operation completed. Because this
-    /// operation may fail spuriously, a returned value equal to `current` does
-    /// not by itself prove that `new` was stored; use
-    /// [`compare_set_weak`](Self::compare_set_weak) when the caller needs an
-    /// explicit success indicator.
+    /// `Ok(previous)` when the value was replaced, or `Err(actual)` when the
+    /// comparison failed, including possible spurious failure.
     ///
     /// For `Atomic<f32>` and `Atomic<f64>`, the same caveat applies to raw-bit
     /// equality: `0.0` and `-0.0` compare equal by [`PartialEq`] but are
@@ -386,23 +382,26 @@ where
     ///
     /// # Example
     ///
-    /// Weak CAS may fail spuriously; retry until [`load`](Self::load) shows the
-    /// expected outcome (or use [`compare_set_weak`](Self::compare_set_weak)
-    /// which reports success explicitly).
+    /// Weak CAS may fail spuriously; retry on `Err(actual)`.
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
     ///
     /// let atomic = Atomic::new(5);
+    /// let mut current = 5;
     /// loop {
-    ///     let _ = atomic.compare_and_exchange_weak(5, 10);
-    ///     if atomic.load() == 10 {
-    ///         break;
+    ///     match atomic.compare_and_exchange_weak(current, 10) {
+    ///         Ok(previous) => {
+    ///             assert_eq!(previous, current);
+    ///             break;
+    ///         }
+    ///         Err(actual) => current = actual,
     ///     }
     /// }
+    /// assert_eq!(atomic.load(), 10);
     /// ```
     #[inline]
-    pub fn compare_and_exchange_weak(&self, current: T, new: T) -> T {
+    pub fn compare_and_exchange_weak(&self, current: T, new: T) -> Result<T, T> {
         AtomicOps::compare_exchange_weak(&self.primitive, current, new)
     }
 

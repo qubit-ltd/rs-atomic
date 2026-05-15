@@ -7,9 +7,5 @@
  *    Licensed under the Apache License, Version 2.0.
  *
  ******************************************************************************/
-//! # Atomic Module Tests
-//!
-//! Comprehensive tests for all atomic types and operations.
 
-mod atomic;
-mod markdown_tests;
+mod readme_examples_tests;

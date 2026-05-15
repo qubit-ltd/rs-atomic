@@ -520,6 +520,7 @@ fn test_trait_atomic_compare_exchange_weak() {
         atomic.store(Arc::new(10));
         let current = atomic.load();
         let prev = atomic.compare_and_exchange_weak(&current, Arc::new(20));
+        let prev = prev.expect("weak exchange should succeed");
         assert!(Arc::ptr_eq(&prev, &current) || *prev == 10);
         assert_eq!(*atomic.load(), 20);
     }
@@ -534,6 +535,7 @@ fn test_trait_atomic_compare_exchange_weak_failure() {
         atomic.store(Arc::new(10));
         let wrong = Arc::new(999);
         let prev = atomic.compare_and_exchange_weak(&wrong, Arc::new(20));
+        let prev = prev.expect_err("weak exchange should fail");
         assert_eq!(*prev, 10);
         assert_eq!(*atomic.load(), 10);
     }
@@ -709,6 +711,7 @@ fn test_compare_and_exchange_weak() {
 
     let current = atomic.load();
     let prev = atomic.compare_and_exchange_weak(&current, data2);
+    let prev = prev.expect("weak exchange should succeed");
     assert!(Arc::ptr_eq(&prev, &current));
     assert_eq!(atomic.load().value, 100);
 }
@@ -848,11 +851,13 @@ fn test_compare_and_exchange_weak_in_loop() {
     for i in 0..10 {
         loop {
             let new_data = Arc::new(i + 1);
-            let prev = atomic.compare_and_exchange_weak(&current, new_data);
-            if Arc::ptr_eq(&prev, &current) {
-                break;
+            match atomic.compare_and_exchange_weak(&current, new_data) {
+                Ok(prev) => {
+                    assert!(Arc::ptr_eq(&prev, &current));
+                    break;
+                }
+                Err(actual) => current = actual,
             }
-            current = prev;
         }
         current = Arc::new(i + 1);
     }
@@ -995,6 +1000,7 @@ fn test_compare_and_exchange_weak_failure_path() {
     let atomic = AtomicRef::new(data1);
 
     let prev = atomic.compare_and_exchange_weak(&wrong, data2);
+    let prev = prev.expect_err("weak exchange should fail");
     assert_eq!(*prev, 42);
     assert_eq!(*atomic.load(), 42);
 }
@@ -1044,6 +1050,7 @@ fn test_compare_and_exchange_weak_success_path() {
     let current = atomic.load();
     let data2 = Arc::new(100);
     let prev = atomic.compare_and_exchange_weak(&current, data2);
+    let prev = prev.expect("weak exchange should succeed");
 
     assert!(Arc::ptr_eq(&prev, &current));
     assert_eq!(*atomic.load(), 100);
@@ -1147,6 +1154,7 @@ fn test_direct_compare_and_exchange_weak_success() {
 
     // Directly call compare_and_exchange_weak method (parameter is reference)
     let prev = atomic.compare_and_exchange_weak(&current, data2);
+    let prev = prev.expect("weak exchange should succeed");
     assert!(Arc::ptr_eq(&prev, &current));
     assert_eq!(atomic.load().value, 100);
 }
@@ -1170,6 +1178,7 @@ fn test_direct_compare_and_exchange_weak_failure() {
 
     // Directly call compare_and_exchange_weak method with wrong reference
     let prev = atomic.compare_and_exchange_weak(&wrong_ref, data2);
+    let prev = prev.expect_err("weak exchange should fail");
     assert_eq!(prev.value, 42);
     assert_eq!(prev.name, "first");
     assert_eq!(atomic.load().value, 42);
@@ -1190,11 +1199,13 @@ fn test_direct_compare_and_exchange_weak_in_loop() {
             value: current.value + 1,
             name: "updated".to_string(),
         });
-        let prev = atomic.compare_and_exchange_weak(&current, new_data);
-        if Arc::ptr_eq(&prev, &current) {
-            break;
+        match atomic.compare_and_exchange_weak(&current, new_data) {
+            Ok(prev) => {
+                assert!(Arc::ptr_eq(&prev, &current));
+                break;
+            }
+            Err(actual) => current = actual,
         }
-        current = prev;
     }
 
     assert_eq!(atomic.load().value, 1);

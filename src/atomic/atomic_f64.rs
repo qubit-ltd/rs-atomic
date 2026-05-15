@@ -279,22 +279,20 @@ impl AtomicF64 {
     ///
     /// # Returns
     ///
-    /// The value observed before the operation completed. Because this
-    /// operation may fail spuriously, a returned value with the same raw bits
-    /// as `current` does not by itself prove that `new` was stored; use
-    /// [`compare_set_weak`](Self::compare_set_weak) when the caller needs an
-    /// explicit success indicator.
+    /// `Ok(previous)` when the value was replaced, or `Err(actual)` when the
+    /// comparison failed, including possible spurious failure. Values preserve
+    /// their exact raw bit patterns.
     #[inline]
-    pub fn compare_and_exchange_weak(&self, current: f64, new: f64) -> f64 {
-        match self.inner.compare_exchange_weak(
-            current.to_bits(),
-            new.to_bits(),
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
-            Ok(prev_bits) => f64::from_bits(prev_bits),
-            Err(actual_bits) => f64::from_bits(actual_bits),
-        }
+    pub fn compare_and_exchange_weak(&self, current: f64, new: f64) -> Result<f64, f64> {
+        self.inner
+            .compare_exchange_weak(
+                current.to_bits(),
+                new.to_bits(),
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            )
+            .map(f64::from_bits)
+            .map_err(f64::from_bits)
     }
 
     /// Atomically adds a value, returning the old value.
@@ -609,7 +607,7 @@ impl AtomicOps for AtomicF64 {
     }
 
     #[inline]
-    fn compare_exchange_weak(&self, current: f64, new: f64) -> f64 {
+    fn compare_exchange_weak(&self, current: f64, new: f64) -> Result<f64, f64> {
         self.compare_and_exchange_weak(current, new)
     }
 

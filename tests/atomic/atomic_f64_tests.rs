@@ -168,7 +168,7 @@ fn test_trait_atomic_compare_exchange_weak() {
     fn test_atomic(atomic: &Atomic<f64>) {
         atomic.store(1.0);
         let prev = atomic.compare_and_exchange_weak(1.0, 2.0);
-        assert!((prev - 1.0).abs() < EPSILON);
+        assert!((prev.expect("weak exchange should succeed") - 1.0).abs() < EPSILON);
         assert!((atomic.load() - 2.0).abs() < EPSILON);
     }
 
@@ -239,7 +239,7 @@ fn test_compare_and_set_weak() {
 fn test_compare_and_exchange_weak() {
     let atomic = Atomic::<f64>::new(1.0);
     let prev = atomic.compare_and_exchange_weak(1.0, 2.0);
-    assert!((prev - 1.0).abs() < EPSILON);
+    assert!((prev.expect("weak exchange should succeed") - 1.0).abs() < EPSILON);
     assert!((atomic.load() - 2.0).abs() < EPSILON);
 }
 
@@ -398,11 +398,13 @@ fn test_compare_and_exchange_weak_in_loop() {
     let mut current = atomic.load();
     for i in 0..10 {
         loop {
-            let prev = atomic.compare_and_exchange_weak(current, (i + 1) as f64);
-            if (prev - current).abs() < EPSILON {
-                break;
+            match atomic.compare_and_exchange_weak(current, (i + 1) as f64) {
+                Ok(prev) => {
+                    assert!((prev - current).abs() < EPSILON);
+                    break;
+                }
+                Err(actual) => current = actual,
             }
-            current = prev;
         }
         current = (i + 1) as f64;
     }
@@ -513,7 +515,7 @@ fn test_compare_and_set_weak_failure_path() {
 fn test_compare_and_exchange_weak_failure_path() {
     let atomic = Atomic::<f64>::new(10.0);
     let prev = atomic.compare_and_exchange_weak(5.0, 15.0);
-    assert!((prev - 10.0).abs() < EPSILON);
+    assert!((prev.expect_err("weak exchange should fail") - 10.0).abs() < EPSILON);
     assert!((atomic.load() - 10.0).abs() < EPSILON);
 }
 
@@ -529,7 +531,7 @@ fn test_compare_and_exchange_success_path() {
 fn test_compare_and_exchange_weak_success_path() {
     let atomic = Atomic::<f64>::new(10.0);
     let prev = atomic.compare_and_exchange_weak(10.0, 15.0);
-    assert!((prev - 10.0).abs() < EPSILON);
+    assert!((prev.expect("weak exchange should succeed") - 10.0).abs() < EPSILON);
     assert!((atomic.load() - 15.0).abs() < EPSILON);
 }
 

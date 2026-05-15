@@ -405,11 +405,9 @@ macro_rules! impl_atomic_number {
             ///
             /// # Returns
             ///
-            /// The value observed before the operation completed. Because
-            /// this operation may fail spuriously, a returned value equal to
-            /// `current` does not by itself prove that `new` was stored; use
-            /// `compare_set_weak` when the caller needs an explicit success
-            /// indicator.
+            /// `Ok(previous)` when the value was replaced, or `Err(actual)`
+            /// when the comparison failed, including possible spurious
+            /// failure.
             ///
             /// # Example
             ///
@@ -419,12 +417,13 @@ macro_rules! impl_atomic_number {
             #[doc = concat!("let atomic = Atomic::<", stringify!($value_type), ">::new(10);")]
             /// let mut current = atomic.load();
             /// loop {
-            ///     let prev =
-            ///         atomic.compare_and_exchange_weak(current, current + 5);
-            ///     if atomic.load() == current + 5 {
-            ///         break;
+            ///     match atomic.compare_and_exchange_weak(current, current + 5) {
+            ///         Ok(previous) => {
+            ///             assert_eq!(previous, current);
+            ///             break;
+            ///         }
+            ///         Err(actual) => current = actual,
             ///     }
-            ///     current = prev;
             /// }
             /// assert_eq!(atomic.load(), 15);
             /// ```
@@ -433,16 +432,13 @@ macro_rules! impl_atomic_number {
                 &self,
                 current: $value_type,
                 new: $value_type,
-            ) -> $value_type {
-                match self.inner.compare_exchange_weak(
+            ) -> Result<$value_type, $value_type> {
+                self.inner.compare_exchange_weak(
                     current,
                     new,
                     Ordering::AcqRel,
                     Ordering::Acquire,
-                ) {
-                    Ok(prev) => prev,
-                    Err(actual) => actual,
-                }
+                )
             }
 
             /// Increments the value by 1, returning the old value.
@@ -1328,7 +1324,7 @@ macro_rules! impl_atomic_number {
                 &self,
                 current: $value_type,
                 new: $value_type,
-            ) -> $value_type {
+            ) -> Result<$value_type, $value_type> {
                 self.compare_and_exchange_weak(current, new)
             }
 

@@ -449,7 +449,7 @@ fn main() {
 | `compare_set(current, new)` | CAS operation, return Result | AcqRel/Acquire |
 | `compare_set_weak(current, new)` | Weak CAS, return Result | AcqRel/Acquire |
 | `compare_and_exchange(current, new)` | CAS operation, return actual value | AcqRel/Acquire |
-| `compare_and_exchange_weak(current, new)` | Weak CAS, return actual value | AcqRel/Acquire |
+| `compare_and_exchange_weak(current, new)` | Weak CAS, return `Result<observed, actual>` | AcqRel/Acquire |
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
 | `update_and_get(f)` | Functional update, return new | AcqRel/Acquire |
 | `try_update(f)` | Conditional functional update, return `Option<old>` | AcqRel/Acquire |
@@ -617,6 +617,9 @@ atomic.inner().store(42, Ordering::Release);
 Primitive wrappers use `#[repr(transparent)]` and `#[inline]` so the generic API compiles down to the backend atomic operations:
 
 ```rust
+use qubit_atomic::Atomic;
+use std::sync::atomic::Ordering;
+
 // Our wrapper
 let atomic = Atomic::<i32>::new(0);
 let value = atomic.load();

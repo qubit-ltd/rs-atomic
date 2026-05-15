@@ -247,11 +247,11 @@ fn test_compare_and_set_weak_failure() {
 fn test_compare_and_exchange_weak() {
     let atomic = Atomic::<bool>::new(false);
     let prev = atomic.compare_and_exchange_weak(false, true);
-    assert!(!prev);
+    assert_eq!(prev, Ok(false));
     assert!(atomic.load());
 
     let prev = atomic.compare_and_exchange_weak(false, false);
-    assert!(prev);
+    assert_eq!(prev, Err(true));
     assert!(atomic.load());
 }
 
@@ -393,7 +393,7 @@ fn test_trait_atomic_compare_exchange_weak() {
     fn test_atomic(atomic: &Atomic<bool>) {
         atomic.store(false);
         let prev = atomic.compare_and_exchange_weak(false, true);
-        assert!(!prev);
+        assert_eq!(prev, Ok(false));
         assert!(atomic.load());
     }
 
