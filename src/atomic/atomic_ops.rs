@@ -171,6 +171,25 @@ pub trait AtomicOps {
     where
         F: Fn(Self::Value) -> Self::Value;
 
+    /// Updates the value using a function, returning the new value.
+    ///
+    /// Internally uses a CAS loop until the update succeeds.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A function that takes the current value and returns
+    ///   the new value.
+    ///
+    /// # Returns
+    ///
+    /// The value committed by the successful update.
+    ///
+    /// The closure may be called more than once when concurrent updates cause
+    /// CAS retries.
+    fn update_and_get<F>(&self, f: F) -> Self::Value
+    where
+        F: Fn(Self::Value) -> Self::Value;
+
     /// Conditionally updates the value using a function.
     ///
     /// Internally uses a CAS loop until the update succeeds or the closure
@@ -187,6 +206,25 @@ pub trait AtomicOps {
     /// the observed current value. The closure may be called more than once
     /// when concurrent updates cause CAS retries.
     fn try_update<F>(&self, f: F) -> Option<Self::Value>
+    where
+        F: Fn(Self::Value) -> Option<Self::Value>;
+
+    /// Conditionally updates the value using a function, returning the new value.
+    ///
+    /// Internally uses a CAS loop until the update succeeds or the closure
+    /// rejects the current value by returning `None`.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A function that takes the current value and returns either the
+    ///   new value, or `None` to leave the atomic unchanged.
+    ///
+    /// # Returns
+    ///
+    /// `Some(new_value)` when the update succeeds, or `None` when `f` rejects
+    /// the observed current value. The closure may be called more than once
+    /// when concurrent updates cause CAS retries.
+    fn try_update_and_get<F>(&self, f: F) -> Option<Self::Value>
     where
         F: Fn(Self::Value) -> Option<Self::Value>;
 }

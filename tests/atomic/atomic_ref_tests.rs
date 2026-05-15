@@ -201,6 +201,27 @@ fn test_get_and_update() {
 }
 
 #[test]
+fn test_update_and_get() {
+    let data = Arc::new(TestData {
+        value: 42,
+        name: "test".to_string(),
+    });
+    let atomic = AtomicRef::new(data);
+
+    let new = atomic.update_and_get(|current| {
+        Arc::new(TestData {
+            value: current.value * 2,
+            name: format!("{}_updated", current.name),
+        })
+    });
+
+    assert_eq!(new.value, 84);
+    assert_eq!(new.name, "test_updated");
+    assert_eq!(atomic.load().value, 84);
+    assert_eq!(atomic.load().name, "test_updated");
+}
+
+#[test]
 fn test_try_update_success_and_reject() {
     let data = Arc::new(TestData {
         value: 42,
@@ -232,6 +253,39 @@ fn test_try_update_success_and_reject() {
 }
 
 #[test]
+fn test_try_update_and_get_success_and_reject() {
+    let data = Arc::new(TestData {
+        value: 42,
+        name: "test".to_string(),
+    });
+    let atomic = AtomicRef::new(data);
+
+    let new = atomic.try_update_and_get(|current| {
+        (current.value > 0).then_some(Arc::new(TestData {
+            value: current.value * 2,
+            name: format!("{}_updated", current.name),
+        }))
+    });
+
+    let new = new.expect("positive value should update");
+    assert_eq!(new.value, 84);
+    assert_eq!(new.name, "test_updated");
+    assert_eq!(atomic.load().value, 84);
+    assert_eq!(atomic.load().name, "test_updated");
+
+    let rejected = atomic.try_update_and_get(|current| {
+        (current.value < 0).then_some(Arc::new(TestData {
+            value: current.value * 2,
+            name: "rejected".to_string(),
+        }))
+    });
+
+    assert!(rejected.is_none());
+    assert_eq!(atomic.load().value, 84);
+    assert_eq!(atomic.load().name, "test_updated");
+}
+
+#[test]
 fn test_try_update_retry_path() {
     let atomic = AtomicRef::new(Arc::new(1));
     let raced = Cell::new(false);
@@ -244,6 +298,38 @@ fn test_try_update_retry_path() {
     });
 
     assert_eq!(*old.unwrap(), 11);
+    assert_eq!(*atomic.load(), 22);
+}
+
+#[test]
+fn test_update_and_get_retry_path() {
+    let atomic = AtomicRef::new(Arc::new(1));
+    let raced = Cell::new(false);
+
+    let new = atomic.update_and_get(|current| {
+        if !raced.replace(true) {
+            atomic.store(Arc::new(**current + 10));
+        }
+        Arc::new(**current * 2)
+    });
+
+    assert_eq!(*new, 22);
+    assert_eq!(*atomic.load(), 22);
+}
+
+#[test]
+fn test_try_update_and_get_retry_path() {
+    let atomic = AtomicRef::new(Arc::new(1));
+    let raced = Cell::new(false);
+
+    let new = atomic.try_update_and_get(|current| {
+        if !raced.replace(true) {
+            atomic.store(Arc::new(**current + 10));
+        }
+        Some(Arc::new(**current * 2))
+    });
+
+    assert_eq!(*new.expect("retry should eventually update"), 22);
     assert_eq!(*atomic.load(), 22);
 }
 
@@ -421,6 +507,19 @@ fn test_trait_atomic_fetch_update() {
         atomic.store(Arc::new(10));
         let old = atomic.fetch_update(|x| Arc::new(**x * 2));
         assert_eq!(*old, 10);
+        assert_eq!(*atomic.load(), 20);
+    }
+
+    let atomic = AtomicRef::new(Arc::new(0));
+    test_atomic(&atomic);
+}
+
+#[test]
+fn test_trait_atomic_update_and_get() {
+    fn test_atomic(atomic: &AtomicRef<i32>) {
+        atomic.store(Arc::new(10));
+        let new = atomic.update_and_get(|x| Arc::new(**x * 2));
+        assert_eq!(*new, 20);
         assert_eq!(*atomic.load(), 20);
     }
 

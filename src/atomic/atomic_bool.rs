@@ -657,6 +657,46 @@ impl AtomicBool {
         }
     }
 
+    /// Updates the value using a function, returning the new value.
+    ///
+    /// Internally uses a CAS loop until the update succeeds.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A function that takes the current value and returns the new
+    ///   value.
+    ///
+    /// # Returns
+    ///
+    /// The value committed by the successful update.
+    ///
+    /// The closure may be called more than once when concurrent updates cause
+    /// CAS retries.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::Atomic;
+    ///
+    /// let flag = Atomic::<bool>::new(false);
+    /// assert_eq!(flag.update_and_get(|current| !current), true);
+    /// assert_eq!(flag.load(), true);
+    /// ```
+    #[inline]
+    pub fn update_and_get<F>(&self, f: F) -> bool
+    where
+        F: Fn(bool) -> bool,
+    {
+        let mut current = self.load();
+        loop {
+            let new = f(current);
+            match self.compare_set_weak(current, new) {
+                Ok(_) => return new,
+                Err(actual) => current = actual,
+            }
+        }
+    }
+
     /// Conditionally updates the value using a function.
     ///
     /// Internally uses a CAS loop until the update succeeds or the closure
@@ -696,6 +736,56 @@ impl AtomicBool {
             let new = f(current)?;
             match self.compare_set_weak(current, new) {
                 Ok(_) => return Some(current),
+                Err(actual) => current = actual,
+            }
+        }
+    }
+
+    /// Conditionally updates the value using a function, returning the new value.
+    ///
+    /// Internally uses a CAS loop until the update succeeds or the closure
+    /// rejects the current value by returning `None`.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A function that takes the current value and returns the new
+    ///   value, or `None` to leave the value unchanged.
+    ///
+    /// # Returns
+    ///
+    /// `Some(new_value)` when the update succeeds, or `None` when `f` rejects
+    /// the observed current value.
+    ///
+    /// The closure may be called more than once when concurrent updates cause
+    /// CAS retries.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::Atomic;
+    ///
+    /// let flag = Atomic::<bool>::new(false);
+    /// assert_eq!(
+    ///     flag.try_update_and_get(|current| (!current).then_some(true)),
+    ///     Some(true),
+    /// );
+    /// assert_eq!(flag.load(), true);
+    /// assert_eq!(
+    ///     flag.try_update_and_get(|current| (!current).then_some(true)),
+    ///     None,
+    /// );
+    /// assert_eq!(flag.load(), true);
+    /// ```
+    #[inline]
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<bool>
+    where
+        F: Fn(bool) -> Option<bool>,
+    {
+        let mut current = self.load();
+        loop {
+            let new = f(current)?;
+            match self.compare_set_weak(current, new) {
+                Ok(_) => return Some(new),
                 Err(actual) => current = actual,
             }
         }
@@ -780,10 +870,26 @@ impl AtomicOps for AtomicBool {
     }
 
     #[inline]
+    fn update_and_get<F>(&self, f: F) -> bool
+    where
+        F: Fn(bool) -> bool,
+    {
+        self.update_and_get(f)
+    }
+
+    #[inline]
     fn try_update<F>(&self, f: F) -> Option<bool>
     where
         F: Fn(bool) -> Option<bool>,
     {
         self.try_update(f)
+    }
+
+    #[inline]
+    fn try_update_and_get<F>(&self, f: F) -> Option<bool>
+    where
+        F: Fn(bool) -> Option<bool>,
+    {
+        self.try_update_and_get(f)
     }
 }
