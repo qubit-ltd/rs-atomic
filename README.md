@@ -31,7 +31,7 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 - **Boolean Specialization**: `Atomic<bool>` with set, clear, negate, logical AND/OR/XOR, and conditional CAS helpers
 - **Floating-Point Specializations**: `Atomic<f32>` and `Atomic<f64>` with arithmetic operations implemented through CAS loops
 - **Rich Operations**: increment, decrement, add, subtract, multiply, divide, bitwise operations, max/min
-- **Functional Updates**: `fetch_update`, `try_update`, `fetch_accumulate`
+- **Functional Updates**: `fetch_update`, `update_and_get`, `try_update`, `try_update_and_get`, `fetch_accumulate`
 - **Const Initialization Escape Hatch**: concrete wrappers such as `atomic::primitive::AtomicBool`, `AtomicU8`, and `AtomicF32` expose `const fn new` for static initialization when the generic `Atomic<T>` constructor cannot be used in const contexts
 
 ### 🔢 **`AtomicCount` and `AtomicSignedCount`**
@@ -44,7 +44,7 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 - **AtomicRef<T>**: Thread-safe atomic reference using `Arc<T>`
 - **Reference Updates**: Atomic swap and CAS operations
 - **Guarded Loads**: `load_guard()` for short-lived reads without cloning on the fast path
-- **Functional Updates**: Transform references atomically with `fetch_update` or conditionally with `try_update`
+- **Functional Updates**: Transform references atomically with `fetch_update` / `update_and_get` or conditionally with `try_update` / `try_update_and_get`
 
 ### 🤝 **Shared-Owner Convenience Wrappers**
 - **`ArcAtomic<T>`**: convenience newtype around `Arc<Atomic<T>>`
@@ -260,10 +260,20 @@ fn main() {
     assert_eq!(atomic.load(), 20);
     println!("Updated value: {}", atomic.load());
 
+    // Update and return the committed new value
+    let new_value = atomic.update_and_get(|x| x + 5);
+    assert_eq!(new_value, 25);
+    assert_eq!(atomic.load(), 25);
+
+    // Conditional update and return the committed new value
+    let accepted_new = atomic.try_update_and_get(|x| (x < 100).then_some(x + 5));
+    assert_eq!(accepted_new, Some(30));
+    assert_eq!(atomic.load(), 30);
+
     // Accumulate operation (returns old value)
     let old_result = atomic.fetch_accumulate(5, |a, b| a + b);
-    assert_eq!(old_result, 20);
-    assert_eq!(atomic.load(), 25);
+    assert_eq!(old_result, 30);
+    assert_eq!(atomic.load(), 35);
     println!("Accumulated value: {}", atomic.load());
 }
 ```
@@ -309,12 +319,21 @@ fn main() {
     println!("Previous config: {:?}", old);
     println!("Updated config: {:?}", atomic_config.load());
 
+    // Update and return the committed new reference
+    let updated = atomic_config.update_and_get(|current| {
+        Arc::new(Config {
+            timeout: current.timeout + 500,
+            max_retries: current.max_retries + 1,
+        })
+    });
+    println!("Committed config: {:?}", updated);
+
     // Short-lived read without cloning the Arc on the fast path
     let snapshot = atomic_config.load_guard();
     println!("Snapshot config: {:?}", snapshot);
 
-    // Conditional update; returns None without changing the value if rejected
-    let accepted = atomic_config.try_update(|current| {
+    // Conditional update; returns the committed new reference or None if rejected
+    let accepted = atomic_config.try_update_and_get(|current| {
         (current.timeout < 10_000).then_some(Arc::new(Config {
             timeout: current.timeout + 1000,
             max_retries: current.max_retries,
@@ -427,7 +446,9 @@ fn main() {
 | `compare_and_exchange(current, new)` | CAS operation, return actual value | AcqRel/Acquire |
 | `compare_and_exchange_weak(current, new)` | Weak CAS, return actual value | AcqRel/Acquire |
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
+| `update_and_get(f)` | Functional update, return new | AcqRel/Acquire |
 | `try_update(f)` | Conditional functional update, return `Option<old>` | AcqRel/Acquire |
+| `try_update_and_get(f)` | Conditional functional update, return `Option<new>` | AcqRel/Acquire |
 | `inner()` | Access underlying backend type | - |
 
 ### Integer Operations
@@ -451,7 +472,9 @@ fn main() {
 | `fetch_max(value)` | Atomic max, return old | AcqRel |
 | `fetch_min(value)` | Atomic min, return old | AcqRel |
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
+| `update_and_get(f)` | Functional update, return new | AcqRel/Acquire |
 | `try_update(f)` | Conditional functional update, return `Option<old>` | AcqRel/Acquire |
+| `try_update_and_get(f)` | Conditional functional update, return `Option<new>` | AcqRel/Acquire |
 | `fetch_accumulate(x, f)` | Accumulate, return old | AcqRel/Acquire |
 
 Primitive integer operations intentionally use wrapping arithmetic on overflow
@@ -520,7 +543,9 @@ directly on the wrapper.
 | `fetch_mul(factor)` | Atomic multiply, return old | AcqRel (CAS loop) |
 | `fetch_div(divisor)` | Atomic divide, return old | AcqRel (CAS loop) |
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
+| `update_and_get(f)` | Functional update, return new | AcqRel/Acquire |
 | `try_update(f)` | Conditional functional update, return `Option<old>` | AcqRel/Acquire |
+| `try_update_and_get(f)` | Conditional functional update, return `Option<new>` | AcqRel/Acquire |
 
 Floating-point CAS operations (`compare_set`, `compare_and_exchange`, and weak
 variants) compare raw `to_bits()` representations, not `PartialEq`. Values such
@@ -537,7 +562,7 @@ or compare `to_bits()` values yourself.
 | **Read-Modify-Write** (`swap()`, CAS) | `AcqRel` | Ensure both read and write correctness |
 | **`Atomic<T>` counter arithmetic** (`fetch_inc()`, `fetch_dec()`, `fetch_add()`, `fetch_sub()`) | `Relaxed` | Pure metrics; no need to sync other data |
 | **Ordered integer counter arithmetic** (`fetch_*_with_ordering`) | Caller-provided | State-signal counters that need explicit synchronization |
-| **CAS-based arithmetic and updates** (`fetch_mul()`, `fetch_div()`, `fetch_update()`, `try_update()`, `fetch_accumulate()`) | `AcqRel` / `Acquire` | CAS loop standard semantics |
+| **CAS-based arithmetic and updates** (`fetch_mul()`, `fetch_div()`, `fetch_update()`, `update_and_get()`, `try_update()`, `try_update_and_get()`, `fetch_accumulate()`) | `AcqRel` / `Acquire` | CAS loop standard semantics |
 | **`AtomicCount` / `AtomicSignedCount`** (`inc()`, `dec()`) | CAS loop | Values used as concurrent state signals |
 | **Bitwise Operations** (`fetch_and()`, `fetch_or()`) | `AcqRel` | Usually used for flag synchronization |
 | **Max/Min Operations** (`fetch_max()`, `fetch_min()`) | `AcqRel` | Often used with threshold checks |
