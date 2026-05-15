@@ -18,6 +18,36 @@ macro_rules! test_atomic_integer {
             use std::sync::atomic::Ordering;
             use std::thread;
 
+            fn compare_set_weak_until_success(
+                atomic: &Atomic<$value_type>,
+                current: $value_type,
+                new: $value_type,
+            ) {
+                for _ in 0..128 {
+                    match atomic.compare_set_weak(current, new) {
+                        Ok(()) => return,
+                        Err(actual) if actual == current => continue,
+                        Err(actual) => panic!("unexpected current value: {actual}"),
+                    }
+                }
+                panic!("weak compare_set did not succeed after bounded retries");
+            }
+
+            fn compare_exchange_weak_until_success(
+                atomic: &Atomic<$value_type>,
+                current: $value_type,
+                new: $value_type,
+            ) -> $value_type {
+                for _ in 0..128 {
+                    match atomic.compare_and_exchange_weak(current, new) {
+                        Ok(previous) => return previous,
+                        Err(actual) if actual == current => continue,
+                        Err(actual) => panic!("unexpected current value: {actual}"),
+                    }
+                }
+                panic!("weak compare_and_exchange did not succeed after bounded retries");
+            }
+
             #[test]
             fn test_new() {
                 let atomic = Atomic::<$value_type>::new(42);
@@ -620,7 +650,7 @@ macro_rules! test_atomic_integer {
             fn test_trait_atomic_compare_set_weak() {
                 fn test_atomic(atomic: &Atomic<$value_type>) {
                     atomic.store(10);
-                    assert!(atomic.compare_set_weak(10, 20).is_ok());
+                    compare_set_weak_until_success(atomic, 10, 20);
                     assert_eq!(atomic.load(), 20);
                 }
 
@@ -632,8 +662,8 @@ macro_rules! test_atomic_integer {
             fn test_trait_atomic_compare_exchange_weak() {
                 fn test_atomic(atomic: &Atomic<$value_type>) {
                     atomic.store(10);
-                    let prev = atomic.compare_and_exchange_weak(10, 20);
-                    assert_eq!(prev, Ok(10));
+                    let prev = compare_exchange_weak_until_success(atomic, 10, 20);
+                    assert_eq!(prev, 10);
                     assert_eq!(atomic.load(), 20);
                 }
 
@@ -705,15 +735,15 @@ macro_rules! test_atomic_integer {
             #[test]
             fn test_compare_and_set_weak_success() {
                 let atomic = Atomic::<$value_type>::new(10);
-                assert!(atomic.compare_set_weak(10, 20).is_ok());
+                compare_set_weak_until_success(&atomic, 10, 20);
                 assert_eq!(atomic.load(), 20);
             }
 
             #[test]
             fn test_compare_and_exchange_weak_success() {
                 let atomic = Atomic::<$value_type>::new(10);
-                let prev = atomic.compare_and_exchange_weak(10, 20);
-                assert_eq!(prev, Ok(10));
+                let prev = compare_exchange_weak_until_success(&atomic, 10, 20);
+                assert_eq!(prev, 10);
                 assert_eq!(atomic.load(), 20);
             }
 
@@ -843,15 +873,15 @@ macro_rules! test_atomic_integer {
             #[test]
             fn test_compare_set_weak_with_zero() {
                 let atomic = Atomic::<$value_type>::new(0);
-                assert!(atomic.compare_set_weak(0, 42).is_ok());
+                compare_set_weak_until_success(&atomic, 0, 42);
                 assert_eq!(atomic.load(), 42);
             }
 
             #[test]
             fn test_compare_exchange_weak_with_zero() {
                 let atomic = Atomic::<$value_type>::new(0);
-                let prev = atomic.compare_and_exchange_weak(0, 42);
-                assert_eq!(prev, Ok(0));
+                let prev = compare_exchange_weak_until_success(&atomic, 0, 42);
+                assert_eq!(prev, 0);
                 assert_eq!(atomic.load(), 42);
             }
 
@@ -959,8 +989,8 @@ macro_rules! test_atomic_integer {
             #[test]
             fn test_compare_and_exchange_weak_success_path() {
                 let atomic = Atomic::<$value_type>::new(10);
-                let prev = atomic.compare_and_exchange_weak(10, 15);
-                assert_eq!(prev, Ok(10));
+                let prev = compare_exchange_weak_until_success(&atomic, 10, 15);
+                assert_eq!(prev, 10);
                 assert_eq!(atomic.load(), 15);
             }
 

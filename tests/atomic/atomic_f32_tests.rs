@@ -14,6 +14,28 @@ use std::thread;
 
 const EPSILON: f32 = 1e-6;
 
+fn compare_set_weak_until_success(atomic: &Atomic<f32>, current: f32, new: f32) {
+    for _ in 0..128 {
+        match atomic.compare_set_weak(current, new) {
+            Ok(()) => return,
+            Err(actual) if (actual - current).abs() < EPSILON => continue,
+            Err(actual) => panic!("unexpected current value: {actual}"),
+        }
+    }
+    panic!("weak compare_set did not succeed after bounded retries");
+}
+
+fn compare_exchange_weak_until_success(atomic: &Atomic<f32>, current: f32, new: f32) -> f32 {
+    for _ in 0..128 {
+        match atomic.compare_and_exchange_weak(current, new) {
+            Ok(previous) => return previous,
+            Err(actual) if (actual - current).abs() < EPSILON => continue,
+            Err(actual) => panic!("unexpected current value: {actual}"),
+        }
+    }
+    panic!("weak compare_and_exchange did not succeed after bounded retries");
+}
+
 #[test]
 fn test_new() {
     let atomic = Atomic::<f32>::new(std::f32::consts::PI);
@@ -155,7 +177,7 @@ fn test_trait_atomic() {
 fn test_trait_atomic_compare_set_weak() {
     fn test_atomic(atomic: &Atomic<f32>) {
         atomic.store(1.0);
-        assert!(atomic.compare_set_weak(1.0, 2.0).is_ok());
+        compare_set_weak_until_success(atomic, 1.0, 2.0);
         assert!((atomic.load() - 2.0).abs() < EPSILON);
     }
 
@@ -167,8 +189,8 @@ fn test_trait_atomic_compare_set_weak() {
 fn test_trait_atomic_compare_exchange_weak() {
     fn test_atomic(atomic: &Atomic<f32>) {
         atomic.store(1.0);
-        let prev = atomic.compare_and_exchange_weak(1.0, 2.0);
-        assert!((prev.expect("weak exchange should succeed") - 1.0).abs() < EPSILON);
+        let prev = compare_exchange_weak_until_success(atomic, 1.0, 2.0);
+        assert!((prev - 1.0).abs() < EPSILON);
         assert!((atomic.load() - 2.0).abs() < EPSILON);
     }
 
@@ -225,15 +247,15 @@ fn test_infinity() {
 #[test]
 fn test_compare_and_set_weak() {
     let atomic = Atomic::<f32>::new(1.0);
-    assert!(atomic.compare_set_weak(1.0, 2.0).is_ok());
+    compare_set_weak_until_success(&atomic, 1.0, 2.0);
     assert!((atomic.load() - 2.0).abs() < EPSILON);
 }
 
 #[test]
 fn test_compare_and_exchange_weak() {
     let atomic = Atomic::<f32>::new(1.0);
-    let prev = atomic.compare_and_exchange_weak(1.0, 2.0);
-    assert!((prev.expect("weak exchange should succeed") - 1.0).abs() < EPSILON);
+    let prev = compare_exchange_weak_until_success(&atomic, 1.0, 2.0);
+    assert!((prev - 1.0).abs() < EPSILON);
     assert!((atomic.load() - 2.0).abs() < EPSILON);
 }
 
@@ -502,8 +524,8 @@ fn test_compare_and_exchange_success_path() {
 #[test]
 fn test_compare_and_exchange_weak_success_path() {
     let atomic = Atomic::<f32>::new(10.0);
-    let prev = atomic.compare_and_exchange_weak(10.0, 15.0);
-    assert!((prev.expect("weak exchange should succeed") - 10.0).abs() < EPSILON);
+    let prev = compare_exchange_weak_until_success(&atomic, 10.0, 15.0);
+    assert!((prev - 10.0).abs() < EPSILON);
     assert!((atomic.load() - 15.0).abs() < EPSILON);
 }
 

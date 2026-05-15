@@ -269,48 +269,6 @@ impl<T> AtomicRef<T> {
         }
     }
 
-    /// Weak version of compare-and-set.
-    ///
-    /// This implementation currently delegates to the same lock-free CAS as
-    /// `compare_set`, so it does not introduce extra spurious failures.
-    ///
-    /// # Parameters
-    ///
-    /// * `current` - The expected current reference.
-    /// * `new` - The new reference to set if current matches.
-    ///
-    /// # Returns
-    ///
-    /// `Ok(())` if the pointer comparison succeeds and `new` is stored.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err(actual)` with the observed current reference when the
-    /// pointer comparison fails. On failure, `new` is not installed. This
-    /// implementation currently delegates to [`compare_set`](Self::compare_set)
-    /// and does not add extra spurious failures.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use qubit_atomic::AtomicRef;
-    /// use std::sync::Arc;
-    ///
-    /// let atomic = AtomicRef::new(Arc::new(10));
-    /// let mut current = atomic.load();
-    /// loop {
-    ///     match atomic.compare_set_weak(&current, Arc::new(20)) {
-    ///         Ok(_) => break,
-    ///         Err(actual) => current = actual,
-    ///     }
-    /// }
-    /// assert_eq!(*atomic.load(), 20);
-    /// ```
-    #[inline]
-    pub fn compare_set_weak(&self, current: &Arc<T>, new: Arc<T>) -> Result<(), Arc<T>> {
-        self.compare_set(current, new)
-    }
-
     /// Compares and exchanges the reference atomically, returning the
     /// previous reference.
     ///
@@ -352,53 +310,6 @@ impl<T> AtomicRef<T> {
         Guard::into_inner(self.inner.compare_and_swap(current, new))
     }
 
-    /// Weak version of compare-and-exchange.
-    ///
-    /// This implementation currently delegates to the same lock-free CAS as
-    /// `compare_and_exchange`, so it does not introduce extra spurious
-    /// failures.
-    ///
-    /// # Parameters
-    ///
-    /// * `current` - The expected current reference.
-    /// * `new` - The new reference to set if current matches.
-    ///
-    /// # Returns
-    ///
-    /// `Ok(previous)` when the reference was replaced, or `Err(actual)` when
-    /// the pointer comparison failed. This implementation currently delegates
-    /// to [`compare_set_weak`](Self::compare_set_weak), so it does not add
-    /// extra spurious failures.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use qubit_atomic::AtomicRef;
-    /// use std::sync::Arc;
-    ///
-    /// let atomic = AtomicRef::new(Arc::new(10));
-    /// let mut current = atomic.load();
-    /// loop {
-    ///     match atomic.compare_and_exchange_weak(&current, Arc::new(20)) {
-    ///         Ok(previous) => {
-    ///             assert!(Arc::ptr_eq(&previous, &current));
-    ///             break;
-    ///         }
-    ///         Err(actual) => current = actual,
-    ///     }
-    /// }
-    /// assert_eq!(*atomic.load(), 20);
-    /// ```
-    #[inline]
-    pub fn compare_and_exchange_weak(
-        &self,
-        current: &Arc<T>,
-        new: Arc<T>,
-    ) -> Result<Arc<T>, Arc<T>> {
-        self.compare_set_weak(current, new)
-            .map(|()| Arc::clone(current))
-    }
-
     /// Updates the reference using a function, returning the old reference.
     ///
     /// Internally uses a CAS loop until the update succeeds.
@@ -434,7 +345,7 @@ impl<T> AtomicRef<T> {
         let mut current = self.load();
         loop {
             let new = f(&current);
-            match self.compare_set_weak(&current, new) {
+            match self.compare_set(&current, new) {
                 Ok(_) => return current,
                 Err(actual) => current = actual,
             }
@@ -477,7 +388,7 @@ impl<T> AtomicRef<T> {
         loop {
             let new = f(&current);
             let returned = Arc::clone(&new);
-            match self.compare_set_weak(&current, new) {
+            match self.compare_set(&current, new) {
                 Ok(_) => return returned,
                 Err(actual) => current = actual,
             }
@@ -529,7 +440,7 @@ impl<T> AtomicRef<T> {
         let mut current = self.load();
         loop {
             let new = f(&current)?;
-            match self.compare_set_weak(&current, new) {
+            match self.compare_set(&current, new) {
                 Ok(_) => return Some(current),
                 Err(actual) => current = actual,
             }
@@ -583,7 +494,7 @@ impl<T> AtomicRef<T> {
         loop {
             let new = f(&current)?;
             let returned = Arc::clone(&new);
-            match self.compare_set_weak(&current, new) {
+            match self.compare_set(&current, new) {
                 Ok(_) => return Some(returned),
                 Err(actual) => current = actual,
             }

@@ -97,6 +97,8 @@ weak CAS 允许虚假失败。因此 `compare_and_exchange_weak` 不应返回裸
 
 `AtomicRef<T>` 基于 `arc_swap::ArcSwap<T>`，存储 `Arc<T>`。CAS 比较的是指针身份，
 不是 `T: Eq` 的值相等。
+它只暴露强指针 CAS。weak 别名在 `arc_swap` 后端上没有独立语义，反而会让调用方以为
+这里存在 weak CAS 的重试规则。
 
 `AtomicRef<T>::clone()` 会创建一个新的 atomic container，并用当前引用初始化；它不会
 创建共享同一 container 的另一个句柄。如果 clone 后应该共享同一容器，请使用

@@ -439,6 +439,9 @@ fn main() {
 
 ### 通用操作（所有类型）
 
+weak CAS 方法适用于基础值类型的 `Atomic<T>` 特例。`AtomicRef<T>` 只暴露强指针
+CAS；它不会为同一个 `arc_swap` 操作提供 weak 别名。
+
 | 方法 | 描述 | 内存序 |
 |-----|------|--------|
 | `new(value)` | 创建新的原子值 | - |
@@ -594,7 +597,7 @@ atomic.inner().store(42, Ordering::Release);
 |-----|-----|---------------|------|
 | **基础类型** | 3 种类型 | `Atomic<T>` 特例；`atomic::primitive::*` 用于 const 初始化 | Rust 覆盖更多整数、浮点、布尔与计数场景 |
 | **内存序** | 隐式（volatile 语义） | 默认值 + 显式内存序整数 RMW + `inner()` 可选 | Rust 更灵活 |
-| **弱 CAS** | `weakCompareAndSet` | `compare_set_weak` | 等价 |
+| **弱 CAS** | `weakCompareAndSet` | 基础值类型 `Atomic<T>` 的 `compare_set_weak` | 等价 |
 | **引用类型** | `AtomicReference<V>` | `AtomicRef<T>` | Rust 使用 `Arc<T>` |
 | **`AtomicCount` / `AtomicSignedCount`** | 手动组合 | `AtomicCount`、`AtomicSignedCount` | 状态跟踪用的非负 / 有符号计数 |
 | **共享所有权** | 通常使用对象引用 | `ArcAtomic<T>`、`ArcAtomicRef<T>`、`ArcAtomicCount`、`ArcAtomicSignedCount` | 共享原子容器的便利封装 |
