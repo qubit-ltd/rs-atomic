@@ -15,6 +15,7 @@ macro_rules! test_atomic_integer {
         mod $test_mod {
             use qubit_atomic::Atomic;
             use std::sync::Arc;
+            use std::sync::atomic::Ordering;
             use std::thread;
 
             #[test]
@@ -90,6 +91,14 @@ macro_rules! test_atomic_integer {
             }
 
             #[test]
+            fn test_fetch_inc_with_ordering() {
+                let atomic = Atomic::<$value_type>::new(10);
+                let old = atomic.fetch_inc_with_ordering(Ordering::AcqRel);
+                assert_eq!(old, 10);
+                assert_eq!(atomic.load(), 11);
+            }
+
+            #[test]
             fn test_get_and_decrement() {
                 let atomic = Atomic::<$value_type>::new(10);
                 let old = atomic.fetch_dec();
@@ -98,9 +107,25 @@ macro_rules! test_atomic_integer {
             }
 
             #[test]
+            fn test_fetch_dec_with_ordering() {
+                let atomic = Atomic::<$value_type>::new(10);
+                let old = atomic.fetch_dec_with_ordering(Ordering::AcqRel);
+                assert_eq!(old, 10);
+                assert_eq!(atomic.load(), 9);
+            }
+
+            #[test]
             fn test_get_and_add() {
                 let atomic = Atomic::<$value_type>::new(10);
                 let old = atomic.fetch_add(5);
+                assert_eq!(old, 10);
+                assert_eq!(atomic.load(), 15);
+            }
+
+            #[test]
+            fn test_fetch_add_with_ordering() {
+                let atomic = Atomic::<$value_type>::new(10);
+                let old = atomic.fetch_add_with_ordering(5, Ordering::AcqRel);
                 assert_eq!(old, 10);
                 assert_eq!(atomic.load(), 15);
             }
@@ -125,6 +150,14 @@ macro_rules! test_atomic_integer {
             fn test_get_and_sub() {
                 let atomic = Atomic::<$value_type>::new(10);
                 let old = atomic.fetch_sub(3);
+                assert_eq!(old, 10);
+                assert_eq!(atomic.load(), 7);
+            }
+
+            #[test]
+            fn test_fetch_sub_with_ordering() {
+                let atomic = Atomic::<$value_type>::new(10);
+                let old = atomic.fetch_sub_with_ordering(3, Ordering::AcqRel);
                 assert_eq!(old, 10);
                 assert_eq!(atomic.load(), 7);
             }

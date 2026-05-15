@@ -48,7 +48,9 @@ macro_rules! impl_atomic_number {
         /// - **Counter arithmetic** (`fetch_inc`, `fetch_dec`, `fetch_add`,
         ///   `fetch_sub`): Use `Relaxed` ordering for optimal performance in
         ///   pure counting scenarios where no other data needs
-        ///   synchronization.
+        ///   synchronization. Use the corresponding
+        ///   `_with_ordering` variants when the counter value is used as a
+        ///   synchronization signal.
         ///   These operations intentionally follow Rust integer atomic
         ///   wrapping semantics on overflow and underflow.
         /// - **CAS-based arithmetic and updates** (`fetch_mul`, `fetch_div`,
@@ -480,6 +482,37 @@ macro_rules! impl_atomic_number {
                 self.inner.fetch_add(1, Ordering::Relaxed)
             }
 
+            /// Increments the value by 1 with an explicit memory ordering,
+            /// returning the old value.
+            ///
+            /// Arithmetic wraps on overflow, matching Rust atomic integer
+            /// operations.
+            ///
+            /// # Parameters
+            ///
+            /// * `ordering` - The memory ordering used by the atomic
+            ///   read-modify-write operation.
+            ///
+            /// # Returns
+            ///
+            /// The old value before incrementing.
+            ///
+            /// # Example
+            ///
+            /// ```rust
+            /// use qubit_atomic::Atomic;
+            /// use std::sync::atomic::Ordering;
+            ///
+            #[doc = concat!("let atomic = Atomic::<", stringify!($value_type), ">::new(10);")]
+            /// let old = atomic.fetch_inc_with_ordering(Ordering::AcqRel);
+            /// assert_eq!(old, 10);
+            /// assert_eq!(atomic.load(), 11);
+            /// ```
+            #[inline]
+            pub fn fetch_inc_with_ordering(&self, ordering: Ordering) -> $value_type {
+                self.inner.fetch_add(1, ordering)
+            }
+
             /// Decrements the value by 1, returning the old value.
             ///
             /// Arithmetic wraps on underflow, matching Rust atomic integer
@@ -504,6 +537,37 @@ macro_rules! impl_atomic_number {
             #[inline]
             pub fn fetch_dec(&self) -> $value_type {
                 self.inner.fetch_sub(1, Ordering::Relaxed)
+            }
+
+            /// Decrements the value by 1 with an explicit memory ordering,
+            /// returning the old value.
+            ///
+            /// Arithmetic wraps on underflow, matching Rust atomic integer
+            /// operations.
+            ///
+            /// # Parameters
+            ///
+            /// * `ordering` - The memory ordering used by the atomic
+            ///   read-modify-write operation.
+            ///
+            /// # Returns
+            ///
+            /// The old value before decrementing.
+            ///
+            /// # Example
+            ///
+            /// ```rust
+            /// use qubit_atomic::Atomic;
+            /// use std::sync::atomic::Ordering;
+            ///
+            #[doc = concat!("let atomic = Atomic::<", stringify!($value_type), ">::new(10);")]
+            /// let old = atomic.fetch_dec_with_ordering(Ordering::AcqRel);
+            /// assert_eq!(old, 10);
+            /// assert_eq!(atomic.load(), 9);
+            /// ```
+            #[inline]
+            pub fn fetch_dec_with_ordering(&self, ordering: Ordering) -> $value_type {
+                self.inner.fetch_sub(1, ordering)
             }
 
             /// Adds a delta to the value, returning the old value.
@@ -541,6 +605,42 @@ macro_rules! impl_atomic_number {
                 self.inner.fetch_add(delta, Ordering::Relaxed)
             }
 
+            /// Adds a delta to the value with an explicit memory ordering,
+            /// returning the old value.
+            ///
+            /// Arithmetic wraps on overflow and underflow, matching Rust
+            /// atomic integer operations.
+            ///
+            /// # Parameters
+            ///
+            /// * `delta` - The value to add.
+            /// * `ordering` - The memory ordering used by the atomic
+            ///   read-modify-write operation.
+            ///
+            /// # Returns
+            ///
+            /// The old value before adding.
+            ///
+            /// # Example
+            ///
+            /// ```rust
+            /// use qubit_atomic::Atomic;
+            /// use std::sync::atomic::Ordering;
+            ///
+            #[doc = concat!("let atomic = Atomic::<", stringify!($value_type), ">::new(10);")]
+            /// let old = atomic.fetch_add_with_ordering(5, Ordering::AcqRel);
+            /// assert_eq!(old, 10);
+            /// assert_eq!(atomic.load(), 15);
+            /// ```
+            #[inline]
+            pub fn fetch_add_with_ordering(
+                &self,
+                delta: $value_type,
+                ordering: Ordering,
+            ) -> $value_type {
+                self.inner.fetch_add(delta, ordering)
+            }
+
             /// Subtracts a delta from the value, returning the old value.
             ///
             /// Arithmetic wraps on overflow and underflow, matching Rust
@@ -569,6 +669,42 @@ macro_rules! impl_atomic_number {
             #[inline]
             pub fn fetch_sub(&self, delta: $value_type) -> $value_type {
                 self.inner.fetch_sub(delta, Ordering::Relaxed)
+            }
+
+            /// Subtracts a delta from the value with an explicit memory
+            /// ordering, returning the old value.
+            ///
+            /// Arithmetic wraps on overflow and underflow, matching Rust
+            /// atomic integer operations.
+            ///
+            /// # Parameters
+            ///
+            /// * `delta` - The value to subtract.
+            /// * `ordering` - The memory ordering used by the atomic
+            ///   read-modify-write operation.
+            ///
+            /// # Returns
+            ///
+            /// The old value before subtracting.
+            ///
+            /// # Example
+            ///
+            /// ```rust
+            /// use qubit_atomic::Atomic;
+            /// use std::sync::atomic::Ordering;
+            ///
+            #[doc = concat!("let atomic = Atomic::<", stringify!($value_type), ">::new(10);")]
+            /// let old = atomic.fetch_sub_with_ordering(3, Ordering::AcqRel);
+            /// assert_eq!(old, 10);
+            /// assert_eq!(atomic.load(), 7);
+            /// ```
+            #[inline]
+            pub fn fetch_sub_with_ordering(
+                &self,
+                delta: $value_type,
+                ordering: Ordering,
+            ) -> $value_type {
+                self.inner.fetch_sub(delta, ordering)
             }
 
             /// Multiplies the value by a factor, returning the old value.

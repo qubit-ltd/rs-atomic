@@ -9,6 +9,8 @@
  ******************************************************************************/
 
 use qubit_atomic::Atomic;
+use qubit_atomic::atomic::primitive::AtomicI64;
+use std::sync::atomic::Ordering;
 
 #[test]
 fn test_impl_atomic_number_generated_methods() {
@@ -22,4 +24,18 @@ fn test_impl_atomic_number_generated_methods() {
     assert_eq!(atomic.load(), 24);
     assert_eq!(atomic.fetch_div(4), 24);
     assert_eq!(atomic.load(), 6);
+}
+
+#[test]
+fn test_impl_atomic_number_generated_ordered_methods() {
+    let atomic = AtomicI64::new(10);
+
+    assert_eq!(atomic.fetch_add_with_ordering(5, Ordering::AcqRel), 10);
+    assert_eq!(atomic.load(), 15);
+    assert_eq!(atomic.fetch_sub_with_ordering(3, Ordering::AcqRel), 15);
+    assert_eq!(atomic.load(), 12);
+    assert_eq!(atomic.fetch_inc_with_ordering(Ordering::AcqRel), 12);
+    assert_eq!(atomic.load(), 13);
+    assert_eq!(atomic.fetch_dec_with_ordering(Ordering::AcqRel), 13);
+    assert_eq!(atomic.load(), 12);
 }

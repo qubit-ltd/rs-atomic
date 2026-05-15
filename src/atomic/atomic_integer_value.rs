@@ -14,6 +14,8 @@
 //! integer-only [`crate::Atomic<T>`] operations.
 //!
 
+use std::sync::atomic::Ordering;
+
 use super::{
     atomic_i8,
     atomic_i16,
@@ -49,6 +51,20 @@ pub trait AtomicIntegerValue: AtomicValue {
     /// The value before the increment.
     fn fetch_inc(primitive: &Self::Primitive) -> Self;
 
+    /// Increments the atomic integer with an explicit memory ordering and
+    /// returns the previous value.
+    ///
+    /// # Parameters
+    ///
+    /// * `primitive` - The primitive wrapper to update.
+    /// * `ordering` - The memory ordering used by the atomic read-modify-write
+    ///   operation.
+    ///
+    /// # Returns
+    ///
+    /// The value before the increment.
+    fn fetch_inc_with_ordering(primitive: &Self::Primitive, ordering: Ordering) -> Self;
+
     /// Decrements the atomic integer and returns the previous value.
     ///
     /// # Parameters
@@ -59,6 +75,58 @@ pub trait AtomicIntegerValue: AtomicValue {
     ///
     /// The value before the decrement.
     fn fetch_dec(primitive: &Self::Primitive) -> Self;
+
+    /// Decrements the atomic integer with an explicit memory ordering and
+    /// returns the previous value.
+    ///
+    /// # Parameters
+    ///
+    /// * `primitive` - The primitive wrapper to update.
+    /// * `ordering` - The memory ordering used by the atomic read-modify-write
+    ///   operation.
+    ///
+    /// # Returns
+    ///
+    /// The value before the decrement.
+    fn fetch_dec_with_ordering(primitive: &Self::Primitive, ordering: Ordering) -> Self;
+
+    /// Adds a delta with an explicit memory ordering and returns the previous
+    /// value.
+    ///
+    /// # Parameters
+    ///
+    /// * `primitive` - The primitive wrapper to update.
+    /// * `value` - The delta to add.
+    /// * `ordering` - The memory ordering used by the atomic read-modify-write
+    ///   operation.
+    ///
+    /// # Returns
+    ///
+    /// The value before the addition.
+    fn fetch_add_with_ordering(
+        primitive: &Self::Primitive,
+        value: Self,
+        ordering: Ordering,
+    ) -> Self;
+
+    /// Subtracts a delta with an explicit memory ordering and returns the
+    /// previous value.
+    ///
+    /// # Parameters
+    ///
+    /// * `primitive` - The primitive wrapper to update.
+    /// * `value` - The delta to subtract.
+    /// * `ordering` - The memory ordering used by the atomic read-modify-write
+    ///   operation.
+    ///
+    /// # Returns
+    ///
+    /// The value before the subtraction.
+    fn fetch_sub_with_ordering(
+        primitive: &Self::Primitive,
+        value: Self,
+        ordering: Ordering,
+    ) -> Self;
 
     /// Applies bitwise AND and returns the previous value.
     ///

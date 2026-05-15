@@ -13,7 +13,10 @@
 //! Provides the public [`Atomic<T>`] wrapper for supported primitive values.
 //!
 
-use std::fmt;
+use std::{
+    fmt,
+    sync::atomic::Ordering,
+};
 
 use super::atomic_integer_value::AtomicIntegerValue;
 use super::atomic_number_ops::AtomicNumberOps;
@@ -46,8 +49,8 @@ use super::atomic_value::AtomicValue;
 /// | Specialization | Additional methods |
 /// | --- | --- |
 /// | `Atomic<bool>` | `fetch_set`, `fetch_clear`, `fetch_not`, `fetch_and`, `fetch_or`, `fetch_xor`, `set_if_false`, `set_if_true` |
-/// | `Atomic<i8>`, `Atomic<i16>`, `Atomic<i32>`, `Atomic<i64>`, `Atomic<i128>`, `Atomic<isize>` | `fetch_add`, `fetch_sub`, `fetch_mul`, `fetch_div`, `fetch_inc`, `fetch_dec`, `fetch_and`, `fetch_or`, `fetch_xor`, `fetch_not`, `fetch_accumulate`, `fetch_max`, `fetch_min` |
-/// | `Atomic<u8>`, `Atomic<u16>`, `Atomic<u32>`, `Atomic<u64>`, `Atomic<u128>`, `Atomic<usize>` | `fetch_add`, `fetch_sub`, `fetch_mul`, `fetch_div`, `fetch_inc`, `fetch_dec`, `fetch_and`, `fetch_or`, `fetch_xor`, `fetch_not`, `fetch_accumulate`, `fetch_max`, `fetch_min` |
+/// | `Atomic<i8>`, `Atomic<i16>`, `Atomic<i32>`, `Atomic<i64>`, `Atomic<i128>`, `Atomic<isize>` | `fetch_add`, `fetch_sub`, `fetch_mul`, `fetch_div`, `fetch_inc`, `fetch_dec`, `fetch_*_with_ordering`, `fetch_and`, `fetch_or`, `fetch_xor`, `fetch_not`, `fetch_accumulate`, `fetch_max`, `fetch_min` |
+/// | `Atomic<u8>`, `Atomic<u16>`, `Atomic<u32>`, `Atomic<u64>`, `Atomic<u128>`, `Atomic<usize>` | `fetch_add`, `fetch_sub`, `fetch_mul`, `fetch_div`, `fetch_inc`, `fetch_dec`, `fetch_*_with_ordering`, `fetch_and`, `fetch_or`, `fetch_xor`, `fetch_not`, `fetch_accumulate`, `fetch_max`, `fetch_min` |
 /// | `Atomic<f32>`, `Atomic<f64>` | `fetch_add`, `fetch_sub`, `fetch_mul`, `fetch_div` |
 ///
 /// All supported specializations also provide [`new`](Self::new),
@@ -635,6 +638,35 @@ where
         T::fetch_inc(&self.primitive)
     }
 
+    /// Increments the value by one with an explicit memory ordering and returns
+    /// the previous value.
+    ///
+    /// Arithmetic wraps on overflow, matching Rust atomic integer operations.
+    ///
+    /// # Parameters
+    ///
+    /// * `ordering` - The memory ordering used by the atomic read-modify-write
+    ///   operation.
+    ///
+    /// # Returns
+    ///
+    /// The value before the increment.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::Atomic;
+    /// use std::sync::atomic::Ordering;
+    ///
+    /// let atomic = Atomic::new(0);
+    /// assert_eq!(atomic.fetch_inc_with_ordering(Ordering::AcqRel), 0);
+    /// assert_eq!(atomic.load(), 1);
+    /// ```
+    #[inline]
+    pub fn fetch_inc_with_ordering(&self, ordering: Ordering) -> T {
+        T::fetch_inc_with_ordering(&self.primitive, ordering)
+    }
+
     /// Decrements the value by one and returns the previous value.
     ///
     /// # Returns
@@ -653,6 +685,97 @@ where
     #[inline]
     pub fn fetch_dec(&self) -> T {
         T::fetch_dec(&self.primitive)
+    }
+
+    /// Decrements the value by one with an explicit memory ordering and returns
+    /// the previous value.
+    ///
+    /// Arithmetic wraps on underflow, matching Rust atomic integer operations.
+    ///
+    /// # Parameters
+    ///
+    /// * `ordering` - The memory ordering used by the atomic read-modify-write
+    ///   operation.
+    ///
+    /// # Returns
+    ///
+    /// The value before the decrement.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::Atomic;
+    /// use std::sync::atomic::Ordering;
+    ///
+    /// let atomic = Atomic::new(1);
+    /// assert_eq!(atomic.fetch_dec_with_ordering(Ordering::AcqRel), 1);
+    /// assert_eq!(atomic.load(), 0);
+    /// ```
+    #[inline]
+    pub fn fetch_dec_with_ordering(&self, ordering: Ordering) -> T {
+        T::fetch_dec_with_ordering(&self.primitive, ordering)
+    }
+
+    /// Adds `delta` with an explicit memory ordering and returns the previous
+    /// value.
+    ///
+    /// Arithmetic wraps on overflow and underflow, matching Rust atomic integer
+    /// operations.
+    ///
+    /// # Parameters
+    ///
+    /// * `delta` - The value to add.
+    /// * `ordering` - The memory ordering used by the atomic read-modify-write
+    ///   operation.
+    ///
+    /// # Returns
+    ///
+    /// The value before the addition.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::Atomic;
+    /// use std::sync::atomic::Ordering;
+    ///
+    /// let atomic = Atomic::new(10);
+    /// assert_eq!(atomic.fetch_add_with_ordering(5, Ordering::AcqRel), 10);
+    /// assert_eq!(atomic.load(), 15);
+    /// ```
+    #[inline]
+    pub fn fetch_add_with_ordering(&self, delta: T, ordering: Ordering) -> T {
+        T::fetch_add_with_ordering(&self.primitive, delta, ordering)
+    }
+
+    /// Subtracts `delta` with an explicit memory ordering and returns the
+    /// previous value.
+    ///
+    /// Arithmetic wraps on overflow and underflow, matching Rust atomic integer
+    /// operations.
+    ///
+    /// # Parameters
+    ///
+    /// * `delta` - The value to subtract.
+    /// * `ordering` - The memory ordering used by the atomic read-modify-write
+    ///   operation.
+    ///
+    /// # Returns
+    ///
+    /// The value before the subtraction.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::Atomic;
+    /// use std::sync::atomic::Ordering;
+    ///
+    /// let atomic = Atomic::new(10);
+    /// assert_eq!(atomic.fetch_sub_with_ordering(3, Ordering::AcqRel), 10);
+    /// assert_eq!(atomic.load(), 7);
+    /// ```
+    #[inline]
+    pub fn fetch_sub_with_ordering(&self, delta: T, ordering: Ordering) -> T {
+        T::fetch_sub_with_ordering(&self.primitive, delta, ordering)
     }
 
     /// Applies bitwise AND and returns the previous value.
