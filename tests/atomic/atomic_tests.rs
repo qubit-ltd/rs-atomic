@@ -331,6 +331,64 @@ fn test_try_update_and_get_retry_paths() {
 }
 
 #[test]
+fn test_update_closures_accept_fn_mut() {
+    let atomic = Atomic::<i32>::new(1);
+    let mut update_calls = 0;
+    let old = atomic.fetch_update(|current| {
+        update_calls += 1;
+        current + update_calls
+    });
+    assert_eq!(old, 1);
+    assert_eq!(atomic.load(), 2);
+    assert_eq!(update_calls, 1);
+
+    let mut update_and_get_calls = 0;
+    let new = atomic.update_and_get(|current| {
+        update_and_get_calls += 1;
+        current + update_and_get_calls
+    });
+    assert_eq!(new, 3);
+    assert_eq!(atomic.load(), 3);
+    assert_eq!(update_and_get_calls, 1);
+
+    let mut try_update_calls = 0;
+    let old = atomic.try_update(|current| {
+        try_update_calls += 1;
+        Some(current + try_update_calls)
+    });
+    assert_eq!(old, Some(3));
+    assert_eq!(atomic.load(), 4);
+    assert_eq!(try_update_calls, 1);
+
+    let mut try_update_and_get_calls = 0;
+    let new = atomic.try_update_and_get(|current| {
+        try_update_and_get_calls += 1;
+        Some(current + try_update_and_get_calls)
+    });
+    assert_eq!(new, Some(5));
+    assert_eq!(atomic.load(), 5);
+    assert_eq!(try_update_and_get_calls, 1);
+
+    let mut accumulate_calls = 0;
+    let old = atomic.fetch_accumulate(2, |current, value| {
+        accumulate_calls += 1;
+        current + value + accumulate_calls
+    });
+    assert_eq!(old, 5);
+    assert_eq!(atomic.load(), 8);
+    assert_eq!(accumulate_calls, 1);
+
+    let mut accumulate_and_get_calls = 0;
+    let new = atomic.accumulate_and_get(2, |current, value| {
+        accumulate_and_get_calls += 1;
+        current + value + accumulate_and_get_calls
+    });
+    assert_eq!(new, 11);
+    assert_eq!(atomic.load(), 11);
+    assert_eq!(accumulate_and_get_calls, 1);
+}
+
+#[test]
 fn test_f32_compare_exchange_uses_raw_bits() {
     let atomic = Atomic::<f32>::new(-0.0);
 

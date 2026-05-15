@@ -527,13 +527,29 @@ fn report_peak() {
 | 操作 | 内存序 | 使用场景 | 决策理由 |
 |------|--------|---------|---------|
 | `fetch_update(f)` | `AcqRel` / `Acquire` | 复杂原子更新 | CAS 循环标准语义 |
-| `fetch_update(f)` | `AcqRel` / `Acquire` | 同上 | 同上 |
+| `update_and_get(f)` | `AcqRel` / `Acquire` | 需要新值的复杂原子更新 | 同上 |
+| `try_update(f)` | `AcqRel` / `Acquire` | 条件式函数更新 | 同上 |
+| `try_update_and_get(f)` | `AcqRel` / `Acquire` | 需要新值的条件式函数更新 | 同上 |
 | `fetch_accumulate(x, f)` | `AcqRel` / `Acquire` | 自定义二元操作 | 同上 |
-| `fetch_accumulate(x, f)` | `AcqRel` / `Acquire` | 同上 | 同上 |
+| `accumulate_and_get(x, f)` | `AcqRel` / `Acquire` | 需要新值的自定义二元操作 | 同上 |
 
 **内部实现使用 CAS 循环**：
 
 ```rust
+pub fn fetch_update<F>(&self, mut f: F) -> i32
+where
+    F: FnMut(i32) -> i32,
+{
+    let mut current = self.load();  // Acquire
+    loop {
+        let new = f(current);
+        match self.compare_set_weak(current, new) {
+            // Success: AcqRel, Failure: Acquire
+            Ok(_) => return current,  // 返回旧值
+            Err(actual) => current = actual,
+        }
+    }
+}
 ```
 
 #### 2.2.3 原子布尔操作的内存序选择
@@ -551,6 +567,10 @@ fn report_peak() {
 | `fetch_and(v)` | `AcqRel` | 逻辑与 | 组合标志位 |
 | `fetch_or(v)` | `AcqRel` | 逻辑或 | 组合标志位 |
 | `fetch_xor(v)` | `AcqRel` | 逻辑异或 | 组合标志位 |
+| `fetch_update(f)` | `AcqRel` / `Acquire` | 函数式标志更新 | CAS 循环标准语义 |
+| `update_and_get(f)` | `AcqRel` / `Acquire` | 需要新值的函数式标志更新 | 同上 |
+| `try_update(f)` | `AcqRel` / `Acquire` | 条件式函数标志更新 | 同上 |
+| `try_update_and_get(f)` | `AcqRel` / `Acquire` | 需要新值的条件式标志更新 | 同上 |
 
 **典型使用模式**：
 
@@ -596,6 +616,9 @@ fn ensure_initialized() {
 | `swap(value)` | ArcSwap 默认语义 | 原子交换引用 | 标准原子替换语义 |
 | `compare_set()` | ArcSwap CAS | CAS 操作 | 基于 `Arc::ptr_eq` 的指针相等性 |
 | `fetch_update(f)` | ArcSwap CAS 循环 | 函数式更新 | 围绕指针 CAS 的重试循环 |
+| `update_and_get(f)` | ArcSwap CAS 循环 | 需要新引用的函数式更新 | 同上 |
+| `try_update(f)` | ArcSwap CAS 循环 | 条件式函数更新 | 同上 |
+| `try_update_and_get(f)` | ArcSwap CAS 循环 | 需要新引用的条件式函数更新 | 同上 |
 
 **典型使用模式**：
 
@@ -918,7 +941,22 @@ impl AtomicI32 {
     /// 使用函数更新值，返回旧值（使用 AcqRel ordering）
     pub fn fetch_update<F>(&self, f: F) -> i32
     where
-        F: Fn(i32) -> i32;
+        F: FnMut(i32) -> i32;
+
+    /// 使用函数更新值，返回新值（使用 AcqRel ordering）
+    pub fn update_and_get<F>(&self, f: F) -> i32
+    where
+        F: FnMut(i32) -> i32;
+
+    /// 条件式更新值，返回旧值
+    pub fn try_update<F>(&self, f: F) -> Option<i32>
+    where
+        F: FnMut(i32) -> Option<i32>;
+
+    /// 条件式更新值，返回新值
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<i32>
+    where
+        F: FnMut(i32) -> Option<i32>;
 
     /// 获取底层标准库类型的引用（用于精细控制内存序）
     pub fn inner(&self) -> &std::sync::atomic::AtomicI32;
@@ -938,6 +976,9 @@ impl AtomicI32 {
 | `compare_and_exchange(current, new)` | `compare_exchange(current, new, success, failure)` | Success: `AcqRel`<br>Failure: `Acquire` | CAS 操作，返回旧值 |
 | `compare_and_exchange_weak(current, new)` | `compare_exchange_weak(current, new, success, failure)` | Success: `AcqRel`<br>Failure: `Acquire` | 弱 CAS，返回旧值 |
 | `fetch_update<F>(f)` | CAS 循环 + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | 函数式更新，返回旧值 |
+| `update_and_get<F>(f)` | CAS 循环 + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | 函数式更新，返回新值 |
+| `try_update<F>(f)` | CAS 循环 + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | 条件式函数更新，返回 `Option<旧值>` |
+| `try_update_and_get<F>(f)` | CAS 循环 + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | 条件式函数更新，返回 `Option<新值>` |
 | `inner()` | - | - | 获取底层原子类型引用 |
 
 ### 4.2 整数类型的高级操作
@@ -987,7 +1028,12 @@ impl AtomicI32 {
     /// 使用给定的二元函数原子累积值，返回旧值（使用 AcqRel ordering）
     pub fn fetch_accumulate<F>(&self, x: i32, f: F) -> i32
     where
-        F: Fn(i32, i32) -> i32;
+        F: FnMut(i32, i32) -> i32;
+
+    /// 使用给定的二元函数原子累积值，返回新值（使用 AcqRel ordering）
+    pub fn accumulate_and_get<F>(&self, x: i32, f: F) -> i32
+    where
+        F: FnMut(i32, i32) -> i32;
 
     // ==================== 最大值/最小值操作 ====================
 
@@ -1018,6 +1064,7 @@ impl AtomicI32 {
 | `fetch_not()` | `fetch_xor(!0, ordering)` | `AcqRel` | 按位取反，返回旧值 |
 | **函数式更新操作** |
 | `fetch_accumulate(x, f)` | CAS 循环 + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | 使用二元函数累积，返回旧值 |
+| `accumulate_and_get(x, f)` | CAS 循环 + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | 使用二元函数累积，返回新值 |
 | **最大值/最小值操作** |
 | `fetch_max(value)` | `fetch_max(value, ordering)` | `AcqRel` | 取最大值，返回旧值 |
 | `fetch_min(value)` | `fetch_min(value, ordering)` | `AcqRel` | 取最小值，返回旧值 |
@@ -1053,7 +1100,22 @@ impl AtomicBool {
     /// 使用函数更新值，返回旧值（使用 AcqRel ordering）
     pub fn fetch_update<F>(&self, f: F) -> bool
     where
-        F: Fn(bool) -> bool;
+        F: FnMut(bool) -> bool;
+
+    /// 使用函数更新值，返回新值（使用 AcqRel ordering）
+    pub fn update_and_get<F>(&self, f: F) -> bool
+    where
+        F: FnMut(bool) -> bool;
+
+    /// 条件式使用函数更新值，成功时返回旧值
+    pub fn try_update<F>(&self, f: F) -> Option<bool>
+    where
+        F: FnMut(bool) -> Option<bool>;
+
+    /// 条件式使用函数更新值，成功时返回新值
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<bool>
+    where
+        F: FnMut(bool) -> Option<bool>;
 
     // ==================== 布尔特殊操作 ====================
 
@@ -1100,6 +1162,9 @@ impl AtomicBool {
 | `compare_and_exchange(current, new)` | `compare_exchange(current, new, success, failure)` | Success: `AcqRel`<br>Failure: `Acquire` | CAS 操作，返回旧值 |
 | `compare_and_exchange_weak(current, new)` | `compare_exchange_weak(current, new, success, failure)` | Success: `AcqRel`<br>Failure: `Acquire` | 弱 CAS，返回旧值 |
 | `fetch_update<F>(f)` | CAS 循环 + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | 函数式更新，返回旧值 |
+| `update_and_get<F>(f)` | CAS 循环 + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | 函数式更新，返回新值 |
+| `try_update<F>(f)` | CAS 循环 + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | 条件式函数更新，成功时返回旧值 |
+| `try_update_and_get<F>(f)` | CAS 循环 + `compare_exchange_weak` | Success: `AcqRel`<br>Failure: `Acquire` | 条件式函数更新，成功时返回新值 |
 | **布尔特殊操作** |
 | `fetch_set()` | `swap(true, ordering)` | `AcqRel` | 设置为 true，返回旧值 |
 | `fetch_clear()` | `swap(false, ordering)` | `AcqRel` | 设置为 false，返回旧值 |
@@ -1152,12 +1217,22 @@ impl<T> AtomicRef<T> {
     /// 使用函数更新引用，返回旧引用（使用 AcqRel ordering）
     pub fn fetch_update<F>(&self, f: F) -> Arc<T>
     where
-        F: Fn(&Arc<T>) -> Arc<T>;
+        F: FnMut(&Arc<T>) -> Arc<T>;
+
+    /// 使用函数更新引用，返回新引用
+    pub fn update_and_get<F>(&self, f: F) -> Arc<T>
+    where
+        F: FnMut(&Arc<T>) -> Arc<T>;
 
     /// 条件式更新引用，返回旧引用
     pub fn try_update<F>(&self, f: F) -> Option<Arc<T>>
     where
-        F: Fn(&Arc<T>) -> Option<Arc<T>>;
+        F: FnMut(&Arc<T>) -> Option<Arc<T>>;
+
+    /// 条件式更新引用，返回新引用
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<Arc<T>>
+    where
+        F: FnMut(&Arc<T>) -> Option<Arc<T>>;
 
     /// 获取底层 ArcSwap 后端的引用
     pub fn inner(&self) -> &arc_swap::ArcSwap<T>;
@@ -1185,7 +1260,9 @@ impl<T> Clone for AtomicRef<T> {
 | `compare_and_exchange(current, new)` | `compare_and_swap(current, new)` | CAS 操作，返回观察到的引用 |
 | `compare_and_exchange_weak(current, new)` | 委托给 `compare_and_exchange` | 弱 CAS 形态的 API；当前后端不会额外引入虚假失败 |
 | `fetch_update(f)` | CAS 循环 + `compare_set_weak` | 使用函数更新，返回旧引用 |
+| `update_and_get(f)` | CAS 循环 + `compare_set_weak` | 使用函数更新，返回新引用 |
 | `try_update(f)` | CAS 循环 + `compare_set_weak` | 条件式更新，返回 `Option<old_reference>` |
+| `try_update_and_get(f)` | CAS 循环 + `compare_set_weak` | 条件式更新，返回 `Option<new_reference>` |
 | `inner()` | - | 获取底层 `ArcSwap<T>` 引用 |
 
 **注意**：`AtomicRef<T>` 的底层实现基于 `arc_swap::ArcSwap<T>`。CAS 风格的操作基于指针身份（`Arc::ptr_eq`）比较，而不是值相等性。
@@ -1245,7 +1322,22 @@ impl AtomicF32 {
     /// 使用给定函数原子更新值，返回旧值（使用 AcqRel ordering）
     pub fn fetch_update<F>(&self, f: F) -> f32
     where
-        F: Fn(f32) -> f32;
+        F: FnMut(f32) -> f32;
+
+    /// 使用给定函数原子更新值，返回新值（使用 AcqRel ordering）
+    pub fn update_and_get<F>(&self, f: F) -> f32
+    where
+        F: FnMut(f32) -> f32;
+
+    /// 条件式更新值，返回旧值
+    pub fn try_update<F>(&self, f: F) -> Option<f32>
+    where
+        F: FnMut(f32) -> Option<f32>;
+
+    /// 条件式更新值，返回新值
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<f32>
+    where
+        F: FnMut(f32) -> Option<f32>;
 
     /// 获取底层标准库类型的引用
     pub fn inner(&self) -> &std::sync::atomic::AtomicU32;
@@ -1271,6 +1363,9 @@ impl AtomicF32 {
 | `fetch_mul(factor)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 乘法，返回旧值 |
 | `fetch_div(divisor)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 除法，返回旧值 |
 | `fetch_update(f)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 使用函数更新，返回旧值 |
+| `update_and_get(f)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 使用函数更新，返回新值 |
+| `try_update(f)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 条件式更新，返回 `Option<旧值>` |
+| `try_update_and_get(f)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 条件式更新，返回 `Option<新值>` |
 | `inner()` | - | - | 获取底层 `AtomicU32` 引用 |
 
 **注意**：
@@ -1330,7 +1425,22 @@ impl AtomicF64 {
     /// 使用给定函数原子更新值，返回旧值（使用 AcqRel ordering）
     pub fn fetch_update<F>(&self, f: F) -> f64
     where
-        F: Fn(f64) -> f64;
+        F: FnMut(f64) -> f64;
+
+    /// 使用给定函数原子更新值，返回新值（使用 AcqRel ordering）
+    pub fn update_and_get<F>(&self, f: F) -> f64
+    where
+        F: FnMut(f64) -> f64;
+
+    /// 条件式更新值，返回旧值
+    pub fn try_update<F>(&self, f: F) -> Option<f64>
+    where
+        F: FnMut(f64) -> Option<f64>;
+
+    /// 条件式更新值，返回新值
+    pub fn try_update_and_get<F>(&self, f: F) -> Option<f64>
+    where
+        F: FnMut(f64) -> Option<f64>;
 
     /// 获取底层标准库类型的引用
     pub fn inner(&self) -> &std::sync::atomic::AtomicU64;
@@ -1356,6 +1466,9 @@ impl AtomicF64 {
 | `fetch_mul(factor)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 乘法，返回旧值 |
 | `fetch_div(divisor)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 除法，返回旧值 |
 | `fetch_update(f)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 使用函数更新，返回旧值 |
+| `update_and_get(f)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 使用函数更新，返回新值 |
+| `try_update(f)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 条件式更新，返回 `Option<旧值>` |
+| `try_update_and_get(f)` | CAS 循环 + `compare_exchange_weak` + 位转换 | Success: `AcqRel`<br>Failure: `Acquire` | 条件式更新，返回 `Option<新值>` |
 | `inner()` | - | - | 获取底层 `AtomicU64` 引用 |
 
 **注意**：
@@ -1470,7 +1583,22 @@ pub trait Atomic {
     /// 使用函数更新值，返回旧值
     fn fetch_update<F>(&self, f: F) -> Self::Value
     where
-        F: Fn(Self::Value) -> Self::Value;
+        F: FnMut(Self::Value) -> Self::Value;
+
+    /// 使用函数更新值，返回新值
+    fn update_and_get<F>(&self, f: F) -> Self::Value
+    where
+        F: FnMut(Self::Value) -> Self::Value;
+
+    /// 条件式更新值，返回旧值
+    fn try_update<F>(&self, f: F) -> Option<Self::Value>
+    where
+        F: FnMut(Self::Value) -> Option<Self::Value>;
+
+    /// 条件式更新值，返回新值
+    fn try_update_and_get<F>(&self, f: F) -> Option<Self::Value>
+    where
+        F: FnMut(Self::Value) -> Option<Self::Value>;
 }
 
 /// 原子数值类型 trait
@@ -1562,13 +1690,13 @@ fn main() {
 ### 6.3 函数式更新
 
 ```rust
-use qubit_atomic::AtomicI32;
+use qubit_atomic::Atomic;
 
 fn main() {
-    let atomic = AtomicI32::new(10);
+    let atomic = Atomic::<i32>::new(10);
 
-    // 使用函数更新
-    let new_value = atomic.fetch_update(|x| {
+    // 使用函数更新并返回提交后的新值
+    let new_value = atomic.update_and_get(|x| {
         if x < 100 {
             x * 2
         } else {
@@ -1579,8 +1707,8 @@ fn main() {
     assert_eq!(new_value, 20);
     println!("更新后的值：{}", new_value);
 
-    // 累积操作
-    let result = atomic.fetch_accumulate(5, |a, b| a + b);
+    // 累积并返回提交后的新值
+    let result = atomic.accumulate_and_get(5, |a, b| a + b);
     assert_eq!(result, 25);
     println!("累积后的值：{}", result);
 }
@@ -1616,15 +1744,15 @@ fn main() {
     println!("旧配置：{:?}", old_config);
     println!("新配置：{:?}", atomic_config.load());
 
-    // 使用函数更新
-    atomic_config.fetch_update(|current| {
+    // 使用函数更新并返回提交后的新引用
+    let updated = atomic_config.update_and_get(|current| {
         Arc::new(Config {
             timeout: current.timeout * 2,
             max_retries: current.max_retries + 1,
         })
     });
 
-    println!("更新后的配置：{:?}", atomic_config.load());
+    println!("更新后的配置：{:?}", updated);
 }
 ```
 
@@ -1723,8 +1851,8 @@ fn float_accumulator_example() {
 fn float_custom_update_example() {
     let temperature = AtomicF32::new(20.0);
 
-    // 使用 fetch_update 实现自定义逻辑
-    let new_temp = temperature.fetch_update(|current| {
+    // 需要新值时使用 update_and_get 实现自定义逻辑
+    let new_temp = temperature.update_and_get(|current| {
         // 温度限制在 -50 到 50 之间
         (current + 5.0).clamp(-50.0, 50.0)
     });
@@ -1945,9 +2073,9 @@ cargo asm --release qubit_atomic::AtomicI32::get
 | | `compareAndExchange(int expect, int update)` (Java 9+) | `compare_and_exchange(current, new)` | ✅ | CAS，返回实际值 |
 | | `weakCompareAndExchange(int expect, int update)` (Java 9+) | `compare_and_exchange_weak(current, new)` | ✅ | 弱 CAS，返回实际值 |
 | **函数式更新** | `getAndUpdate(IntUnaryOperator f)` (Java 8+) | `fetch_update(f)` | ✅ | 函数更新，返回旧值 |
-| | `updateAndGet(IntUnaryOperator f)` (Java 8+) | - | ❌ | 不暴露返回新值的函数式更新变体 |
+| | `updateAndGet(IntUnaryOperator f)` (Java 8+) | `update_and_get(f)` | ✅ | 函数更新，返回新值 |
 | | `getAndAccumulate(int x, IntBinaryOperator f)` (Java 8+) | `fetch_accumulate(x, f)` | ✅ | 累积，返回旧值 |
-| | `accumulateAndGet(int x, IntBinaryOperator f)` (Java 8+) | - | ❌ | 不暴露返回新值的累积变体 |
+| | `accumulateAndGet(int x, IntBinaryOperator f)` (Java 8+) | `accumulate_and_get(x, f)` | ✅ | 累积，返回新值 |
 | **位运算** | - | `fetch_and(value)` | ✅ | 按位与（Rust 特有）|
 | | - | `fetch_or(value)` | ✅ | 按位或（Rust 特有）|
 | | - | `fetch_xor(value)` | ✅ | 按位异或（Rust 特有）|
@@ -2000,7 +2128,7 @@ cargo asm --release qubit_atomic::AtomicI32::get
 | | `compareAndExchange(V expect, V update)` (Java 9+) | `compare_and_exchange(&current, new)` | ✅ | CAS，返回实际引用 |
 | | `weakCompareAndExchange(V expect, V update)` (Java 9+) | `compare_and_exchange_weak(&current, new)` | ✅ | 弱 CAS，返回实际引用 |
 | **函数式更新** | `getAndUpdate(UnaryOperator<V> f)` (Java 8+) | `fetch_update(f)` | ✅ | 函数更新，返回旧引用 |
-| | `updateAndGet(UnaryOperator<V> f)` (Java 8+) | - | ❌ | 不暴露返回新引用的函数式更新变体 |
+| | `updateAndGet(UnaryOperator<V> f)` (Java 8+) | `update_and_get(f)` | ✅ | 函数更新，返回新引用 |
 | | `getAndAccumulate(V x, BinaryOperator<V> f)` (Java 8+) | - | ❌ | 不暴露累积变体 |
 | | `accumulateAndGet(V x, BinaryOperator<V> f)` (Java 8+) | - | ❌ | 不暴露累积变体 |
 | **其他** | `toString()` | `Display` trait (如果 T: Display) | ✅ | 实现 Display |

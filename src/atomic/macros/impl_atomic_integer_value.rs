@@ -77,9 +77,17 @@ macro_rules! impl_atomic_integer_value {
             #[inline]
             fn fetch_accumulate<F>(primitive: &Self::Primitive, value: Self, f: F) -> Self
             where
-                F: Fn(Self, Self) -> Self,
+                F: FnMut(Self, Self) -> Self,
             {
                 primitive.fetch_accumulate(value, f)
+            }
+
+            #[inline]
+            fn accumulate_and_get<F>(primitive: &Self::Primitive, value: Self, f: F) -> Self
+            where
+                F: FnMut(Self, Self) -> Self,
+            {
+                primitive.accumulate_and_get(value, f)
             }
 
             #[inline]

@@ -415,9 +415,9 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*atomic.load(), 20);
     /// ```
     #[inline]
-    pub fn fetch_update<F>(&self, f: F) -> Arc<T>
+    pub fn fetch_update<F>(&self, mut f: F) -> Arc<T>
     where
-        F: Fn(&Arc<T>) -> Arc<T>,
+        F: FnMut(&Arc<T>) -> Arc<T>,
     {
         let mut current = self.load();
         loop {
@@ -457,9 +457,9 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*atomic.load(), 20);
     /// ```
     #[inline]
-    pub fn update_and_get<F>(&self, f: F) -> Arc<T>
+    pub fn update_and_get<F>(&self, mut f: F) -> Arc<T>
     where
-        F: Fn(&Arc<T>) -> Arc<T>,
+        F: FnMut(&Arc<T>) -> Arc<T>,
     {
         let mut current = self.load();
         loop {
@@ -510,9 +510,9 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*atomic.load(), 4);
     /// ```
     #[inline]
-    pub fn try_update<F>(&self, f: F) -> Option<Arc<T>>
+    pub fn try_update<F>(&self, mut f: F) -> Option<Arc<T>>
     where
-        F: Fn(&Arc<T>) -> Option<Arc<T>>,
+        F: FnMut(&Arc<T>) -> Option<Arc<T>>,
     {
         let mut current = self.load();
         loop {
@@ -563,9 +563,9 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*atomic.load(), 4);
     /// ```
     #[inline]
-    pub fn try_update_and_get<F>(&self, f: F) -> Option<Arc<T>>
+    pub fn try_update_and_get<F>(&self, mut f: F) -> Option<Arc<T>>
     where
-        F: Fn(&Arc<T>) -> Option<Arc<T>>,
+        F: FnMut(&Arc<T>) -> Option<Arc<T>>,
     {
         let mut current = self.load();
         loop {

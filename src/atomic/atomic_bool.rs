@@ -643,9 +643,9 @@ impl AtomicBool {
     /// assert_eq!(flag.load(), true);
     /// ```
     #[inline]
-    pub fn fetch_update<F>(&self, f: F) -> bool
+    pub fn fetch_update<F>(&self, mut f: F) -> bool
     where
-        F: Fn(bool) -> bool,
+        F: FnMut(bool) -> bool,
     {
         let mut current = self.load();
         loop {
@@ -683,9 +683,9 @@ impl AtomicBool {
     /// assert_eq!(flag.load(), true);
     /// ```
     #[inline]
-    pub fn update_and_get<F>(&self, f: F) -> bool
+    pub fn update_and_get<F>(&self, mut f: F) -> bool
     where
-        F: Fn(bool) -> bool,
+        F: FnMut(bool) -> bool,
     {
         let mut current = self.load();
         loop {
@@ -727,9 +727,9 @@ impl AtomicBool {
     /// assert_eq!(flag.load(), true);
     /// ```
     #[inline]
-    pub fn try_update<F>(&self, f: F) -> Option<bool>
+    pub fn try_update<F>(&self, mut f: F) -> Option<bool>
     where
-        F: Fn(bool) -> Option<bool>,
+        F: FnMut(bool) -> Option<bool>,
     {
         let mut current = self.load();
         loop {
@@ -777,9 +777,9 @@ impl AtomicBool {
     /// assert_eq!(flag.load(), true);
     /// ```
     #[inline]
-    pub fn try_update_and_get<F>(&self, f: F) -> Option<bool>
+    pub fn try_update_and_get<F>(&self, mut f: F) -> Option<bool>
     where
-        F: Fn(bool) -> Option<bool>,
+        F: FnMut(bool) -> Option<bool>,
     {
         let mut current = self.load();
         loop {
@@ -864,7 +864,7 @@ impl AtomicOps for AtomicBool {
     #[inline]
     fn fetch_update<F>(&self, f: F) -> bool
     where
-        F: Fn(bool) -> bool,
+        F: FnMut(bool) -> bool,
     {
         self.fetch_update(f)
     }
@@ -872,7 +872,7 @@ impl AtomicOps for AtomicBool {
     #[inline]
     fn update_and_get<F>(&self, f: F) -> bool
     where
-        F: Fn(bool) -> bool,
+        F: FnMut(bool) -> bool,
     {
         self.update_and_get(f)
     }
@@ -880,7 +880,7 @@ impl AtomicOps for AtomicBool {
     #[inline]
     fn try_update<F>(&self, f: F) -> Option<bool>
     where
-        F: Fn(bool) -> Option<bool>,
+        F: FnMut(bool) -> Option<bool>,
     {
         self.try_update(f)
     }
@@ -888,7 +888,7 @@ impl AtomicOps for AtomicBool {
     #[inline]
     fn try_update_and_get<F>(&self, f: F) -> Option<bool>
     where
-        F: Fn(bool) -> Option<bool>,
+        F: FnMut(bool) -> Option<bool>,
     {
         self.try_update_and_get(f)
     }

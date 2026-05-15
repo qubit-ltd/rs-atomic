@@ -49,8 +49,8 @@ use super::atomic_value::AtomicValue;
 /// | Specialization | Additional methods |
 /// | --- | --- |
 /// | `Atomic<bool>` | `fetch_set`, `fetch_clear`, `fetch_not`, `fetch_and`, `fetch_or`, `fetch_xor`, `set_if_false`, `set_if_true` |
-/// | `Atomic<i8>`, `Atomic<i16>`, `Atomic<i32>`, `Atomic<i64>`, `Atomic<i128>`, `Atomic<isize>` | `fetch_add`, `fetch_sub`, `fetch_mul`, `fetch_div`, `fetch_inc`, `fetch_dec`, `fetch_*_with_ordering`, `fetch_and`, `fetch_or`, `fetch_xor`, `fetch_not`, `fetch_accumulate`, `fetch_max`, `fetch_min` |
-/// | `Atomic<u8>`, `Atomic<u16>`, `Atomic<u32>`, `Atomic<u64>`, `Atomic<u128>`, `Atomic<usize>` | `fetch_add`, `fetch_sub`, `fetch_mul`, `fetch_div`, `fetch_inc`, `fetch_dec`, `fetch_*_with_ordering`, `fetch_and`, `fetch_or`, `fetch_xor`, `fetch_not`, `fetch_accumulate`, `fetch_max`, `fetch_min` |
+/// | `Atomic<i8>`, `Atomic<i16>`, `Atomic<i32>`, `Atomic<i64>`, `Atomic<i128>`, `Atomic<isize>` | `fetch_add`, `fetch_sub`, `fetch_mul`, `fetch_div`, `fetch_inc`, `fetch_dec`, `fetch_*_with_ordering`, `fetch_and`, `fetch_or`, `fetch_xor`, `fetch_not`, `fetch_accumulate`, `accumulate_and_get`, `fetch_max`, `fetch_min` |
+/// | `Atomic<u8>`, `Atomic<u16>`, `Atomic<u32>`, `Atomic<u64>`, `Atomic<u128>`, `Atomic<usize>` | `fetch_add`, `fetch_sub`, `fetch_mul`, `fetch_div`, `fetch_inc`, `fetch_dec`, `fetch_*_with_ordering`, `fetch_and`, `fetch_or`, `fetch_xor`, `fetch_not`, `fetch_accumulate`, `accumulate_and_get`, `fetch_max`, `fetch_min` |
 /// | `Atomic<f32>`, `Atomic<f64>` | `fetch_add`, `fetch_sub`, `fetch_mul`, `fetch_div` |
 ///
 /// All supported specializations also provide [`new`](Self::new),
@@ -431,7 +431,7 @@ where
     #[inline]
     pub fn fetch_update<F>(&self, f: F) -> T
     where
-        F: Fn(T) -> T,
+        F: FnMut(T) -> T,
     {
         AtomicOps::fetch_update(&self.primitive, f)
     }
@@ -461,7 +461,7 @@ where
     #[inline]
     pub fn update_and_get<F>(&self, f: F) -> T
     where
-        F: Fn(T) -> T,
+        F: FnMut(T) -> T,
     {
         AtomicOps::update_and_get(&self.primitive, f)
     }
@@ -496,7 +496,7 @@ where
     #[inline]
     pub fn try_update<F>(&self, f: F) -> Option<T>
     where
-        F: Fn(T) -> Option<T>,
+        F: FnMut(T) -> Option<T>,
     {
         AtomicOps::try_update(&self.primitive, f)
     }
@@ -537,7 +537,7 @@ where
     #[inline]
     pub fn try_update_and_get<F>(&self, f: F) -> Option<T>
     where
-        F: Fn(T) -> Option<T>,
+        F: FnMut(T) -> Option<T>,
     {
         AtomicOps::try_update_and_get(&self.primitive, f)
     }
@@ -970,9 +970,40 @@ where
     #[inline]
     pub fn fetch_accumulate<F>(&self, value: T, f: F) -> T
     where
-        F: Fn(T, T) -> T,
+        F: FnMut(T, T) -> T,
     {
         T::fetch_accumulate(&self.primitive, value, f)
+    }
+
+    /// Updates the value by accumulating it with `value` and returns the new value.
+    ///
+    /// # Parameters
+    ///
+    /// * `value` - The right-hand input to the accumulator.
+    /// * `f` - A function that combines the current value and `value`.
+    ///
+    /// # Returns
+    ///
+    /// The value committed by the successful update.
+    ///
+    /// The closure may be called more than once when concurrent updates cause
+    /// CAS retries.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::Atomic;
+    ///
+    /// let atomic = Atomic::new(10);
+    /// assert_eq!(atomic.accumulate_and_get(5, |a, b| a + b), 15);
+    /// assert_eq!(atomic.load(), 15);
+    /// ```
+    #[inline]
+    pub fn accumulate_and_get<F>(&self, value: T, f: F) -> T
+    where
+        F: FnMut(T, T) -> T,
+    {
+        T::accumulate_and_get(&self.primitive, value, f)
     }
 
     /// Replaces the value with the maximum of the current value and `value`.

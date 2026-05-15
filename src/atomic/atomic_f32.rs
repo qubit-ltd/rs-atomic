@@ -565,9 +565,9 @@ impl AtomicF32 {
     /// assert_eq!(atomic.load(), 20.0);
     /// ```
     #[inline]
-    pub fn fetch_update<F>(&self, f: F) -> f32
+    pub fn fetch_update<F>(&self, mut f: F) -> f32
     where
-        F: Fn(f32) -> f32,
+        F: FnMut(f32) -> f32,
     {
         let mut current = self.load();
         loop {
@@ -606,9 +606,9 @@ impl AtomicF32 {
     /// assert_eq!(atomic.load(), 20.0);
     /// ```
     #[inline]
-    pub fn update_and_get<F>(&self, f: F) -> f32
+    pub fn update_and_get<F>(&self, mut f: F) -> f32
     where
-        F: Fn(f32) -> f32,
+        F: FnMut(f32) -> f32,
     {
         let mut current = self.load();
         loop {
@@ -650,9 +650,9 @@ impl AtomicF32 {
     /// assert_eq!(atomic.load(), 3.0);
     /// ```
     #[inline]
-    pub fn try_update<F>(&self, f: F) -> Option<f32>
+    pub fn try_update<F>(&self, mut f: F) -> Option<f32>
     where
-        F: Fn(f32) -> Option<f32>,
+        F: FnMut(f32) -> Option<f32>,
     {
         let mut current = self.load();
         loop {
@@ -700,9 +700,9 @@ impl AtomicF32 {
     /// assert_eq!(atomic.load(), 3.0);
     /// ```
     #[inline]
-    pub fn try_update_and_get<F>(&self, f: F) -> Option<f32>
+    pub fn try_update_and_get<F>(&self, mut f: F) -> Option<f32>
     where
-        F: Fn(f32) -> Option<f32>,
+        F: FnMut(f32) -> Option<f32>,
     {
         let mut current = self.load();
         loop {
@@ -788,7 +788,7 @@ impl AtomicOps for AtomicF32 {
     #[inline]
     fn fetch_update<F>(&self, f: F) -> f32
     where
-        F: Fn(f32) -> f32,
+        F: FnMut(f32) -> f32,
     {
         self.fetch_update(f)
     }
@@ -796,7 +796,7 @@ impl AtomicOps for AtomicF32 {
     #[inline]
     fn update_and_get<F>(&self, f: F) -> f32
     where
-        F: Fn(f32) -> f32,
+        F: FnMut(f32) -> f32,
     {
         self.update_and_get(f)
     }
@@ -804,7 +804,7 @@ impl AtomicOps for AtomicF32 {
     #[inline]
     fn try_update<F>(&self, f: F) -> Option<f32>
     where
-        F: Fn(f32) -> Option<f32>,
+        F: FnMut(f32) -> Option<f32>,
     {
         self.try_update(f)
     }
@@ -812,7 +812,7 @@ impl AtomicOps for AtomicF32 {
     #[inline]
     fn try_update_and_get<F>(&self, f: F) -> Option<f32>
     where
-        F: Fn(f32) -> Option<f32>,
+        F: FnMut(f32) -> Option<f32>,
     {
         self.try_update_and_get(f)
     }

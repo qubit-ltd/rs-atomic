@@ -83,7 +83,7 @@ fn main() {
     let old = counter.fetch_update(|x| x * 2);
     println!("   After doubling - old: {}, new: {}", old, counter.load());
 
-    let new = counter.fetch_update(|x| x + 10);
+    let new = counter.update_and_get(|x| x + 10);
     println!("   After adding 10 - new: {}", new);
 
     // Example 5: Accumulate operations
@@ -98,7 +98,7 @@ fn main() {
         counter.load()
     );
 
-    let new = counter.fetch_accumulate(3, |a, b| a + b);
+    let new = counter.accumulate_and_get(3, |a, b| a + b);
     println!("   After adding 3 - new: {}", new);
 
     println!("\n=== Example completed ===");

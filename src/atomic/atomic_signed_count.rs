@@ -340,9 +340,9 @@ impl AtomicSignedCount {
     /// rejects the current value. A rejected update leaves the counter
     /// unchanged.
     #[inline]
-    fn try_update<F>(&self, update: F) -> Option<isize>
+    fn try_update<F>(&self, mut update: F) -> Option<isize>
     where
-        F: Fn(isize) -> Option<isize>,
+        F: FnMut(isize) -> Option<isize>,
     {
         let mut current = self.get();
         loop {

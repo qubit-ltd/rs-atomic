@@ -31,7 +31,7 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 - **Boolean Specialization**: `Atomic<bool>` with set, clear, negate, logical AND/OR/XOR, and conditional CAS helpers
 - **Floating-Point Specializations**: `Atomic<f32>` and `Atomic<f64>` with arithmetic operations implemented through CAS loops
 - **Rich Operations**: increment, decrement, add, subtract, multiply, divide, bitwise operations, max/min
-- **Functional Updates**: `fetch_update`, `update_and_get`, `try_update`, `try_update_and_get`, `fetch_accumulate`
+- **Functional Updates**: `fetch_update`, `update_and_get`, `try_update`, `try_update_and_get`, `fetch_accumulate`, `accumulate_and_get`
 - **Const Initialization Escape Hatch**: concrete wrappers such as `atomic::primitive::AtomicBool`, `AtomicU8`, and `AtomicF32` expose `const fn new` for static initialization when the generic `Atomic<T>` constructor cannot be used in const contexts
 
 ### 🔢 **`AtomicCount` and `AtomicSignedCount`**
@@ -274,6 +274,11 @@ fn main() {
     let old_result = atomic.fetch_accumulate(5, |a, b| a + b);
     assert_eq!(old_result, 30);
     assert_eq!(atomic.load(), 35);
+
+    // Accumulate and return the committed new value
+    let accumulated = atomic.accumulate_and_get(5, |a, b| a + b);
+    assert_eq!(accumulated, 40);
+    assert_eq!(atomic.load(), 40);
     println!("Accumulated value: {}", atomic.load());
 }
 ```
@@ -476,6 +481,7 @@ fn main() {
 | `try_update(f)` | Conditional functional update, return `Option<old>` | AcqRel/Acquire |
 | `try_update_and_get(f)` | Conditional functional update, return `Option<new>` | AcqRel/Acquire |
 | `fetch_accumulate(x, f)` | Accumulate, return old | AcqRel/Acquire |
+| `accumulate_and_get(x, f)` | Accumulate, return new | AcqRel/Acquire |
 
 Primitive integer operations intentionally use wrapping arithmetic on overflow
 and underflow, matching Rust atomic integer semantics. Use `AtomicCount` or
@@ -562,7 +568,7 @@ or compare `to_bits()` values yourself.
 | **Read-Modify-Write** (`swap()`, CAS) | `AcqRel` | Ensure both read and write correctness |
 | **`Atomic<T>` counter arithmetic** (`fetch_inc()`, `fetch_dec()`, `fetch_add()`, `fetch_sub()`) | `Relaxed` | Pure metrics; no need to sync other data |
 | **Ordered integer counter arithmetic** (`fetch_*_with_ordering`) | Caller-provided | State-signal counters that need explicit synchronization |
-| **CAS-based arithmetic and updates** (`fetch_mul()`, `fetch_div()`, `fetch_update()`, `update_and_get()`, `try_update()`, `try_update_and_get()`, `fetch_accumulate()`) | `AcqRel` / `Acquire` | CAS loop standard semantics |
+| **CAS-based arithmetic and updates** (`fetch_mul()`, `fetch_div()`, `fetch_update()`, `update_and_get()`, `try_update()`, `try_update_and_get()`, `fetch_accumulate()`, `accumulate_and_get()`) | `AcqRel` / `Acquire` | CAS loop standard semantics |
 | **`AtomicCount` / `AtomicSignedCount`** (`inc()`, `dec()`) | CAS loop | Values used as concurrent state signals |
 | **Bitwise Operations** (`fetch_and()`, `fetch_or()`) | `AcqRel` | Usually used for flag synchronization |
 | **Max/Min Operations** (`fetch_max()`, `fetch_min()`) | `AcqRel` | Often used with threshold checks |

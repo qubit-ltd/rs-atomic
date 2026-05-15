@@ -24,6 +24,8 @@ fn test_impl_atomic_number_generated_methods() {
     assert_eq!(atomic.load(), 24);
     assert_eq!(atomic.fetch_div(4), 24);
     assert_eq!(atomic.load(), 6);
+    assert_eq!(atomic.accumulate_and_get(4, |a, b| a + b), 10);
+    assert_eq!(atomic.load(), 10);
 }
 
 #[test]

@@ -54,9 +54,10 @@ macro_rules! impl_atomic_number {
         ///   These operations intentionally follow Rust integer atomic
         ///   wrapping semantics on overflow and underflow.
         /// - **CAS-based arithmetic and updates** (`fetch_mul`, `fetch_div`,
-        ///   `fetch_update`, `try_update`, `fetch_accumulate`): Use `AcqRel`
-        ///   ordering on successful update and `Acquire` ordering on failed
-        ///   CAS attempts.
+        ///   `fetch_update`, `update_and_get`, `try_update`,
+        ///   `try_update_and_get`, `fetch_accumulate`,
+        ///   `accumulate_and_get`): Use `AcqRel` ordering on successful
+        ///   update and `Acquire` ordering on failed CAS attempts.
         /// - **Bit operations** (`fetch_and`, `fetch_or`, etc.): Use
         ///   `AcqRel` ordering as they typically synchronize flag states.
         /// - **Max/Min operations**: Use `AcqRel` ordering as they often
@@ -932,9 +933,9 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 20);
             /// ```
             #[inline]
-            pub fn fetch_update<F>(&self, f: F) -> $value_type
+            pub fn fetch_update<F>(&self, mut f: F) -> $value_type
             where
-                F: Fn($value_type) -> $value_type,
+                F: FnMut($value_type) -> $value_type,
             {
                 let mut current = self.load();
                 loop {
@@ -973,9 +974,9 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 20);
             /// ```
             #[inline]
-            pub fn update_and_get<F>(&self, f: F) -> $value_type
+            pub fn update_and_get<F>(&self, mut f: F) -> $value_type
             where
-                F: Fn($value_type) -> $value_type,
+                F: FnMut($value_type) -> $value_type,
             {
                 let mut current = self.load();
                 loop {
@@ -1017,9 +1018,9 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 4);
             /// ```
             #[inline]
-            pub fn try_update<F>(&self, f: F) -> Option<$value_type>
+            pub fn try_update<F>(&self, mut f: F) -> Option<$value_type>
             where
-                F: Fn($value_type) -> Option<$value_type>,
+                F: FnMut($value_type) -> Option<$value_type>,
             {
                 let mut current = self.load();
                 loop {
@@ -1068,9 +1069,9 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 4);
             /// ```
             #[inline]
-            pub fn try_update_and_get<F>(&self, f: F) -> Option<$value_type>
+            pub fn try_update_and_get<F>(&self, mut f: F) -> Option<$value_type>
             where
-                F: Fn($value_type) -> Option<$value_type>,
+                F: FnMut($value_type) -> Option<$value_type>,
             {
                 let mut current = self.load();
                 loop {
@@ -1114,16 +1115,63 @@ macro_rules! impl_atomic_number {
             pub fn fetch_accumulate<F>(
                 &self,
                 x: $value_type,
-                f: F,
+                mut f: F,
             ) -> $value_type
             where
-                F: Fn($value_type, $value_type) -> $value_type,
+                F: FnMut($value_type, $value_type) -> $value_type,
             {
                 let mut current = self.load();
                 loop {
                     let new = f(current, x);
                     match self.compare_set_weak(current, new) {
                         Ok(_) => return current,
+                        Err(actual) => current = actual,
+                    }
+                }
+            }
+
+            /// Accumulates a value using a binary function, returning the
+            /// new value.
+            ///
+            /// Internally uses a CAS loop until the update succeeds.
+            ///
+            /// # Parameters
+            ///
+            /// * `x` - The value to accumulate with.
+            /// * `f` - A binary function that takes the current value and
+            ///   `x`, returning the new value.
+            ///
+            /// # Returns
+            ///
+            /// The value committed by the successful accumulation.
+            ///
+            /// The closure may be called more than once when concurrent
+            /// updates cause CAS retries.
+            ///
+            /// # Example
+            ///
+            /// ```rust
+            /// use qubit_atomic::Atomic;
+            ///
+            #[doc = concat!("let atomic = Atomic::<", stringify!($value_type), ">::new(10);")]
+            /// let new = atomic.accumulate_and_get(5, |a, b| a + b);
+            /// assert_eq!(new, 15);
+            /// assert_eq!(atomic.load(), 15);
+            /// ```
+            #[inline]
+            pub fn accumulate_and_get<F>(
+                &self,
+                x: $value_type,
+                mut f: F,
+            ) -> $value_type
+            where
+                F: FnMut($value_type, $value_type) -> $value_type,
+            {
+                let mut current = self.load();
+                loop {
+                    let new = f(current, x);
+                    match self.compare_set_weak(current, new) {
+                        Ok(_) => return new,
                         Err(actual) => current = actual,
                     }
                 }
@@ -1287,7 +1335,7 @@ macro_rules! impl_atomic_number {
             #[inline]
             fn fetch_update<F>(&self, f: F) -> $value_type
             where
-                F: Fn($value_type) -> $value_type,
+                F: FnMut($value_type) -> $value_type,
             {
                 self.fetch_update(f)
             }
@@ -1295,7 +1343,7 @@ macro_rules! impl_atomic_number {
             #[inline]
             fn update_and_get<F>(&self, f: F) -> $value_type
             where
-                F: Fn($value_type) -> $value_type,
+                F: FnMut($value_type) -> $value_type,
             {
                 self.update_and_get(f)
             }
@@ -1303,7 +1351,7 @@ macro_rules! impl_atomic_number {
             #[inline]
             fn try_update<F>(&self, f: F) -> Option<$value_type>
             where
-                F: Fn($value_type) -> Option<$value_type>,
+                F: FnMut($value_type) -> Option<$value_type>,
             {
                 self.try_update(f)
             }
@@ -1311,7 +1359,7 @@ macro_rules! impl_atomic_number {
             #[inline]
             fn try_update_and_get<F>(&self, f: F) -> Option<$value_type>
             where
-                F: Fn($value_type) -> Option<$value_type>,
+                F: FnMut($value_type) -> Option<$value_type>,
             {
                 self.try_update_and_get(f)
             }

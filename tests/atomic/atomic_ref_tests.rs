@@ -334,6 +334,47 @@ fn test_try_update_and_get_retry_path() {
 }
 
 #[test]
+fn test_update_closures_accept_fn_mut() {
+    let atomic = AtomicRef::new(Arc::new(1));
+
+    let mut fetch_calls = 0;
+    let old = atomic.fetch_update(|current| {
+        fetch_calls += 1;
+        Arc::new(**current + fetch_calls)
+    });
+    assert_eq!(*old, 1);
+    assert_eq!(*atomic.load(), 2);
+    assert_eq!(fetch_calls, 1);
+
+    let mut update_calls = 0;
+    let new = atomic.update_and_get(|current| {
+        update_calls += 1;
+        Arc::new(**current + update_calls)
+    });
+    assert_eq!(*new, 3);
+    assert_eq!(*atomic.load(), 3);
+    assert_eq!(update_calls, 1);
+
+    let mut try_update_calls = 0;
+    let old = atomic.try_update(|current| {
+        try_update_calls += 1;
+        Some(Arc::new(**current + try_update_calls))
+    });
+    assert_eq!(*old.expect("update should be accepted"), 3);
+    assert_eq!(*atomic.load(), 4);
+    assert_eq!(try_update_calls, 1);
+
+    let mut try_update_and_get_calls = 0;
+    let new = atomic.try_update_and_get(|current| {
+        try_update_and_get_calls += 1;
+        Some(Arc::new(**current + try_update_and_get_calls))
+    });
+    assert_eq!(*new.expect("update should be accepted"), 5);
+    assert_eq!(*atomic.load(), 5);
+    assert_eq!(try_update_and_get_calls, 1);
+}
+
+#[test]
 fn test_concurrent_updates() {
     let data = Arc::new(TestData {
         value: 0,
