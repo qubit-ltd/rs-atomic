@@ -21,7 +21,8 @@
 //! - **Completeness**: Provides high-level operations similar to JDK atomic
 //! - **Safety**: Guarantees memory safety and thread safety
 //! - **Performance**: Zero-cost abstraction with no additional overhead
-//! - **Flexibility**: Exposes underlying types via `inner()` for advanced users
+//! - **Flexibility**: Exposes ordered integer RMW helpers and `inner()` for
+//!   advanced users
 //!
 //! ## Features
 //!
