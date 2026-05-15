@@ -438,11 +438,7 @@ fn main() {
 
 ## API Reference
 
-### Common Operations (All Types)
-
-The weak CAS methods apply to primitive `Atomic<T>` specializations. `AtomicRef<T>`
-exposes strong pointer CAS only; it does not provide weak aliases over the same
-`arc_swap` operation.
+### Common Operations
 
 | Method | Description | Memory Ordering |
 |--------|-------------|-----------------|
@@ -451,14 +447,22 @@ exposes strong pointer CAS only; it does not provide weak aliases over the same
 | `store(value)` | Store new value | Release |
 | `swap(value)` | Swap value, return old | AcqRel |
 | `compare_set(current, new)` | CAS operation, return Result | AcqRel/Acquire |
-| `compare_set_weak(current, new)` | Weak CAS, return Result | AcqRel/Acquire |
 | `compare_and_exchange(current, new)` | CAS operation, return actual value | AcqRel/Acquire |
-| `compare_and_exchange_weak(current, new)` | Weak CAS, return `Result<observed, actual>` | AcqRel/Acquire |
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
 | `update_and_get(f)` | Functional update, return new | AcqRel/Acquire |
 | `try_update(f)` | Conditional functional update, return `Option<old>` | AcqRel/Acquire |
 | `try_update_and_get(f)` | Conditional functional update, return `Option<new>` | AcqRel/Acquire |
 | `inner()` | Access underlying backend type | - |
+
+### Primitive Weak CAS Operations
+
+These methods are available on primitive `Atomic<T>` specializations. They are
+not available on `AtomicRef<T>`, which exposes strong pointer CAS only.
+
+| Method | Description | Memory Ordering |
+|--------|-------------|-----------------|
+| `compare_set_weak(current, new)` | Weak CAS, return Result | AcqRel/Acquire |
+| `compare_and_exchange_weak(current, new)` | Weak CAS, return `Result<observed, actual>` | AcqRel/Acquire |
 
 ### Integer Operations
 
