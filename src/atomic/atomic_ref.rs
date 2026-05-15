@@ -325,8 +325,10 @@ impl<T> AtomicRef<T> {
     ///
     /// # Returns
     ///
-    /// `Ok(previous)` when the reference was replaced, or `Err(actual)` when
-    /// the pointer comparison failed.
+    /// The reference observed before the operation completed. If it is pointer
+    /// equal to `current`, the exchange succeeded and `new` was stored.
+    /// Otherwise, it is the actual current reference that prevented the
+    /// exchange.
     ///
     /// # Note
     ///
@@ -363,7 +365,10 @@ impl<T> AtomicRef<T> {
     ///
     /// # Returns
     ///
-    /// The reference before the operation.
+    /// `Ok(previous)` when the reference was replaced, or `Err(actual)` when
+    /// the pointer comparison failed. This implementation currently delegates
+    /// to [`compare_set_weak`](Self::compare_set_weak), so it does not add
+    /// extra spurious failures.
     ///
     /// # Example
     ///
