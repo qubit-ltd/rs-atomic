@@ -99,7 +99,7 @@ impl AtomicF64 {
     /// assert_eq!(atomic.load(), 3.14159);
     /// ```
     #[inline]
-    pub fn new(value: f64) -> Self {
+    pub const fn new(value: f64) -> Self {
         Self {
             inner: AtomicU64::new(value.to_bits()),
         }

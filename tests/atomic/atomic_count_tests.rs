@@ -13,6 +13,9 @@ use std::thread;
 
 use qubit_atomic::AtomicCount;
 
+static CONST_INITIALIZED_COUNTER: AtomicCount = AtomicCount::new(42);
+static CONST_INITIALIZED_ZERO_COUNTER: AtomicCount = AtomicCount::zero();
+
 #[test]
 fn test_new_get() {
     let counter = AtomicCount::new(42);
@@ -20,10 +23,21 @@ fn test_new_get() {
 }
 
 #[test]
+fn test_new_is_const() {
+    assert_eq!(CONST_INITIALIZED_COUNTER.get(), 42);
+}
+
+#[test]
 fn test_zero() {
     let counter = AtomicCount::zero();
     assert_eq!(counter.get(), 0);
     assert!(counter.is_zero());
+}
+
+#[test]
+fn test_zero_is_const() {
+    assert_eq!(CONST_INITIALIZED_ZERO_COUNTER.get(), 0);
+    assert!(CONST_INITIALIZED_ZERO_COUNTER.is_zero());
 }
 
 #[test]

@@ -118,7 +118,7 @@ impl AtomicF32 {
     /// assert_eq!(atomic.load(), 3.14);
     /// ```
     #[inline]
-    pub fn new(value: f32) -> Self {
+    pub const fn new(value: f32) -> Self {
         Self {
             inner: AtomicU32::new(value.to_bits()),
         }

@@ -1094,6 +1094,5 @@ macro_rules! impl_atomic_number {
                 self.fetch_div(divisor)
             }
         }
-
     };
 }

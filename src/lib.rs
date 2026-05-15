@@ -28,6 +28,8 @@
 //! - Primitive atomic values: `Atomic<bool>`, `Atomic<i32>`,
 //!   `Atomic<u64>`, `Atomic<usize>`, `Atomic<f32>`, and other supported
 //!   primitive types
+//! - Concrete primitive wrappers under `atomic::primitive` for `const`
+//!   initialization use cases
 //! - Counter atomic types: `AtomicCount`, `AtomicSignedCount`
 //! - Reference atomic type: `AtomicRef<T>`
 //! - Shared-owner wrappers: `ArcAtomic<T>`, `ArcAtomicRef<T>`,

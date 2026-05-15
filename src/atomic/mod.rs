@@ -51,3 +51,26 @@ pub use atomic::Atomic;
 pub use atomic_count::AtomicCount;
 pub use atomic_ref::AtomicRef;
 pub use atomic_signed_count::AtomicSignedCount;
+
+/// Concrete primitive atomic wrappers for const initialization use cases.
+///
+/// Prefer [`Atomic<T>`](Atomic) for normal usage. These concrete wrappers are
+/// exposed under an explicit module path so callers opt into them intentionally
+/// when they need a `const fn new` constructor.
+pub mod primitive {
+    pub use super::atomic_bool::AtomicBool;
+    pub use super::atomic_f32::AtomicF32;
+    pub use super::atomic_f64::AtomicF64;
+    pub use super::atomic_i8::AtomicI8;
+    pub use super::atomic_i16::AtomicI16;
+    pub use super::atomic_i32::AtomicI32;
+    pub use super::atomic_i64::AtomicI64;
+    pub use super::atomic_i128::AtomicI128;
+    pub use super::atomic_isize::AtomicIsize;
+    pub use super::atomic_u8::AtomicU8;
+    pub use super::atomic_u16::AtomicU16;
+    pub use super::atomic_u32::AtomicU32;
+    pub use super::atomic_u64::AtomicU64;
+    pub use super::atomic_u128::AtomicU128;
+    pub use super::atomic_usize::AtomicUsize;
+}
