@@ -16,6 +16,7 @@ mod arc_atomic_ref_tests;
 mod arc_atomic_signed_count_tests;
 mod arc_atomic_tests;
 mod atomic_bool_tests;
+mod atomic_const_new_tests;
 mod atomic_count_tests;
 mod atomic_f32_tests;
 mod atomic_f64_tests;
