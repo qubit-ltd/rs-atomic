@@ -29,7 +29,7 @@ Design a Rust atomic wrapper that achieves:
 3. **Safety**: Guarantee memory safety and thread safety
 4. **Performance**: Zero-cost abstraction, no additional overhead
 5. **Flexibility**: Expose underlying types through `inner()` method, allowing advanced users to directly operate on standard library types
-6. **Simplicity**: Small API surface, avoid API bloat by not providing `_with_ordering` variants
+6. **Simplicity**: Small API surface, only expose selected `_with_ordering` variants for integer read-modify-write operations
 
 ### 1.3 Non-Goals
 
@@ -300,8 +300,8 @@ Our default memory ordering choices follow these principles:
 
 | Operation | Ordering | Use Case | Rationale |
 |------|--------|---------|---------|
-| `get()` | `Acquire` | Read shared state | Ensures seeing latest writes from other threads |
-| `set(value)` | `Release` | Update shared state | Ensures previous writes are visible to other threads |
+| `load()` | `Acquire` | Read shared state | Ensures seeing latest writes from other threads |
+| `store(value)` | `Release` | Update shared state | Ensures previous writes are visible to other threads |
 | `swap(value)` | `AcqRel` | Atomic exchange | Needs both read and write synchronization semantics |
 | `compare_set()` | `AcqRel` / `Acquire` | CAS operation | Standard CAS semantics, write on success needs Release |
 
@@ -592,15 +592,17 @@ fn ensure_initialized() {
 
 #### 2.2.4 Memory Ordering Choices for Atomic Reference Operations
 
-`AtomicRef<T>` wraps atomic pointers to `Arc<T>`, used for atomic updates of shared immutable data:
+`AtomicRef<T>` wraps `Arc<T>` values in an `arc_swap::ArcSwap<T>` backend,
+used for atomic updates of shared immutable data:
 
 | Operation | Ordering | Use Case | Rationale |
 |------|--------|---------|---------|
-| `load()` | `Acquire` | Get current reference | Ensures seeing latest data pointed to by reference |
-| `store(value)` | `Release` | Update reference | Ensures new data is visible to other threads |
-| `swap(value)` | `AcqRel` | Atomic exchange reference | Standard read-modify-write semantics |
-| `compare_set()` | `AcqRel` / `Acquire` | CAS operation | Standard CAS semantics |
-| `fetch_update(f)` | `AcqRel` / `Acquire` | Functional update | CAS loop |
+| `load()` | ArcSwap default | Get an owned `Arc<T>` clone | Safe snapshot of the current reference |
+| `load_guard()` | ArcSwap default | Short-lived read | Avoids cloning `Arc<T>` on the fast path |
+| `store(value)` | ArcSwap default | Update reference | Publishes a new shared value |
+| `swap(value)` | ArcSwap default | Atomic exchange reference | Standard atomic replacement semantics |
+| `compare_set()` | ArcSwap CAS | CAS operation | Pointer equality via `Arc::ptr_eq` |
+| `fetch_update(f)` | ArcSwap CAS loop | Functional update | Retry loop around pointer-based CAS |
 
 **Typical Usage Pattern**:
 
@@ -649,19 +651,19 @@ fn read_data() {
 
 | Operation | Ordering | Use Case | Rationale |
 |------|--------|---------|---------|
-| `get()` | `Acquire` | Read float value | Standard read operation |
-| `set(value)` | `Release` | Set float value | Standard write operation |
+| `load()` | `Acquire` | Read float value | Standard read operation |
+| `store(value)` | `Release` | Set float value | Standard write operation |
 | `swap(value)` | `AcqRel` | Atomic exchange | Standard read-modify-write semantics |
-| `add(delta)` | `AcqRel` / `Acquire` | Atomic addition | CAS loop implementation |
-| `sub(delta)` | `AcqRel` / `Acquire` | Atomic subtraction | CAS loop implementation |
-| `mul(factor)` | `AcqRel` / `Acquire` | Atomic multiplication | CAS loop implementation |
-| `div(divisor)` | `AcqRel` / `Acquire` | Atomic division | CAS loop implementation |
+| `fetch_add(delta)` | `AcqRel` / `Acquire` | Atomic addition | CAS loop implementation |
+| `fetch_sub(delta)` | `AcqRel` / `Acquire` | Atomic subtraction | CAS loop implementation |
+| `fetch_mul(factor)` | `AcqRel` / `Acquire` | Atomic multiplication | CAS loop implementation |
+| `fetch_div(divisor)` | `AcqRel` / `Acquire` | Atomic division | CAS loop implementation |
 
 **Notes**:
 
 1. **Floating-point arithmetic implemented through CAS loops**, not hardware atomic instructions
 2. **Poor performance in high contention scenarios**, suitable for low-contention statistics scenarios
-3. **Arithmetic operations return new value instead of old value**, because old value is usually not needed
+3. **Arithmetic operations return the old value**, following Rust's `fetch_*` convention
 
 **Typical Usage Pattern**:
 
@@ -771,7 +773,8 @@ atomic.inner().store(42, Ordering::Release);
 1. Avoid API bloat (otherwise method count doubles)
 2. Prevent misuse (users may not understand memory ordering)
 3. Maintain simplicity (aligns with "easy-to-use wrapper" positioning)
-4. `inner()` is the perfect escape hatch (advanced users know what they're doing)
+4. Selected integer read-modify-write operations expose `_with_ordering` variants for common synchronization-sensitive counters
+5. `inner()` remains the escape hatch for advanced users
 
 ## 3. Type Design
 
@@ -865,7 +868,7 @@ All atomic types should implement the following traits:
 - `PartialOrd`/`Ord`: Same as above
 - `Hash`: Same as above
 
-**Reason**: Implementing these traits would hide read operations, users should explicitly call `get()` or `inner().load()`.
+**Reason**: Implementing these traits would hide read operations, users should explicitly call `load()` or `inner().load()`.
 
 ```rust
 // ❌ Misleading code
@@ -1125,7 +1128,7 @@ The following table shows the underlying `std::sync::atomic` functions used by b
 ///
 /// * `T` - The data type being referenced
 pub struct AtomicRef<T> {
-    inner: std::sync::atomic::AtomicPtr<Arc<T>>,
+    inner: arc_swap::ArcSwap<T>,
 }
 
 impl<T> AtomicRef<T> {
@@ -1134,6 +1137,9 @@ impl<T> AtomicRef<T> {
 
     /// Load the current reference (using Acquire ordering)
     pub fn load(&self) -> Arc<T>;
+
+    /// Load the current reference as an ArcSwap guard
+    pub fn load_guard(&self) -> arc_swap::Guard<Arc<T>>;
 
     /// Store a new reference (using Release ordering)
     pub fn store(&self, value: Arc<T>);
@@ -1158,8 +1164,13 @@ impl<T> AtomicRef<T> {
     where
         F: Fn(&Arc<T>) -> Arc<T>;
 
-    /// Get reference to underlying standard library type
-    pub fn inner(&self) -> &std::sync::atomic::AtomicPtr<Arc<T>>;
+    /// Conditionally update reference using a function, returning the old reference
+    pub fn try_update<F>(&self, f: F) -> Option<Arc<T>>
+    where
+        F: Fn(&Arc<T>) -> Option<Arc<T>>;
+
+    /// Get reference to underlying ArcSwap backend
+    pub fn inner(&self) -> &arc_swap::ArcSwap<T>;
 }
 
 impl<T> Clone for AtomicRef<T> {
@@ -1170,22 +1181,27 @@ impl<T> Clone for AtomicRef<T> {
 }
 ```
 
-The following table shows the underlying `std::sync::atomic` functions used by reference type methods and their default memory orderings:
+The following table shows the reference type methods and their backing
+`arc-swap` operations:
 
-| **API Method** | **Underlying Function** | **Default Ordering** | **Description** |
-|-------------|-------------|---------------|---------|
-| `new(value)` | - | - | Create new atomic reference |
-| `load()` | `load(ordering)` | `Acquire` | Load current reference (clone Arc) |
-| `store(value)` | `store(value, ordering)` | `Release` | Store new reference |
-| `swap(value)` | `swap(value, ordering)` | `AcqRel` | Swap reference and return old reference |
-| `compare_set(current, new)` | `compare_exchange(current, new, success, failure)` + pointer comparison | Success: `AcqRel`<br>Failure: `Acquire` | CAS operation, returns `Result` |
-| `compare_set_weak(current, new)` | `compare_exchange_weak(current, new, success, failure)` + pointer comparison | Success: `AcqRel`<br>Failure: `Acquire` | Weak CAS (allows spurious failures) |
-| `compare_and_exchange(current, new)` | `compare_exchange(current, new, success, failure)` + pointer comparison | Success: `AcqRel`<br>Failure: `Acquire` | CAS operation, returns old reference |
-| `compare_and_exchange_weak(current, new)` | `compare_exchange_weak(current, new, success, failure)` + pointer comparison | Success: `AcqRel`<br>Failure: `Acquire` | Weak CAS, returns old reference |
-| `fetch_update(f)` | CAS loop + `compare_exchange_weak` + pointer comparison | Success: `AcqRel`<br>Failure: `Acquire` | Update using function, return old reference |
-| `inner()` | - | - | Get reference to underlying atomic type |
+| **API Method** | **Backing Operation** | **Description** |
+|-------------|-------------|---------|
+| `new(value)` | `ArcSwap::from(value)` | Create new atomic reference |
+| `load()` | `load_full()` | Load current reference as an owned `Arc<T>` |
+| `load_guard()` | `load()` | Load current reference as a short-lived guard |
+| `store(value)` | `store(value)` | Store new reference |
+| `swap(value)` | `swap(value)` | Swap reference and return old reference |
+| `compare_set(current, new)` | `compare_and_swap(current, new)` + pointer comparison | CAS operation, returns `Result` |
+| `compare_set_weak(current, new)` | delegates to `compare_set` | Weak-shaped API; current backend does not add spurious failures |
+| `compare_and_exchange(current, new)` | `compare_and_swap(current, new)` | CAS operation, returns the observed reference |
+| `compare_and_exchange_weak(current, new)` | delegates to `compare_and_exchange` | Weak-shaped API; current backend does not add spurious failures |
+| `fetch_update(f)` | CAS loop + `compare_set_weak` | Update using function, return old reference |
+| `try_update(f)` | CAS loop + `compare_set_weak` | Conditional update, return `Option<old_reference>` |
+| `inner()` | - | Get reference to underlying `ArcSwap<T>` |
 
-**Note**: The underlying implementation of `AtomicRef<T>` is based on `AtomicPtr<Arc<T>>`, and all operations are based on pointer comparison (`Arc::ptr_eq`), not value equality.
+**Note**: The underlying implementation of `AtomicRef<T>` is based on
+`arc_swap::ArcSwap<T>`. CAS-style operations compare references by pointer
+identity (`Arc::ptr_eq`), not by value equality.
 
 ### 4.5 Floating-Point Type Operations
 
@@ -1858,33 +1874,30 @@ fn mixed_usage() {
 |------|---------|--------------|---------|------|
 | **Construction** | `new(int value)` | `new(value: i32)` | ✅ | Constructor |
 | **Basic Operations** | `get()` | `load()` | ✅ | Read current value |
-| | `set(int newValue)` | `set(value: i32)` | ✅ | Set new value |
+| | `set(int newValue)` | `store(value: i32)` | ✅ | Set new value |
 | | `lazySet(int newValue)` | `inner().store(value, Relaxed)` | ✅ | Lazy write (via inner) |
 | | `getAndSet(int newValue)` | `swap(value: i32)` | ✅ | Swap value (Rust naming convention) |
 | **Increment/Decrement** | `getAndIncrement()` | `fetch_inc()` | ✅ | Post-increment |
-| | `incrementAndGet()` | `fetch_inc()` | ✅ | Pre-increment |
+| | `incrementAndGet()` | - | ❌ | New-value variant is not exposed; derive it from `fetch_inc()` when needed |
 | | `getAndDecrement()` | `fetch_dec()` | ✅ | Post-decrement |
-| | `decrementAndGet()` | `fetch_dec()` | ✅ | Pre-decrement |
+| | `decrementAndGet()` | - | ❌ | New-value variant is not exposed; derive it from `fetch_dec()` when needed |
 | **Arithmetic Operations** | `getAndAdd(int delta)` | `fetch_add(delta: i32)` | ✅ | Post-add |
-| | `addAndGet(int delta)` | `fetch_add(delta: i32)` | ✅ | Pre-add |
+| | `addAndGet(int delta)` | - | ❌ | New-value variant is not exposed; derive it from `fetch_add()` when needed |
 | | - | `fetch_sub(delta: i32)` | ✅ | Post-subtract (Rust-specific) |
-| | - | `fetch_sub(delta: i32)` | ✅ | Pre-subtract (Rust-specific) |
 | **CAS Operations** | `compareAndSet(int expect, int update)` | `compare_set(current, new)` | ✅ | CAS, returns Result |
-| | `weakCompareAndSet(int expect, int update)` | `compare_and_set_weak(current, new)` | ✅ | Weak CAS, returns Result |
+| | `weakCompareAndSet(int expect, int update)` | `compare_set_weak(current, new)` | ✅ | Weak CAS, returns Result |
 | | `compareAndExchange(int expect, int update)` (Java 9+) | `compare_and_exchange(current, new)` | ✅ | CAS, returns actual value |
 | | `weakCompareAndExchange(int expect, int update)` (Java 9+) | `compare_and_exchange_weak(current, new)` | ✅ | Weak CAS, returns actual value |
 | **Functional Updates** | `getAndUpdate(IntUnaryOperator f)` (Java 8+) | `fetch_update(f)` | ✅ | Function update, returns old value |
-| | `updateAndGet(IntUnaryOperator f)` (Java 8+) | `fetch_update(f)` | ✅ | Function update, returns new value |
+| | `updateAndGet(IntUnaryOperator f)` (Java 8+) | - | ❌ | New-value functional variant is not exposed |
 | | `getAndAccumulate(int x, IntBinaryOperator f)` (Java 8+) | `fetch_accumulate(x, f)` | ✅ | Accumulate, returns old value |
-| | `accumulateAndGet(int x, IntBinaryOperator f)` (Java 8+) | `fetch_accumulate(x, f)` | ✅ | Accumulate, returns new value |
+| | `accumulateAndGet(int x, IntBinaryOperator f)` (Java 8+) | - | ❌ | New-value accumulate variant is not exposed |
 | **Bitwise Operations** | - | `fetch_and(value)` | ✅ | Bitwise AND (Rust-specific) |
 | | - | `fetch_or(value)` | ✅ | Bitwise OR (Rust-specific) |
 | | - | `fetch_xor(value)` | ✅ | Bitwise XOR (Rust-specific) |
 | | - | `fetch_not()` | ✅ | Bitwise NOT (Rust-specific) |
 | **Max/Min Values** | - | `fetch_max(value)` | ✅ | Get maximum (Rust-specific) |
-| | - | `fetch_max(value)` | ✅ | Get maximum, returns new value |
 | | - | `fetch_min(value)` | ✅ | Get minimum (Rust-specific) |
-| | - | `fetch_min(value)` | ✅ | Get minimum, returns new value |
 | **Type Conversion** | `intValue()` | `load()` | ✅ | Use load() directly |
 | | `longValue()` | `load() as i64` | ✅ | Convert via as |
 | | `floatValue()` | `load() as f32` | ✅ | Convert via as |
@@ -1892,8 +1905,6 @@ fn mixed_usage() {
 | **Other** | `toString()` | `Display` trait | ✅ | Implement Display |
 | | - | `Debug` trait | ✅ | Implement Debug |
 | | - | `inner()` | ✅ | Access underlying type (Rust-specific) |
-| | - | `into_inner()` | ✅ | Convert to underlying type |
-| | - | `from_std(std_atomic)` | ✅ | Create from standard library type |
 
 #### 9.1.2 AtomicBoolean (JDK) vs AtomicBool (Rust)
 
@@ -1905,15 +1916,12 @@ fn mixed_usage() {
 | | `lazySet(boolean newValue)` | `inner().store(value, Relaxed)` | ✅ | Lazy write (via inner) |
 | | `getAndSet(boolean newValue)` | `swap(value: bool)` | ✅ | Swap value |
 | **CAS Operations** | `compareAndSet(boolean expect, boolean update)` | `compare_set(current, new)` | ✅ | CAS, returns Result |
-| | `weakCompareAndSet(boolean expect, boolean update)` | `compare_and_set_weak(current, new)` | ✅ | Weak CAS, returns Result |
+| | `weakCompareAndSet(boolean expect, boolean update)` | `compare_set_weak(current, new)` | ✅ | Weak CAS, returns Result |
 | | `compareAndExchange(boolean expect, boolean update)` (Java 9+) | `compare_and_exchange(current, new)` | ✅ | CAS, returns actual value |
 | | `weakCompareAndExchange(boolean expect, boolean update)` (Java 9+) | `compare_and_exchange_weak(current, new)` | ✅ | Weak CAS, returns actual value |
 | **Boolean-Specific** | - | `fetch_set()` | ✅ | Set to true, return old value (Rust-specific) |
-| | - | `fetch_set()` | ✅ | Set to true, return new value |
 | | - | `fetch_clear()` | ✅ | Set to false, return old value |
-| | - | `fetch_clear()` | ✅ | Set to false, return new value |
 | | - | `fetch_not()` | ✅ | Negate, return old value (Rust-specific) |
-| | - | `fetch_not()` | ✅ | Negate, return new value |
 | | - | `fetch_and(bool)` | ✅ | Logical AND (Rust-specific) |
 | | - | `fetch_or(bool)` | ✅ | Logical OR (Rust-specific) |
 | | - | `fetch_xor(bool)` | ✅ | Logical XOR (Rust-specific) |
@@ -1929,16 +1937,16 @@ fn mixed_usage() {
 | **Construction** | `new(V value)` | `new(value: Arc<T>)` | ✅ | Constructor (using Arc) |
 | **Basic Operations** | `get()` | `load()` | ✅ | Get current reference |
 | | `set(V newValue)` | `store(value: Arc<T>)` | ✅ | Set new reference |
-| | `lazySet(V newValue)` | `inner().store(ptr, Relaxed)` | ✅ | Lazy write (via inner) |
+| | `lazySet(V newValue)` | - | ❌ | Separate lazy-set API is not exposed; use `store()` |
 | | `getAndSet(V newValue)` | `swap(value: Arc<T>)` | ✅ | Swap reference |
 | **CAS Operations** | `compareAndSet(V expect, V update)` | `compare_set(&current, new)` | ✅ | CAS (pointer equality), returns Result |
-| | `weakCompareAndSet(V expect, V update)` | `compare_and_set_weak(&current, new)` | ✅ | Weak CAS, returns Result |
+| | `weakCompareAndSet(V expect, V update)` | `compare_set_weak(&current, new)` | ✅ | Weak CAS, returns Result |
 | | `compareAndExchange(V expect, V update)` (Java 9+) | `compare_and_exchange(&current, new)` | ✅ | CAS, returns actual reference |
 | | `weakCompareAndExchange(V expect, V update)` (Java 9+) | `compare_and_exchange_weak(&current, new)` | ✅ | Weak CAS, returns actual reference |
 | **Functional Updates** | `getAndUpdate(UnaryOperator<V> f)` (Java 8+) | `fetch_update(f)` | ✅ | Function update, returns old reference |
-| | `updateAndGet(UnaryOperator<V> f)` (Java 8+) | `fetch_update(f)` | ✅ | Function update, returns new reference |
-| | `getAndAccumulate(V x, BinaryOperator<V> f)` (Java 8+) | `fetch_accumulate(x, f)` | ✅ | Accumulate, returns old reference |
-| | `accumulateAndGet(V x, BinaryOperator<V> f)` (Java 8+) | `fetch_accumulate(x, f)` | ✅ | Accumulate, returns new reference |
+| | `updateAndGet(UnaryOperator<V> f)` (Java 8+) | - | ❌ | New-reference functional variant is not exposed |
+| | `getAndAccumulate(V x, BinaryOperator<V> f)` (Java 8+) | - | ❌ | Accumulate variant is not exposed |
+| | `accumulateAndGet(V x, BinaryOperator<V> f)` (Java 8+) | - | ❌ | Accumulate variant is not exposed |
 | **Other** | `toString()` | `Display` trait (if T: Display) | ✅ | Implement Display |
 | | - | `inner()` | ✅ | Access underlying type |
 | | - | `Clone` trait | ✅ | Clone atomic reference |
@@ -1968,12 +1976,12 @@ fn mixed_usage() {
 | Feature | JDK | Rust Wrapper | Description |
 |-----|-----|----------|------|
 | **Memory Ordering** | Implicit (using volatile semantics) | Default automatic + `inner()` optional | 99% scenarios no need to worry, 1% scenarios control via `inner()` |
-| **Weak CAS** | `weakCompareAndSet` | `compare_and_set_weak` | Both equivalent |
+| **Weak CAS** | `weakCompareAndSet` | `compare_set_weak` | Both equivalent |
 | **Reference Type** | `AtomicReference<V>` | `AtomicRef<T>` | Rust uses `Arc<T>` |
 | **Nullability** | Allows `null` | Use `Option<Arc<T>>` | Rust doesn't allow null pointers |
 | **Bitwise Operations** | Partial support | Full support | Rust supports all bitwise operations |
 | **Max/Min Values** | Java 9+ support | Supported | Both equivalent |
-| **API Count** | ~20 methods/type | ~25 methods/type | Rust doesn't provide `_with_ordering` variants, API more concise |
+| **API Count** | ~20 methods/type | ~25 methods/type | Rust exposes selected `_with_ordering` variants without mirroring every method |
 
 ### 9.3 Rust-Specific Advantages
 
@@ -1997,7 +2005,7 @@ JDK introduced the `compareAndExchange` method in Java 9, with the main differen
 **Advantage**: In CAS loops, `compareAndExchange` can reduce one read operation:
 
 ```rust
-// Using compare_and_set (need to extract value from Err on failure)
+// Using compare_set (need to extract value from Err on failure)
 let mut current = atomic.load();
 loop {
     match atomic.compare_set(current, new_value) {
@@ -2068,7 +2076,7 @@ impl<T> AtomicRef<T> {
 
 #### 9.4.4 Usage Recommendations
 
-**When to use `compare_and_set`**:
+**When to use `compare_set`**:
 - Only need to know if operation succeeded
 - Prefer Rust's `Result` style error handling
 - Code already accustomed to using `match` to handle `Result`
@@ -2099,7 +2107,7 @@ pub fn compare_exchange(
 
 Our wrapper provides two styles:
 
-1. **`compare_and_set`**: Wraps standard library's `compare_exchange`, returns `Result<(), T>`
+1. **`compare_set`**: Wraps standard library's `compare_exchange`, returns `Result<(), T>`
 2. **`compare_and_exchange`**: Wraps standard library's `compare_exchange`, directly returns `T`
 
 Both are thin wrappers over standard library API, no performance difference.
@@ -2121,8 +2129,8 @@ Our default memory ordering strategy has been carefully designed to balance corr
 
 | Operation Type | Default Ordering | Performance Characteristics | Typical Scenario |
 |---------|--------------|---------|---------|
-| **Read** (`get()`) | `Acquire` | Lightweight, read barrier | Read shared state |
-| **Write** (`set()`) | `Release` | Lightweight, write barrier | Update shared state |
+| **Read** (`load()`) | `Acquire` | Lightweight, read barrier | Read shared state |
+| **Write** (`store()`) | `Release` | Lightweight, write barrier | Update shared state |
 | **RMW** (`swap()`, CAS) | `AcqRel` | Moderate, read-write barrier | Atomic swap |
 | **Counter** (`fetch_inc()`) | `Relaxed` | Fastest, no barrier | Pure counting statistics |
 
@@ -2500,7 +2508,7 @@ counter.fetch_add(1000);
 ```rust
 // ✅ Use weak CAS in loop
 loop {
-    match atomic.compare_and_set_weak(current, new) {
+    match atomic.compare_set_weak(current, new) {
         Ok(_) => break,
         Err(actual) => current = actual,
     }
@@ -2528,42 +2536,16 @@ use std::sync::atomic::AtomicI32 as StdAtomicI32;
 use std::sync::atomic::Ordering;
 use qubit_atomic::AtomicI32;
 
-impl From<StdAtomicI32> for AtomicI32 {
-    fn from(std_atomic: StdAtomicI32) -> Self {
-        Self::new(std_atomic.load(Ordering::Acquire))
-    }
-}
-
-impl AtomicI32 {
-    /// Get reference to underlying standard library type
-    ///
-    /// This is the primary method for interoperating with standard library.
-    #[inline]
-    pub fn inner(&self) -> &StdAtomicI32 {
-        &self.inner
-    }
-
-    /// Convert to standard library type (consumes self)
-    pub fn into_inner(self) -> StdAtomicI32 {
-        self.inner
-    }
-
-    /// Create from standard library type (zero-cost)
-    pub const fn from_std(std_atomic: StdAtomicI32) -> Self {
-        Self { inner: std_atomic }
-    }
-}
-
 // Usage example
 fn interop_example() {
-    // Wrapper type -> Standard library type
+    // Wrapper type -> standard library operation through inner()
     let atomic = AtomicI32::new(42);
     let std_atomic = atomic.inner();
     std_atomic.store(100, Ordering::Release);
 
-    // Standard library type -> Wrapper type
+    // Standard library type -> wrapper type by loading the current value
     let std_atomic = StdAtomicI32::new(42);
-    let atomic = AtomicI32::from_std(std_atomic);
+    let atomic = AtomicI32::new(std_atomic.load(Ordering::Acquire));
 }
 ```
 
@@ -2710,8 +2692,8 @@ counter.fetch_inc();
 // Keep old code unchanged
 let old_counter = std::sync::atomic::AtomicI32::new(0);
 
-// Bridge via from_std
-let new_counter = AtomicI32::from_std(old_counter);
+// Create a wrapper from the current observed value
+let new_counter = AtomicI32::new(old_counter.load(std::sync::atomic::Ordering::Acquire));
 ```
 
 **Phase 3: Evaluate performance-critical paths**
@@ -2737,7 +2719,7 @@ use qubit_atomic::AtomicI32;
 
 let counter = AtomicI32::new(0);
 let old = counter.fetch_inc();
-let current = counter.fetch_inc();
+let current = counter.fetch_inc().wrapping_add(1);
 let success = counter.compare_set(10, 20).is_ok();
 ```
 
@@ -2752,6 +2734,7 @@ This design document includes complete design for all the following types:
 - ✅ `AtomicI16`, `AtomicU16` - 16-bit integers (direct wrapper of standard library)
 - ✅ `AtomicI32`, `AtomicU32` - 32-bit integers (direct wrapper of standard library)
 - ✅ `AtomicI64`, `AtomicU64` - 64-bit integers (direct wrapper of standard library)
+- ✅ `AtomicI128`, `AtomicU128` - 128-bit integers (implemented via `portable-atomic`)
 - ✅ `AtomicIsize`, `AtomicUsize` - Pointer-sized integers (direct wrapper of standard library)
 
 **Floating-Point Types**:
@@ -2775,12 +2758,6 @@ This design document includes complete design for all the following types:
 
 4. **Statistics Features**
    - Built-in counting and statistics functionality
-
-5. **128-bit Integer Support** (platform-dependent)
-   - `AtomicI128`, `AtomicU128`
-   - Requires conditional compilation support
-   - Recommend depending on `portable_atomic` crate
-   - Fallback to lock-based implementation on unsupported platforms
 
 ### 12.3 Compatibility Considerations
 
