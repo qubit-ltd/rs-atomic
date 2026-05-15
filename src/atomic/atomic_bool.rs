@@ -345,11 +345,8 @@ impl AtomicBool {
     ///
     /// # Returns
     ///
-    /// The value observed before the operation completed. Because this
-    /// operation may fail spuriously, a returned value equal to `current` does
-    /// not by itself prove that `new` was stored; use
-    /// [`compare_set_weak`](Self::compare_set_weak) when the caller needs an
-    /// explicit success indicator.
+    /// `Ok(previous)` when the value was replaced, or `Err(actual)` when the
+    /// comparison failed, including possible spurious failure.
     ///
     /// # Example
     ///
@@ -359,23 +356,20 @@ impl AtomicBool {
     /// let flag = Atomic::<bool>::new(false);
     /// let mut current = flag.load();
     /// loop {
-    ///     let prev = flag.compare_and_exchange_weak(current, true);
-    ///     if flag.load() {
-    ///         break;
+    ///     match flag.compare_and_exchange_weak(current, true) {
+    ///         Ok(previous) => {
+    ///             assert_eq!(previous, current);
+    ///             break;
+    ///         }
+    ///         Err(actual) => current = actual,
     ///     }
-    ///     current = prev;
     /// }
     /// assert_eq!(flag.load(), true);
     /// ```
     #[inline]
-    pub fn compare_and_exchange_weak(&self, current: bool, new: bool) -> bool {
-        match self
-            .inner
+    pub fn compare_and_exchange_weak(&self, current: bool, new: bool) -> Result<bool, bool> {
+        self.inner
             .compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire)
-        {
-            Ok(prev) => prev,
-            Err(actual) => actual,
-        }
     }
 
     /// Atomically sets the value to `true`, returning the old value.
@@ -857,7 +851,7 @@ impl AtomicOps for AtomicBool {
     }
 
     #[inline]
-    fn compare_exchange_weak(&self, current: bool, new: bool) -> bool {
+    fn compare_exchange_weak(&self, current: bool, new: bool) -> Result<bool, bool> {
         self.compare_and_exchange_weak(current, new)
     }
 

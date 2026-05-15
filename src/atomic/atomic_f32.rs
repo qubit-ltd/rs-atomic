@@ -370,11 +370,9 @@ impl AtomicF32 {
     ///
     /// # Returns
     ///
-    /// The value observed before the operation completed. Because this
-    /// operation may fail spuriously, a returned value with the same raw bits
-    /// as `current` does not by itself prove that `new` was stored; use
-    /// [`compare_set_weak`](Self::compare_set_weak) when the caller needs an
-    /// explicit success indicator.
+    /// `Ok(previous)` when the value was replaced, or `Err(actual)` when the
+    /// comparison failed, including possible spurious failure. Values preserve
+    /// their exact raw bit patterns.
     ///
     /// # Example
     ///
@@ -384,25 +382,24 @@ impl AtomicF32 {
     /// let atomic = Atomic::<f32>::new(1.0);
     /// let mut current = atomic.load();
     /// loop {
-    ///     let prev = atomic.compare_and_exchange_weak(current, current + 1.0);
-    ///     if atomic.load() == 2.0 {
-    ///         break;
+    ///     match atomic.compare_and_exchange_weak(current, current + 1.0) {
+    ///         Ok(_) => break,
+    ///         Err(actual) => current = actual,
     ///     }
-    ///     current = prev;
     /// }
     /// assert_eq!(atomic.load(), 2.0);
     /// ```
     #[inline]
-    pub fn compare_and_exchange_weak(&self, current: f32, new: f32) -> f32 {
-        match self.inner.compare_exchange_weak(
-            current.to_bits(),
-            new.to_bits(),
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
-            Ok(prev_bits) => f32::from_bits(prev_bits),
-            Err(actual_bits) => f32::from_bits(actual_bits),
-        }
+    pub fn compare_and_exchange_weak(&self, current: f32, new: f32) -> Result<f32, f32> {
+        self.inner
+            .compare_exchange_weak(
+                current.to_bits(),
+                new.to_bits(),
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            )
+            .map(f32::from_bits)
+            .map_err(f32::from_bits)
     }
 
     /// Atomically adds a value, returning the old value.
@@ -781,7 +778,7 @@ impl AtomicOps for AtomicF32 {
     }
 
     #[inline]
-    fn compare_exchange_weak(&self, current: f32, new: f32) -> f32 {
+    fn compare_exchange_weak(&self, current: f32, new: f32) -> Result<f32, f32> {
         self.compare_and_exchange_weak(current, new)
     }
 

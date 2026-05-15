@@ -564,11 +564,13 @@ macro_rules! test_atomic_integer {
                     let handle = thread::spawn(move || {
                         let mut current = atomic.load();
                         loop {
-                            let prev = atomic.compare_and_exchange_weak(current, current + 1);
-                            if prev == current {
-                                break;
+                            match atomic.compare_and_exchange_weak(current, current + 1) {
+                                Ok(prev) => {
+                                    assert_eq!(prev, current);
+                                    break;
+                                }
+                                Err(actual) => current = actual,
                             }
-                            current = prev;
                         }
                     });
                     handles.push(handle);
@@ -631,7 +633,7 @@ macro_rules! test_atomic_integer {
                 fn test_atomic(atomic: &Atomic<$value_type>) {
                     atomic.store(10);
                     let prev = atomic.compare_and_exchange_weak(10, 20);
-                    assert_eq!(prev, 10);
+                    assert_eq!(prev, Ok(10));
                     assert_eq!(atomic.load(), 20);
                 }
 
@@ -711,7 +713,7 @@ macro_rules! test_atomic_integer {
             fn test_compare_and_exchange_weak_success() {
                 let atomic = Atomic::<$value_type>::new(10);
                 let prev = atomic.compare_and_exchange_weak(10, 20);
-                assert_eq!(prev, 10);
+                assert_eq!(prev, Ok(10));
                 assert_eq!(atomic.load(), 20);
             }
 
@@ -801,7 +803,7 @@ macro_rules! test_atomic_integer {
             fn test_compare_and_exchange_weak_failure_path() {
                 let atomic = Atomic::<$value_type>::new(10);
                 let prev = atomic.compare_and_exchange_weak(5, 15);
-                assert_eq!(prev, 10);
+                assert_eq!(prev, Err(10));
                 assert_eq!(atomic.load(), 10);
             }
 
@@ -826,11 +828,13 @@ macro_rules! test_atomic_integer {
                 for i in 0..100 {
                     let mut current = atomic.load();
                     loop {
-                        let prev = atomic.compare_and_exchange_weak(current, i);
-                        if prev == current {
-                            break;
+                        match atomic.compare_and_exchange_weak(current, i) {
+                            Ok(prev) => {
+                                assert_eq!(prev, current);
+                                break;
+                            }
+                            Err(actual) => current = actual,
                         }
-                        current = prev;
                     }
                 }
                 assert_eq!(atomic.load(), 99);
@@ -847,7 +851,7 @@ macro_rules! test_atomic_integer {
             fn test_compare_exchange_weak_with_zero() {
                 let atomic = Atomic::<$value_type>::new(0);
                 let prev = atomic.compare_and_exchange_weak(0, 42);
-                assert_eq!(prev, 0);
+                assert_eq!(prev, Ok(0));
                 assert_eq!(atomic.load(), 42);
             }
 
@@ -956,7 +960,7 @@ macro_rules! test_atomic_integer {
             fn test_compare_and_exchange_weak_success_path() {
                 let atomic = Atomic::<$value_type>::new(10);
                 let prev = atomic.compare_and_exchange_weak(10, 15);
-                assert_eq!(prev, 10);
+                assert_eq!(prev, Ok(10));
                 assert_eq!(atomic.load(), 15);
             }
 

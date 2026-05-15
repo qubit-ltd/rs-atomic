@@ -325,7 +325,8 @@ impl<T> AtomicRef<T> {
     ///
     /// # Returns
     ///
-    /// The reference before the operation.
+    /// `Ok(previous)` when the reference was replaced, or `Err(actual)` when
+    /// the pointer comparison failed.
     ///
     /// # Note
     ///
@@ -373,18 +374,24 @@ impl<T> AtomicRef<T> {
     /// let atomic = AtomicRef::new(Arc::new(10));
     /// let mut current = atomic.load();
     /// loop {
-    ///     let prev =
-    ///         atomic.compare_and_exchange_weak(&current, Arc::new(20));
-    ///     if Arc::ptr_eq(&prev, &current) {
-    ///         break;
+    ///     match atomic.compare_and_exchange_weak(&current, Arc::new(20)) {
+    ///         Ok(previous) => {
+    ///             assert!(Arc::ptr_eq(&previous, &current));
+    ///             break;
+    ///         }
+    ///         Err(actual) => current = actual,
     ///     }
-    ///     current = prev;
     /// }
     /// assert_eq!(*atomic.load(), 20);
     /// ```
     #[inline]
-    pub fn compare_and_exchange_weak(&self, current: &Arc<T>, new: Arc<T>) -> Arc<T> {
-        self.compare_and_exchange(current, new)
+    pub fn compare_and_exchange_weak(
+        &self,
+        current: &Arc<T>,
+        new: Arc<T>,
+    ) -> Result<Arc<T>, Arc<T>> {
+        self.compare_set_weak(current, new)
+            .map(|()| Arc::clone(current))
     }
 
     /// Updates the reference using a function, returning the old reference.

@@ -150,7 +150,11 @@ pub trait AtomicOps {
     /// not by itself prove that `new` was stored; use
     /// [`compare_set_weak`](Self::compare_set_weak) when the caller needs an
     /// explicit success indicator.
-    fn compare_exchange_weak(&self, current: Self::Value, new: Self::Value) -> Self::Value;
+    fn compare_exchange_weak(
+        &self,
+        current: Self::Value,
+        new: Self::Value,
+    ) -> Result<Self::Value, Self::Value>;
 
     /// Updates the value using a function, returning the old value.
     ///

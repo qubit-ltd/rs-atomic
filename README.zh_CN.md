@@ -448,7 +448,7 @@ fn main() {
 | `compare_set(current, new)` | CAS 操作，返回 Result | AcqRel/Acquire |
 | `compare_set_weak(current, new)` | 弱 CAS，返回 Result | AcqRel/Acquire |
 | `compare_and_exchange(current, new)` | CAS 操作，返回实际值 | AcqRel/Acquire |
-| `compare_and_exchange_weak(current, new)` | 弱 CAS，返回实际值 | AcqRel/Acquire |
+| `compare_and_exchange_weak(current, new)` | 弱 CAS，返回 `Result<观察值, 实际值>` | AcqRel/Acquire |
 | `fetch_update(f)` | 函数式更新，返回旧值 | AcqRel/Acquire |
 | `update_and_get(f)` | 函数式更新，返回新值 | AcqRel/Acquire |
 | `try_update(f)` | 条件函数式更新，返回 `Option<旧值>` | AcqRel/Acquire |
@@ -610,6 +610,9 @@ atomic.inner().store(42, Ordering::Release);
 基础类型封装使用 `#[repr(transparent)]` 和 `#[inline]`，让泛型 API 编译到底层原子操作：
 
 ```rust
+use qubit_atomic::Atomic;
+use std::sync::atomic::Ordering;
+
 // 我们的封装
 let atomic = Atomic::<i32>::new(0);
 let value = atomic.load();
