@@ -30,6 +30,7 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 - **Floating-Point Specializations**: `Atomic<f32>` and `Atomic<f64>` with arithmetic operations implemented through CAS loops
 - **Rich Operations**: increment, decrement, add, subtract, multiply, divide, bitwise operations, max/min
 - **Functional Updates**: `fetch_update`, `try_update`, `fetch_accumulate`
+- **Const Initialization Escape Hatch**: concrete wrappers such as `atomic::primitive::AtomicBool`, `AtomicU8`, and `AtomicF32` expose `const fn new` for static initialization when the generic `Atomic<T>` constructor cannot be used in const contexts
 
 ### 🔢 **`AtomicCount` and `AtomicSignedCount`**
 - **`AtomicCount`**: non-negative count for active tasks, in-flight requests, and resource usage
@@ -51,6 +52,7 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 
 ### 🎯 **Focused Public API**
 - **Atomic<T>**: Generic entry point for primitive atomic values
+- **`atomic::primitive::*`**: concrete primitive wrappers for `const fn new` use cases
 - **AtomicRef<T>**: Atomic `Arc<T>` reference wrapper
 - **`AtomicCount` / `AtomicSignedCount`**: checked state-oriented semantics (no silent wrap)
 - **`ArcAtomic*` wrappers**: ergonomic shared ownership without spelling `Arc<...>` at every use site
@@ -80,6 +82,22 @@ assert_eq!(wide.load(), 0u64);
 
 let narrow = Atomic::<i16>::new(0);
 assert_eq!(narrow.load(), 0i16);
+```
+
+### Const initialization
+
+Use `Atomic<T>` for normal code. The generic constructor is the intended entry point because it keeps the public API compact and lets one type cover all primitive specializations.
+
+Rust stable does not currently allow `Atomic<T>::new` to call the hidden trait constructor in a `const fn`. When you need a `static` or another const-initialized atomic value, use the concrete wrappers under `atomic::primitive`:
+
+```rust
+use qubit_atomic::atomic::primitive::{
+    AtomicBool,
+    AtomicU32,
+};
+
+static READY: AtomicBool = AtomicBool::new(false);
+static NEXT_ID: AtomicU32 = AtomicU32::new(1);
 ```
 
 ### Example: concurrent `Atomic<i32>`
@@ -536,7 +554,7 @@ atomic.inner().store(42, Ordering::Release);
 
 | Feature | JDK | Qubit Atomic | Notes |
 |---------|-----|---------------|-------|
-| **Basic Types** | 3 types | `Atomic<T>` specializations | Rust supports more integer, floating-point, boolean, and counter use cases |
+| **Basic Types** | 3 types | `Atomic<T>` specializations; `atomic::primitive::*` for const initialization | Rust supports more integer, floating-point, boolean, and counter use cases |
 | **Memory Ordering** | Implicit (volatile) | Default + `inner()` optional | Rust more flexible |
 | **Weak CAS** | `weakCompareAndSet` | `compare_set_weak` | Equivalent |
 | **Reference Type** | `AtomicReference<V>` | `AtomicRef<T>` | Rust uses `Arc<T>` |
