@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{
     Path,
@@ -85,18 +86,7 @@ fn compile_snippets(manifest_dir: &Path, output_dir: &Path, name: &str, snippets
     let bin_dir = crate_dir.join("src/bin");
     fs::create_dir_all(&bin_dir).expect("failed to create snippet bin directory");
 
-    let manifest = format!(
-        r#"[package]
-name = "qubit-atomic-{name}-markdown-doctest"
-version = "0.0.0"
-edition = "2024"
-publish = false
-
-[dependencies]
-qubit-atomic = {{ path = "{}" }}
-"#,
-        manifest_dir.display()
-    );
+    let manifest = build_markdown_doctest_manifest(name, manifest_dir);
     fs::write(crate_dir.join("Cargo.toml"), manifest).expect("failed to write snippet Cargo.toml");
 
     for (index, snippet) in snippets.iter().enumerate() {
@@ -120,6 +110,45 @@ qubit-atomic = {{ path = "{}" }}
     );
 }
 
+/// Builds the temporary manifest used for compiling README snippets.
+fn build_markdown_doctest_manifest(name: &str, manifest_dir: &Path) -> String {
+    let manifest_path = toml_basic_string(&manifest_dir.display().to_string());
+
+    format!(
+        r#"[package]
+name = "qubit-atomic-{name}-markdown-doctest"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+qubit-atomic = {{ path = "{manifest_path}" }}
+"#
+    )
+}
+
+/// Escapes a value for use inside a TOML basic string.
+fn toml_basic_string(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for ch in value.chars() {
+        match ch {
+            '\u{0008}' => escaped.push_str("\\b"),
+            '\t' => escaped.push_str("\\t"),
+            '\n' => escaped.push_str("\\n"),
+            '\u{000C}' => escaped.push_str("\\f"),
+            '\r' => escaped.push_str("\\r"),
+            '"' => escaped.push_str("\\\""),
+            '\\' => escaped.push_str("\\\\"),
+            '\u{0000}'..='\u{001F}' | '\u{007F}' => {
+                write!(escaped, "\\u{:04X}", ch as u32)
+                    .expect("writing TOML escape to String should not fail");
+            }
+            _ => escaped.push(ch),
+        }
+    }
+    escaped
+}
+
 fn normalize_snippet(snippet: &str) -> String {
     let allow_example_noise = "#![allow(dead_code, unused_imports, unused_variables)]\n";
     if snippet.contains("fn main") {
@@ -127,4 +156,16 @@ fn normalize_snippet(snippet: &str) -> String {
     } else {
         format!("{allow_example_noise}fn main() {{\n{snippet}\n}}\n")
     }
+}
+
+/// Verifies that Windows dependency paths are valid TOML basic strings.
+#[test]
+fn test_build_markdown_doctest_manifest_escapes_windows_dependency_path() {
+    let manifest =
+        build_markdown_doctest_manifest("readme_en", Path::new(r"D:\a\rs-atomic\rs-atomic"));
+
+    assert!(
+        manifest.contains(r#"qubit-atomic = { path = "D:\\a\\rs-atomic\\rs-atomic" }"#),
+        "Windows backslashes must be escaped in the generated TOML manifest:\n{manifest}"
+    );
 }
