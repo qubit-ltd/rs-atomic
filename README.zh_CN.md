@@ -445,8 +445,8 @@ fn main() {
 | `load()` | 加载当前值 | Acquire |
 | `store(value)` | 存储新值 | Release |
 | `swap(value)` | 交换值，返回旧值 | AcqRel |
-| `compare_set(current, new)` | CAS 操作，返回 Result | AcqRel/Acquire |
-| `compare_and_exchange(current, new)` | CAS 操作，返回实际值 | AcqRel/Acquire |
+| `compare_set(current, new)` | CAS 操作，显式返回成功或失败 | AcqRel/Acquire |
+| `compare_and_exchange(current, new)` | CAS 操作，返回观察值 | AcqRel/Acquire |
 | `fetch_update(f)` | 函数式更新，返回旧值 | AcqRel/Acquire |
 | `update_and_get(f)` | 函数式更新，返回新值 | AcqRel/Acquire |
 | `try_update(f)` | 条件函数式更新，返回 `Option<旧值>` | AcqRel/Acquire |
@@ -460,8 +460,8 @@ fn main() {
 
 | 方法 | 描述 | 内存序 |
 |-----|------|--------|
-| `compare_set_weak(current, new)` | 弱 CAS，返回 Result | AcqRel/Acquire |
-| `compare_and_exchange_weak(current, new)` | 弱 CAS，返回 `Result<观察值, 实际值>` | AcqRel/Acquire |
+| `compare_set_weak(current, new)` | 弱 CAS，显式返回成功或失败 | AcqRel/Acquire |
+| `compare_and_exchange_weak(current, new)` | 弱 CAS，返回 `Ok(观察值)` 或 `Err(实际值)` | AcqRel/Acquire |
 
 ### 整数操作
 

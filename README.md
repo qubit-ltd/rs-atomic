@@ -446,8 +446,8 @@ fn main() {
 | `load()` | Load current value | Acquire |
 | `store(value)` | Store new value | Release |
 | `swap(value)` | Swap value, return old | AcqRel |
-| `compare_set(current, new)` | CAS operation, return Result | AcqRel/Acquire |
-| `compare_and_exchange(current, new)` | CAS operation, return actual value | AcqRel/Acquire |
+| `compare_set(current, new)` | CAS operation, return explicit success/failure | AcqRel/Acquire |
+| `compare_and_exchange(current, new)` | CAS operation, return observed value | AcqRel/Acquire |
 | `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
 | `update_and_get(f)` | Functional update, return new | AcqRel/Acquire |
 | `try_update(f)` | Conditional functional update, return `Option<old>` | AcqRel/Acquire |
@@ -461,8 +461,8 @@ not available on `AtomicRef<T>`, which exposes strong pointer CAS only.
 
 | Method | Description | Memory Ordering |
 |--------|-------------|-----------------|
-| `compare_set_weak(current, new)` | Weak CAS, return Result | AcqRel/Acquire |
-| `compare_and_exchange_weak(current, new)` | Weak CAS, return `Result<observed, actual>` | AcqRel/Acquire |
+| `compare_set_weak(current, new)` | Weak CAS, return explicit success/failure | AcqRel/Acquire |
+| `compare_and_exchange_weak(current, new)` | Weak CAS, return `Ok(observed)` or `Err(actual)` | AcqRel/Acquire |
 
 ### Integer Operations
 
