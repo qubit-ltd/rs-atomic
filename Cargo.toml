@@ -1,6 +1,6 @@
 [package]
 name = "qubit-atomic"
-version = "0.13.0"
+version = "0.13.1"
 edition = "2024"
 rust-version = "1.94"
 authors = ["Haixing Hu <starfish.hu@gmail.com>"]
@@ -12,17 +12,15 @@ documentation = "https://docs.rs/qubit-atomic"
 readme = "README.md"
 keywords = ["atomic", "concurrent", "lock-free", "thread-safe", "qubit"]
 categories = ["concurrency", "data-structures"]
-exclude = [
-    "align-ci.sh",
-    "ci-check.sh",
-    "coverage.sh",
-    "style-check.sh",
-    "update-submodule.sh",
-    ".gitmodules",
-    ".rs-ci/**",
-    ".github/*",
-    ".llvm-cov.toml",
-    ".cargo-audit.toml.example",
+include = [
+    "/Cargo.toml",
+    "/LICENSE",
+    "/README.md",
+    "/README.zh_CN.md",
+    "/doc/**/user_guide*.md",
+    "/examples/**",
+    "/src/**",
+    "/tests/**",
 ]
 
 [lib]
