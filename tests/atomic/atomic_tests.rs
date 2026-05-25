@@ -142,10 +142,7 @@ fn test_try_update_success_and_reject_paths() {
         Some(false),
     );
     assert!(bool_atomic.load());
-    assert_eq!(
-        bool_atomic.try_update(|current| (!current).then_some(true)),
-        None,
-    );
+    assert_eq!(bool_atomic.try_update(|current| (!current).then_some(true)), None,);
     assert!(bool_atomic.load());
 
     let int_atomic = Atomic::<i32>::new(3);

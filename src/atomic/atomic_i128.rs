@@ -16,9 +16,4 @@
 
 use std::sync::atomic::Ordering;
 
-impl_atomic_number!(
-    AtomicI128,
-    portable_atomic::AtomicI128,
-    i128,
-    "128-bit signed integer"
-);
+impl_atomic_number!(AtomicI128, portable_atomic::AtomicI128, i128, "128-bit signed integer");

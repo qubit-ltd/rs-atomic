@@ -29,11 +29,7 @@ fn test_readme_rust_examples_compile() {
 
     for (name, path) in readmes {
         let snippets = extract_rust_snippets(&path);
-        assert!(
-            !snippets.is_empty(),
-            "{} should contain Rust snippets",
-            path.display()
-        );
+        assert!(!snippets.is_empty(), "{} should contain Rust snippets", path.display());
         compile_snippets(&manifest_dir, &output_dir, name, &snippets);
     }
 }
@@ -91,8 +87,7 @@ fn compile_snippets(manifest_dir: &Path, output_dir: &Path, name: &str, snippets
 
     for (index, snippet) in snippets.iter().enumerate() {
         let source = normalize_snippet(snippet);
-        fs::write(bin_dir.join(format!("snippet_{index}.rs")), source)
-            .expect("failed to write snippet source");
+        fs::write(bin_dir.join(format!("snippet_{index}.rs")), source).expect("failed to write snippet source");
     }
 
     let status = Command::new("cargo")
@@ -104,10 +99,7 @@ fn compile_snippets(manifest_dir: &Path, output_dir: &Path, name: &str, snippets
         .status()
         .expect("failed to run cargo check for markdown snippets");
 
-    assert!(
-        status.success(),
-        "markdown Rust snippets failed to compile for {name}"
-    );
+    assert!(status.success(), "markdown Rust snippets failed to compile for {name}");
 }
 
 /// Builds the temporary manifest used for compiling README snippets.
@@ -140,8 +132,7 @@ fn toml_basic_string(value: &str) -> String {
             '"' => escaped.push_str("\\\""),
             '\\' => escaped.push_str("\\\\"),
             '\u{0000}'..='\u{001F}' | '\u{007F}' => {
-                write!(escaped, "\\u{:04X}", ch as u32)
-                    .expect("writing TOML escape to String should not fail");
+                write!(escaped, "\\u{:04X}", ch as u32).expect("writing TOML escape to String should not fail");
             }
             _ => escaped.push(ch),
         }
@@ -161,8 +152,7 @@ fn normalize_snippet(snippet: &str) -> String {
 /// Verifies that Windows dependency paths are valid TOML basic strings.
 #[test]
 fn test_build_markdown_doctest_manifest_escapes_windows_dependency_path() {
-    let manifest =
-        build_markdown_doctest_manifest("readme_en", Path::new(r"D:\a\rs-atomic\rs-atomic"));
+    let manifest = build_markdown_doctest_manifest("readme_en", Path::new(r"D:\a\rs-atomic\rs-atomic"));
 
     assert!(
         manifest.contains(r#"qubit-atomic = { path = "D:\\a\\rs-atomic\\rs-atomic" }"#),

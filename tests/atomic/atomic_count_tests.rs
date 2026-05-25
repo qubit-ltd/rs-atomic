@@ -221,9 +221,7 @@ fn test_concurrent_inc() {
     }
 
     for handle in handles {
-        handle
-            .join()
-            .expect("counter increment thread should not panic");
+        handle.join().expect("counter increment thread should not panic");
     }
 
     assert_eq!(counter.get(), THREAD_COUNT * ITERATIONS);
@@ -247,9 +245,7 @@ fn test_concurrent_dec_to_zero() {
     }
 
     for handle in handles {
-        handle
-            .join()
-            .expect("counter decrement thread should not panic");
+        handle.join().expect("counter decrement thread should not panic");
     }
 
     assert_eq!(counter.get(), 0);

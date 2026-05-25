@@ -16,9 +16,4 @@
 
 use std::sync::atomic::Ordering;
 
-impl_atomic_number!(
-    AtomicU16,
-    std::sync::atomic::AtomicU16,
-    u16,
-    "16-bit unsigned integer"
-);
+impl_atomic_number!(AtomicU16, std::sync::atomic::AtomicU16, u16, "16-bit unsigned integer");

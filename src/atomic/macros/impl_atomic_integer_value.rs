@@ -37,20 +37,12 @@ macro_rules! impl_atomic_integer_value {
             }
 
             #[inline]
-            fn fetch_add_with_ordering(
-                primitive: &Self::Primitive,
-                value: Self,
-                ordering: Ordering,
-            ) -> Self {
+            fn fetch_add_with_ordering(primitive: &Self::Primitive, value: Self, ordering: Ordering) -> Self {
                 primitive.fetch_add_with_ordering(value, ordering)
             }
 
             #[inline]
-            fn fetch_sub_with_ordering(
-                primitive: &Self::Primitive,
-                value: Self,
-                ordering: Ordering,
-            ) -> Self {
+            fn fetch_sub_with_ordering(primitive: &Self::Primitive, value: Self, ordering: Ordering) -> Self {
                 primitive.fetch_sub_with_ordering(value, ordering)
             }
 

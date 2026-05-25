@@ -580,17 +580,13 @@ fn test_arc_reference_counting() {
 #[test]
 fn test_compare_set_success_no_arc_leak() {
     let drops = Arc::new(AtomicUsize::new(0));
-    let initial = Arc::new(DropTracked {
-        drops: drops.clone(),
-    });
+    let initial = Arc::new(DropTracked { drops: drops.clone() });
     let atomic = AtomicRef::new(initial.clone());
 
     const ITERATIONS: usize = 100;
     for _ in 0..ITERATIONS {
         let current = atomic.load();
-        let new_value = Arc::new(DropTracked {
-            drops: drops.clone(),
-        });
+        let new_value = Arc::new(DropTracked { drops: drops.clone() });
         assert!(atomic.compare_set(&current, new_value).is_ok());
     }
 

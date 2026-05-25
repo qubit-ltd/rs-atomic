@@ -1304,9 +1304,7 @@ where
     /// ```
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Atomic")
-            .field("value", &self.load())
-            .finish()
+        f.debug_struct("Atomic").field("value", &self.load()).finish()
     }
 }
 

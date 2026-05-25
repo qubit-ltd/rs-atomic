@@ -273,18 +273,9 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 20);
             /// ```
             #[inline]
-            pub fn compare_set(
-                &self,
-                current: $value_type,
-                new: $value_type,
-            ) -> Result<(), $value_type> {
+            pub fn compare_set(&self, current: $value_type, new: $value_type) -> Result<(), $value_type> {
                 self.inner
-                    .compare_exchange(
-                        current,
-                        new,
-                        Ordering::AcqRel,
-                        Ordering::Acquire,
-                    )
+                    .compare_exchange(current, new, Ordering::AcqRel, Ordering::Acquire)
                     .map(|_| ())
             }
 
@@ -327,18 +318,9 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 11);
             /// ```
             #[inline]
-            pub fn compare_set_weak(
-                &self,
-                current: $value_type,
-                new: $value_type,
-            ) -> Result<(), $value_type> {
+            pub fn compare_set_weak(&self, current: $value_type, new: $value_type) -> Result<(), $value_type> {
                 self.inner
-                    .compare_exchange_weak(
-                        current,
-                        new,
-                        Ordering::AcqRel,
-                        Ordering::Acquire,
-                    )
+                    .compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire)
                     .map(|_| ())
             }
 
@@ -374,17 +356,11 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 20);
             /// ```
             #[inline]
-            pub fn compare_and_exchange(
-                &self,
-                current: $value_type,
-                new: $value_type,
-            ) -> $value_type {
-                match self.inner.compare_exchange(
-                    current,
-                    new,
-                    Ordering::AcqRel,
-                    Ordering::Acquire,
-                ) {
+            pub fn compare_and_exchange(&self, current: $value_type, new: $value_type) -> $value_type {
+                match self
+                    .inner
+                    .compare_exchange(current, new, Ordering::AcqRel, Ordering::Acquire)
+                {
                     Ok(prev) => prev,
                     Err(actual) => actual,
                 }
@@ -433,12 +409,8 @@ macro_rules! impl_atomic_number {
                 current: $value_type,
                 new: $value_type,
             ) -> Result<$value_type, $value_type> {
-                self.inner.compare_exchange_weak(
-                    current,
-                    new,
-                    Ordering::AcqRel,
-                    Ordering::Acquire,
-                )
+                self.inner
+                    .compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire)
             }
 
             /// Increments the value by 1, returning the old value.
@@ -630,11 +602,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 15);
             /// ```
             #[inline]
-            pub fn fetch_add_with_ordering(
-                &self,
-                delta: $value_type,
-                ordering: Ordering,
-            ) -> $value_type {
+            pub fn fetch_add_with_ordering(&self, delta: $value_type, ordering: Ordering) -> $value_type {
                 self.inner.fetch_add(delta, ordering)
             }
 
@@ -696,11 +664,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 7);
             /// ```
             #[inline]
-            pub fn fetch_sub_with_ordering(
-                &self,
-                delta: $value_type,
-                ordering: Ordering,
-            ) -> $value_type {
+            pub fn fetch_sub_with_ordering(&self, delta: $value_type, ordering: Ordering) -> $value_type {
                 self.inner.fetch_sub(delta, ordering)
             }
 
@@ -775,7 +739,6 @@ macro_rules! impl_atomic_number {
                 assert!(divisor != 0, "division by zero");
                 self.fetch_update(|current| current.wrapping_div(divisor))
             }
-
 
             /// Performs bitwise AND, returning the old value.
             ///
@@ -1108,11 +1071,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 15);
             /// ```
             #[inline]
-            pub fn fetch_accumulate<F>(
-                &self,
-                x: $value_type,
-                mut f: F,
-            ) -> $value_type
+            pub fn fetch_accumulate<F>(&self, x: $value_type, mut f: F) -> $value_type
             where
                 F: FnMut($value_type, $value_type) -> $value_type,
             {
@@ -1155,11 +1114,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 15);
             /// ```
             #[inline]
-            pub fn accumulate_and_get<F>(
-                &self,
-                x: $value_type,
-                mut f: F,
-            ) -> $value_type
+            pub fn accumulate_and_get<F>(&self, x: $value_type, mut f: F) -> $value_type
             where
                 F: FnMut($value_type, $value_type) -> $value_type,
             {
@@ -1293,29 +1248,17 @@ macro_rules! impl_atomic_number {
             }
 
             #[inline]
-            fn compare_set(
-                &self,
-                current: $value_type,
-                new: $value_type,
-            ) -> Result<(), $value_type> {
+            fn compare_set(&self, current: $value_type, new: $value_type) -> Result<(), $value_type> {
                 self.compare_set(current, new)
             }
 
             #[inline]
-            fn compare_set_weak(
-                &self,
-                current: $value_type,
-                new: $value_type,
-            ) -> Result<(), $value_type> {
+            fn compare_set_weak(&self, current: $value_type, new: $value_type) -> Result<(), $value_type> {
                 self.compare_set_weak(current, new)
             }
 
             #[inline]
-            fn compare_exchange(
-                &self,
-                current: $value_type,
-                new: $value_type,
-            ) -> $value_type {
+            fn compare_exchange(&self, current: $value_type, new: $value_type) -> $value_type {
                 self.compare_and_exchange(current, new)
             }
 
