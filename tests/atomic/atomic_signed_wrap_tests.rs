@@ -26,11 +26,5 @@ test_signed_fetch_div_min_by_negative_one_wraps!(i8, test_i8_fetch_div_min_by_ne
 test_signed_fetch_div_min_by_negative_one_wraps!(i16, test_i16_fetch_div_min_by_negative_one_wraps);
 test_signed_fetch_div_min_by_negative_one_wraps!(i32, test_i32_fetch_div_min_by_negative_one_wraps);
 test_signed_fetch_div_min_by_negative_one_wraps!(i64, test_i64_fetch_div_min_by_negative_one_wraps);
-test_signed_fetch_div_min_by_negative_one_wraps!(
-    i128,
-    test_i128_fetch_div_min_by_negative_one_wraps
-);
-test_signed_fetch_div_min_by_negative_one_wraps!(
-    isize,
-    test_isize_fetch_div_min_by_negative_one_wraps
-);
+test_signed_fetch_div_min_by_negative_one_wraps!(i128, test_i128_fetch_div_min_by_negative_one_wraps);
+test_signed_fetch_div_min_by_negative_one_wraps!(isize, test_isize_fetch_div_min_by_negative_one_wraps);

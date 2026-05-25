@@ -148,11 +148,7 @@ pub trait AtomicOps {
     /// `Ok(previous)` when the value was replaced, or `Err(actual)` when the
     /// comparison failed, including possible spurious failure. The returned
     /// value preserves the observed value in both cases.
-    fn compare_exchange_weak(
-        &self,
-        current: Self::Value,
-        new: Self::Value,
-    ) -> Result<Self::Value, Self::Value>;
+    fn compare_exchange_weak(&self, current: Self::Value, new: Self::Value) -> Result<Self::Value, Self::Value>;
 
     /// Updates the value using a function, returning the old value.
     ///

@@ -103,11 +103,7 @@ pub trait AtomicIntegerValue: AtomicValue {
     /// # Returns
     ///
     /// The value before the addition.
-    fn fetch_add_with_ordering(
-        primitive: &Self::Primitive,
-        value: Self,
-        ordering: Ordering,
-    ) -> Self;
+    fn fetch_add_with_ordering(primitive: &Self::Primitive, value: Self, ordering: Ordering) -> Self;
 
     /// Subtracts a delta with an explicit memory ordering and returns the
     /// previous value.
@@ -122,11 +118,7 @@ pub trait AtomicIntegerValue: AtomicValue {
     /// # Returns
     ///
     /// The value before the subtraction.
-    fn fetch_sub_with_ordering(
-        primitive: &Self::Primitive,
-        value: Self,
-        ordering: Ordering,
-    ) -> Self;
+    fn fetch_sub_with_ordering(primitive: &Self::Primitive, value: Self, ordering: Ordering) -> Self;
 
     /// Applies bitwise AND and returns the previous value.
     ///
@@ -246,13 +238,5 @@ impl_atomic_integer_value!(u64, atomic_u64::AtomicU64, std::sync::atomic::Atomic
 impl_atomic_integer_value!(i64, atomic_i64::AtomicI64, std::sync::atomic::AtomicI64);
 impl_atomic_integer_value!(u128, atomic_u128::AtomicU128, portable_atomic::AtomicU128);
 impl_atomic_integer_value!(i128, atomic_i128::AtomicI128, portable_atomic::AtomicI128);
-impl_atomic_integer_value!(
-    usize,
-    atomic_usize::AtomicUsize,
-    std::sync::atomic::AtomicUsize
-);
-impl_atomic_integer_value!(
-    isize,
-    atomic_isize::AtomicIsize,
-    std::sync::atomic::AtomicIsize
-);
+impl_atomic_integer_value!(usize, atomic_usize::AtomicUsize, std::sync::atomic::AtomicUsize);
+impl_atomic_integer_value!(isize, atomic_isize::AtomicIsize, std::sync::atomic::AtomicIsize);

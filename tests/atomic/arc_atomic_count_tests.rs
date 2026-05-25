@@ -60,8 +60,5 @@ fn test_arc_atomic_count_default_debug_display() {
     counter.add(42);
 
     assert_eq!(format!("{counter}"), "42");
-    assert_eq!(
-        format!("{counter:?}"),
-        "ArcAtomicCount { value: 42, strong_count: 1 }",
-    );
+    assert_eq!(format!("{counter:?}"), "ArcAtomicCount { value: 42, strong_count: 1 }",);
 }

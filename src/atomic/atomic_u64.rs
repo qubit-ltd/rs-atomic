@@ -16,9 +16,4 @@
 
 use std::sync::atomic::Ordering;
 
-impl_atomic_number!(
-    AtomicU64,
-    std::sync::atomic::AtomicU64,
-    u64,
-    "64-bit unsigned integer"
-);
+impl_atomic_number!(AtomicU64, std::sync::atomic::AtomicU64, u64, "64-bit unsigned integer");

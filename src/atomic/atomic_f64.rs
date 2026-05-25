@@ -188,12 +188,7 @@ impl AtomicF64 {
     #[inline]
     pub fn compare_set(&self, current: f64, new: f64) -> Result<(), f64> {
         self.inner
-            .compare_exchange(
-                current.to_bits(),
-                new.to_bits(),
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            )
+            .compare_exchange(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
             .map(|_| ())
             .map_err(f64::from_bits)
     }
@@ -224,12 +219,7 @@ impl AtomicF64 {
     #[inline]
     pub fn compare_set_weak(&self, current: f64, new: f64) -> Result<(), f64> {
         self.inner
-            .compare_exchange_weak(
-                current.to_bits(),
-                new.to_bits(),
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            )
+            .compare_exchange_weak(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
             .map(|_| ())
             .map_err(f64::from_bits)
     }
@@ -254,12 +244,10 @@ impl AtomicF64 {
     /// otherwise it is the actual value that prevented the exchange.
     #[inline]
     pub fn compare_and_exchange(&self, current: f64, new: f64) -> f64 {
-        match self.inner.compare_exchange(
-            current.to_bits(),
-            new.to_bits(),
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
+        match self
+            .inner
+            .compare_exchange(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
+        {
             Ok(prev_bits) => f64::from_bits(prev_bits),
             Err(actual_bits) => f64::from_bits(actual_bits),
         }
@@ -285,12 +273,7 @@ impl AtomicF64 {
     #[inline]
     pub fn compare_and_exchange_weak(&self, current: f64, new: f64) -> Result<f64, f64> {
         self.inner
-            .compare_exchange_weak(
-                current.to_bits(),
-                new.to_bits(),
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            )
+            .compare_exchange_weak(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
             .map(f64::from_bits)
             .map_err(f64::from_bits)
     }

@@ -89,8 +89,5 @@ fn test_arc_atomic_ref_debug_display() {
     let atomic = ArcAtomicRef::from_value(42);
 
     assert_eq!(format!("{atomic}"), "42");
-    assert_eq!(
-        format!("{atomic:?}"),
-        "ArcAtomicRef { value: 42, strong_count: 1 }",
-    );
+    assert_eq!(format!("{atomic:?}"), "ArcAtomicRef { value: 42, strong_count: 1 }",);
 }

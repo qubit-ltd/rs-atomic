@@ -92,11 +92,7 @@ fn main() {
     println!("   Initial value: {}", counter.load());
 
     let old = counter.fetch_accumulate(2, |a, b| a * b);
-    println!(
-        "   After multiplying by 2 - old: {}, new: {}",
-        old,
-        counter.load()
-    );
+    println!("   After multiplying by 2 - old: {}, new: {}", old, counter.load());
 
     let new = counter.accumulate_and_get(3, |a, b| a + b);
     println!("   After adding 3 - new: {}", new);

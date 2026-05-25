@@ -229,9 +229,7 @@ fn test_concurrent_add() {
     }
 
     for handle in handles {
-        handle
-            .join()
-            .expect("signed counter add thread should not panic");
+        handle.join().expect("signed counter add thread should not panic");
     }
 
     assert_eq!(counter.get(), (THREAD_COUNT * ITERATIONS) as isize);
@@ -264,9 +262,7 @@ fn test_concurrent_add_and_sub() {
     }
 
     for handle in handles {
-        handle
-            .join()
-            .expect("signed counter worker thread should not panic");
+        handle.join().expect("signed counter worker thread should not panic");
     }
 
     assert_eq!(counter.get(), 0);

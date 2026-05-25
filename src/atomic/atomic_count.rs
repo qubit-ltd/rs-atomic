@@ -351,12 +351,10 @@ impl AtomicCount {
         let mut current = self.get();
         loop {
             let next = update(current)?;
-            match self.inner.compare_exchange_weak(
-                current,
-                next,
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            ) {
+            match self
+                .inner
+                .compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire)
+            {
                 Ok(_) => return Some(next),
                 Err(actual) => current = actual,
             }
@@ -404,9 +402,7 @@ impl fmt::Debug for AtomicCount {
     /// A formatting result from the formatter.
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("AtomicCount")
-            .field("value", &self.get())
-            .finish()
+        f.debug_struct("AtomicCount").field("value", &self.get()).finish()
     }
 }
 

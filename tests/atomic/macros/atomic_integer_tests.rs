@@ -18,11 +18,7 @@ macro_rules! test_atomic_integer {
             use std::sync::atomic::Ordering;
             use std::thread;
 
-            fn compare_set_weak_until_success(
-                atomic: &Atomic<$value_type>,
-                current: $value_type,
-                new: $value_type,
-            ) {
+            fn compare_set_weak_until_success(atomic: &Atomic<$value_type>, current: $value_type, new: $value_type) {
                 for _ in 0..128 {
                     match atomic.compare_set_weak(current, new) {
                         Ok(()) => return,
@@ -890,10 +886,9 @@ macro_rules! test_atomic_integer {
                 use std::sync::atomic::Ordering;
 
                 let atomic = Atomic::<$value_type>::new(10);
-                let result =
-                    atomic
-                        .inner()
-                        .compare_exchange(5, 15, Ordering::AcqRel, Ordering::Acquire);
+                let result = atomic
+                    .inner()
+                    .compare_exchange(5, 15, Ordering::AcqRel, Ordering::Acquire);
                 assert!(result.is_err());
                 assert_eq!(result.unwrap_err(), 10);
                 assert_eq!(atomic.load(), 10);
@@ -904,12 +899,9 @@ macro_rules! test_atomic_integer {
                 use std::sync::atomic::Ordering;
 
                 let atomic = Atomic::<$value_type>::new(10);
-                let result = atomic.inner().compare_exchange_weak(
-                    5,
-                    15,
-                    Ordering::AcqRel,
-                    Ordering::Acquire,
-                );
+                let result = atomic
+                    .inner()
+                    .compare_exchange_weak(5, 15, Ordering::AcqRel, Ordering::Acquire);
                 assert!(result.is_err());
                 assert_eq!(result.unwrap_err(), 10);
                 assert_eq!(atomic.load(), 10);
@@ -999,10 +991,9 @@ macro_rules! test_atomic_integer {
                 use std::sync::atomic::Ordering;
 
                 let atomic = Atomic::<$value_type>::new(10);
-                let result =
-                    atomic
-                        .inner()
-                        .compare_exchange(10, 15, Ordering::AcqRel, Ordering::Acquire);
+                let result = atomic
+                    .inner()
+                    .compare_exchange(10, 15, Ordering::AcqRel, Ordering::Acquire);
                 assert!(result.is_ok());
                 assert_eq!(result.unwrap(), 10);
                 assert_eq!(atomic.load(), 15);
@@ -1013,12 +1004,9 @@ macro_rules! test_atomic_integer {
                 use std::sync::atomic::Ordering;
 
                 let atomic = Atomic::<$value_type>::new(10);
-                let result = atomic.inner().compare_exchange_weak(
-                    10,
-                    15,
-                    Ordering::AcqRel,
-                    Ordering::Acquire,
-                );
+                let result = atomic
+                    .inner()
+                    .compare_exchange_weak(10, 15, Ordering::AcqRel, Ordering::Acquire);
                 assert!(result.is_ok());
                 assert_eq!(result.unwrap(), 10);
                 assert_eq!(atomic.load(), 15);
