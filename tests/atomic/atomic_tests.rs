@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::cell::Cell;
 use std::sync::atomic::Ordering;
@@ -142,41 +140,50 @@ fn test_try_update_success_and_reject_paths() {
         Some(false),
     );
     assert!(bool_atomic.load());
-    assert_eq!(bool_atomic.try_update(|current| (!current).then_some(true)), None,);
+    assert_eq!(
+        bool_atomic.try_update(|current| (!current).then_some(true)),
+        None,
+    );
     assert!(bool_atomic.load());
 
     let int_atomic = Atomic::<i32>::new(3);
     assert_eq!(
-        int_atomic.try_update(|current| (current % 2 == 1).then_some(current + 1)),
+        int_atomic
+            .try_update(|current| (current % 2 == 1).then_some(current + 1)),
         Some(3),
     );
     assert_eq!(int_atomic.load(), 4);
     assert_eq!(
-        int_atomic.try_update(|current| (current % 2 == 1).then_some(current + 1)),
+        int_atomic
+            .try_update(|current| (current % 2 == 1).then_some(current + 1)),
         None,
     );
     assert_eq!(int_atomic.load(), 4);
 
     let float_atomic = Atomic::<f32>::new(1.5);
     assert_eq!(
-        float_atomic.try_update(|current| (current > 0.0).then_some(current * 2.0)),
+        float_atomic
+            .try_update(|current| (current > 0.0).then_some(current * 2.0)),
         Some(1.5),
     );
     assert_eq!(float_atomic.load(), 3.0);
     assert_eq!(
-        float_atomic.try_update(|current| (current < 0.0).then_some(current * 2.0)),
+        float_atomic
+            .try_update(|current| (current < 0.0).then_some(current * 2.0)),
         None,
     );
     assert_eq!(float_atomic.load(), 3.0);
 
     let double_atomic = Atomic::<f64>::new(1.5);
     assert_eq!(
-        double_atomic.try_update(|current| (current > 0.0).then_some(current * 2.0)),
+        double_atomic
+            .try_update(|current| (current > 0.0).then_some(current * 2.0)),
         Some(1.5),
     );
     assert_eq!(double_atomic.load(), 3.0);
     assert_eq!(
-        double_atomic.try_update(|current| (current < 0.0).then_some(current * 2.0)),
+        double_atomic
+            .try_update(|current| (current < 0.0).then_some(current * 2.0)),
         None,
     );
     assert_eq!(double_atomic.load(), 3.0);
@@ -198,36 +205,48 @@ fn test_try_update_and_get_success_and_reject_paths() {
 
     let int_atomic = Atomic::<i32>::new(3);
     assert_eq!(
-        int_atomic.try_update_and_get(|current| (current % 2 == 1).then_some(current + 1)),
+        int_atomic.try_update_and_get(
+            |current| (current % 2 == 1).then_some(current + 1)
+        ),
         Some(4),
     );
     assert_eq!(int_atomic.load(), 4);
     assert_eq!(
-        int_atomic.try_update_and_get(|current| (current % 2 == 1).then_some(current + 1)),
+        int_atomic.try_update_and_get(
+            |current| (current % 2 == 1).then_some(current + 1)
+        ),
         None,
     );
     assert_eq!(int_atomic.load(), 4);
 
     let float_atomic = Atomic::<f32>::new(1.5);
     assert_eq!(
-        float_atomic.try_update_and_get(|current| (current > 0.0).then_some(current * 2.0)),
+        float_atomic.try_update_and_get(
+            |current| (current > 0.0).then_some(current * 2.0)
+        ),
         Some(3.0),
     );
     assert_eq!(float_atomic.load(), 3.0);
     assert_eq!(
-        float_atomic.try_update_and_get(|current| (current < 0.0).then_some(current * 2.0)),
+        float_atomic.try_update_and_get(
+            |current| (current < 0.0).then_some(current * 2.0)
+        ),
         None,
     );
     assert_eq!(float_atomic.load(), 3.0);
 
     let double_atomic = Atomic::<f64>::new(1.5);
     assert_eq!(
-        double_atomic.try_update_and_get(|current| (current > 0.0).then_some(current * 2.0)),
+        double_atomic.try_update_and_get(
+            |current| (current > 0.0).then_some(current * 2.0)
+        ),
         Some(3.0),
     );
     assert_eq!(double_atomic.load(), 3.0);
     assert_eq!(
-        double_atomic.try_update_and_get(|current| (current < 0.0).then_some(current * 2.0)),
+        double_atomic.try_update_and_get(
+            |current| (current < 0.0).then_some(current * 2.0)
+        ),
         None,
     );
     assert_eq!(double_atomic.load(), 3.0);

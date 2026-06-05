@@ -1,18 +1,15 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 //! # Atomic Value Marker
 //!
 //! Defines the hidden marker trait for values supported by
 //! [`crate::Atomic<T>`].
-//!
 
 use super::{
     atomic_bool,
@@ -58,6 +55,10 @@ pub trait AtomicValue: sealed::Sealed + Copy {
     fn inner(primitive: &Self::Primitive) -> &Self::Inner;
 }
 
-impl_atomic_value!(bool, atomic_bool::AtomicBool, std::sync::atomic::AtomicBool);
+impl_atomic_value!(
+    bool,
+    atomic_bool::AtomicBool,
+    std::sync::atomic::AtomicBool
+);
 impl_atomic_value!(f32, atomic_f32::AtomicF32, std::sync::atomic::AtomicU32);
 impl_atomic_value!(f64, atomic_f64::AtomicF64, std::sync::atomic::AtomicU64);

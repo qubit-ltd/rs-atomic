@@ -1,18 +1,15 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 //! # Atomic Count
 //!
 //! Provides a non-negative atomic counter for values whose transitions are
 //! used as synchronization signals.
-//!
 
 use std::fmt;
 use std::sync::atomic::{
@@ -50,7 +47,6 @@ use std::sync::atomic::{
 ///     // The last active task finished; notify termination waiters here.
 /// }
 /// ```
-///
 #[repr(transparent)]
 pub struct AtomicCount {
     /// Standard-library atomic storage for the non-negative counter value.
@@ -351,10 +347,12 @@ impl AtomicCount {
         let mut current = self.get();
         loop {
             let next = update(current)?;
-            match self
-                .inner
-                .compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire)
-            {
+            match self.inner.compare_exchange_weak(
+                current,
+                next,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            ) {
                 Ok(_) => return Some(next),
                 Err(actual) => current = actual,
             }
@@ -402,7 +400,9 @@ impl fmt::Debug for AtomicCount {
     /// A formatting result from the formatter.
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("AtomicCount").field("value", &self.get()).finish()
+        f.debug_struct("AtomicCount")
+            .field("value", &self.get())
+            .finish()
     }
 }
 

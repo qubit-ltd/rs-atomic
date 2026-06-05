@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 //! # qubit-atomic
 //!
 //! User-friendly atomic operations wrapper providing JDK-like atomic API.
@@ -26,9 +24,8 @@
 //!
 //! ## Features
 //!
-//! - Primitive atomic values: `Atomic<bool>`, `Atomic<i32>`,
-//!   `Atomic<u64>`, `Atomic<usize>`, `Atomic<f32>`, and other supported
-//!   primitive types
+//! - Primitive atomic values: `Atomic<bool>`, `Atomic<i32>`, `Atomic<u64>`,
+//!   `Atomic<usize>`, `Atomic<f32>`, and other supported primitive types
 //! - Concrete primitive wrappers under `atomic::primitive` for `const`
 //!   initialization use cases
 //! - Counter atomic types: `AtomicCount`, `AtomicSignedCount`
@@ -68,7 +65,6 @@
 //!
 //! assert_eq!(counter.load(), 1000);
 //! ```
-//!
 
 #![deny(missing_docs)]
 #![deny(unsafe_op_in_unsafe_fn)]

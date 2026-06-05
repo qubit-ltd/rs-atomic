@@ -1,22 +1,20 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 //! # Internal Atomic Number Operations Trait
 //!
 //! Defines the internal trait used by [`crate::Atomic<T>`] to delegate numeric
 //! operations to concrete backend implementations.
-//!
 
 use super::atomic_ops::AtomicOps;
 
-/// Internal trait for backend atomic numeric types that support arithmetic operations.
+/// Internal trait for backend atomic numeric types that support arithmetic
+/// operations.
 ///
 /// Provides common arithmetic operations (add, subtract, multiply, divide)
 /// for both integer and floating-point atomic types. This trait unifies
@@ -30,7 +28,6 @@ use super::atomic_ops::AtomicOps;
 /// Integer types also provide `fetch_inc()` and `fetch_dec()` methods
 /// as convenient shortcuts for incrementing/decrementing by 1, but these
 /// are not part of this trait as they are integer-specific operations.
-///
 pub trait AtomicNumberOps: AtomicOps {
     /// Adds a delta to the value, returning the old value.
     ///

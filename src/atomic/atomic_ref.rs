@@ -1,18 +1,15 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 //! # Atomic Reference
 //!
 //! Provides an easy-to-use atomic reference type with sensible default memory
 //! orderings. Uses `Arc<T>` for thread-safe reference counting.
-//!
 
 use arc_swap::{
     ArcSwap,
@@ -68,7 +65,6 @@ use std::sync::Arc;
 /// assert_eq!(old_config.timeout, 1000);
 /// assert_eq!(atomic_config.load().timeout, 2000);
 /// ```
-///
 pub struct AtomicRef<T> {
     /// Lock-free atomic storage for the current shared reference.
     inner: ArcSwap<T>,
@@ -260,9 +256,17 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*atomic.load(), 20);
     /// ```
     #[inline]
-    pub fn compare_set(&self, current: &Arc<T>, new: Arc<T>) -> Result<(), Arc<T>> {
+    pub fn compare_set(
+        &self,
+        current: &Arc<T>,
+        new: Arc<T>,
+    ) -> Result<(), Arc<T>> {
         let prev = Guard::into_inner(self.inner.compare_and_swap(current, new));
-        if Arc::ptr_eq(&prev, current) { Ok(()) } else { Err(prev) }
+        if Arc::ptr_eq(&prev, current) {
+            Ok(())
+        } else {
+            Err(prev)
+        }
     }
 
     /// Compares and exchanges the reference atomically, returning the
@@ -302,7 +306,11 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*atomic.load(), 20);
     /// ```
     #[inline]
-    pub fn compare_and_exchange(&self, current: &Arc<T>, new: Arc<T>) -> Arc<T> {
+    pub fn compare_and_exchange(
+        &self,
+        current: &Arc<T>,
+        new: Arc<T>,
+    ) -> Arc<T> {
         Guard::into_inner(self.inner.compare_and_swap(current, new))
     }
 
@@ -312,8 +320,8 @@ impl<T> AtomicRef<T> {
     ///
     /// # Parameters
     ///
-    /// * `f` - A function that takes the current reference and returns the
-    ///   new reference.
+    /// * `f` - A function that takes the current reference and returns the new
+    ///   reference.
     ///
     /// # Returns
     ///
@@ -354,8 +362,8 @@ impl<T> AtomicRef<T> {
     ///
     /// # Parameters
     ///
-    /// * `f` - A function that takes the current reference and returns the
-    ///   new reference.
+    /// * `f` - A function that takes the current reference and returns the new
+    ///   reference.
     ///
     /// # Returns
     ///
@@ -539,7 +547,9 @@ impl<T: fmt::Debug> fmt::Debug for AtomicRef<T> {
     /// A formatting result from the formatter.
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("AtomicRef").field("value", &self.load()).finish()
+        f.debug_struct("AtomicRef")
+            .field("value", &self.load())
+            .finish()
     }
 }
 

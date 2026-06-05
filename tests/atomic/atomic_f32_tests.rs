@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use qubit_atomic::Atomic;
 use std::sync::Arc;
@@ -14,7 +12,11 @@ use std::thread;
 
 const EPSILON: f32 = 1e-6;
 
-fn compare_set_weak_until_success(atomic: &Atomic<f32>, current: f32, new: f32) {
+fn compare_set_weak_until_success(
+    atomic: &Atomic<f32>,
+    current: f32,
+    new: f32,
+) {
     for _ in 0..128 {
         match atomic.compare_set_weak(current, new) {
             Ok(()) => return,
@@ -25,7 +27,11 @@ fn compare_set_weak_until_success(atomic: &Atomic<f32>, current: f32, new: f32) 
     panic!("weak compare_set did not succeed after bounded retries");
 }
 
-fn compare_exchange_weak_until_success(atomic: &Atomic<f32>, current: f32, new: f32) -> f32 {
+fn compare_exchange_weak_until_success(
+    atomic: &Atomic<f32>,
+    current: f32,
+    new: f32,
+) -> f32 {
     for _ in 0..128 {
         match atomic.compare_and_exchange_weak(current, new) {
             Ok(previous) => return previous,
@@ -281,7 +287,12 @@ fn test_inner_cas() {
 
     atomic
         .inner()
-        .compare_exchange(current_bits, new_bits, Ordering::AcqRel, Ordering::Acquire)
+        .compare_exchange(
+            current_bits,
+            new_bits,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        )
         .unwrap();
 
     assert!((atomic.load() - 2.0).abs() < EPSILON);
@@ -509,7 +520,9 @@ fn test_compare_and_set_weak_failure_path() {
 fn test_compare_and_exchange_weak_failure_path() {
     let atomic = Atomic::<f32>::new(10.0);
     let prev = atomic.compare_and_exchange_weak(5.0, 15.0);
-    assert!((prev.expect_err("weak exchange should fail") - 10.0).abs() < EPSILON);
+    assert!(
+        (prev.expect_err("weak exchange should fail") - 10.0).abs() < EPSILON
+    );
     assert!((atomic.load() - 10.0).abs() < EPSILON);
 }
 
@@ -807,7 +820,8 @@ fn test_atomic_number_concurrent_operations() {
         handle.join().unwrap();
     }
 
-    // 5 threads add 1.0, 5 threads subtract 0.5, result should be 5.0 - 2.5 = 2.5
+    // 5 threads add 1.0, 5 threads subtract 0.5, result should be 5.0 - 2.5 =
+    // 2.5
     let result = atomic.load();
     assert!((result - 2.5).abs() < EPSILON);
 }

@@ -1,18 +1,20 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use qubit_atomic::Atomic;
 use std::sync::Arc;
 use std::thread;
 
-fn compare_set_weak_until_success(atomic: &Atomic<bool>, current: bool, new: bool) {
+fn compare_set_weak_until_success(
+    atomic: &Atomic<bool>,
+    current: bool,
+    new: bool,
+) {
     for _ in 0..128 {
         match atomic.compare_set_weak(current, new) {
             Ok(()) => return,
@@ -23,7 +25,11 @@ fn compare_set_weak_until_success(atomic: &Atomic<bool>, current: bool, new: boo
     panic!("weak compare_set did not succeed after bounded retries");
 }
 
-fn compare_exchange_weak_until_success(atomic: &Atomic<bool>, current: bool, new: bool) -> bool {
+fn compare_exchange_weak_until_success(
+    atomic: &Atomic<bool>,
+    current: bool,
+    new: bool,
+) -> bool {
     for _ in 0..128 {
         match atomic.compare_and_exchange_weak(current, new) {
             Ok(previous) => return previous,
@@ -211,7 +217,8 @@ fn test_concurrent_set_once() {
         let success_count = success_count.clone();
         let handle = thread::spawn(move || {
             if flag.set_if_false(true).is_ok() {
-                success_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                success_count
+                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             }
         });
         handles.push(handle);
@@ -450,7 +457,8 @@ fn test_concurrent_compare_and_set_weak() {
             loop {
                 match flag.compare_set_weak(current, true) {
                     Ok(_) => {
-                        success_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                        success_count
+                            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                         break;
                     }
                     Err(actual) => current = actual,

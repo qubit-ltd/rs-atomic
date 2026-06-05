@@ -1,24 +1,20 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 //! # Internal Atomic Operations Trait
 //!
 //! Defines the internal trait used by [`crate::Atomic<T>`] to delegate common
 //! operations to concrete backend implementations.
-//!
 
 /// Internal common trait for all backend atomic types.
 ///
 /// Provides basic atomic operations including load, store, swap,
 /// compare-and-set, and functional updates.
-///
 pub trait AtomicOps {
     /// The value type stored in the atomic.
     type Value;
@@ -77,7 +73,11 @@ pub trait AtomicOps {
     ///
     /// Returns `Err(actual)` with the observed value when the comparison
     /// fails. In that case, `new` is not stored.
-    fn compare_set(&self, current: Self::Value, new: Self::Value) -> Result<(), Self::Value>;
+    fn compare_set(
+        &self,
+        current: Self::Value,
+        new: Self::Value,
+    ) -> Result<(), Self::Value>;
 
     /// Weak version of compare-and-set.
     ///
@@ -101,7 +101,11 @@ pub trait AtomicOps {
     /// Returns `Err(actual)` with the observed value when the comparison
     /// fails, including possible spurious failures. In that case, `new` is not
     /// stored.
-    fn compare_set_weak(&self, current: Self::Value, new: Self::Value) -> Result<(), Self::Value>;
+    fn compare_set_weak(
+        &self,
+        current: Self::Value,
+        new: Self::Value,
+    ) -> Result<(), Self::Value>;
 
     /// Compares and exchanges the value atomically, returning the
     /// previous value.
@@ -128,7 +132,11 @@ pub trait AtomicOps {
     /// operation succeeded for non-floating-point backends. Floating-point
     /// backends compare raw bit patterns, so callers must compare raw bits or
     /// use `compare_set` when they need an explicit success indicator.
-    fn compare_exchange(&self, current: Self::Value, new: Self::Value) -> Self::Value;
+    fn compare_exchange(
+        &self,
+        current: Self::Value,
+        new: Self::Value,
+    ) -> Self::Value;
 
     /// Weak version of compare-and-exchange.
     ///
@@ -148,7 +156,11 @@ pub trait AtomicOps {
     /// `Ok(previous)` when the value was replaced, or `Err(actual)` when the
     /// comparison failed, including possible spurious failure. The returned
     /// value preserves the observed value in both cases.
-    fn compare_exchange_weak(&self, current: Self::Value, new: Self::Value) -> Result<Self::Value, Self::Value>;
+    fn compare_exchange_weak(
+        &self,
+        current: Self::Value,
+        new: Self::Value,
+    ) -> Result<Self::Value, Self::Value>;
 
     /// Updates the value using a function, returning the old value.
     ///
@@ -156,8 +168,8 @@ pub trait AtomicOps {
     ///
     /// # Parameters
     ///
-    /// * `f` - A function that takes the current value and returns
-    ///   the new value.
+    /// * `f` - A function that takes the current value and returns the new
+    ///   value.
     ///
     /// # Returns
     ///
@@ -175,8 +187,8 @@ pub trait AtomicOps {
     ///
     /// # Parameters
     ///
-    /// * `f` - A function that takes the current value and returns
-    ///   the new value.
+    /// * `f` - A function that takes the current value and returns the new
+    ///   value.
     ///
     /// # Returns
     ///
@@ -207,7 +219,8 @@ pub trait AtomicOps {
     where
         F: FnMut(Self::Value) -> Option<Self::Value>;
 
-    /// Conditionally updates the value using a function, returning the new value.
+    /// Conditionally updates the value using a function, returning the new
+    /// value.
     ///
     /// Internally uses a CAS loop until the update succeeds or the closure
     /// rejects the current value by returning `None`.
