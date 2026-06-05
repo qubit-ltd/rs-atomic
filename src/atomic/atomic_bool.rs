@@ -1,18 +1,15 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 //! # Atomic Boolean
 //!
 //! Provides an easy-to-use atomic boolean type with sensible default memory
 //! orderings.
-//!
 
 use std::sync::atomic::AtomicBool as StdAtomicBool;
 use std::sync::atomic::Ordering;
@@ -28,20 +25,20 @@ use crate::atomic::atomic_ops::AtomicOps;
 ///
 /// This type uses carefully selected default memory orderings:
 ///
-/// - **Read operations** (`load`): Use `Acquire` ordering to ensure that
-///   all writes from other threads that happened before a `Release` store
-///   are visible after this load.
+/// - **Read operations** (`load`): Use `Acquire` ordering to ensure that all
+///   writes from other threads that happened before a `Release` store are
+///   visible after this load.
 ///
-/// - **Write operations** (`store`): Use `Release` ordering to ensure that
-///   all prior writes in this thread are visible to other threads that
-///   perform an `Acquire` load.
+/// - **Write operations** (`store`): Use `Release` ordering to ensure that all
+///   prior writes in this thread are visible to other threads that perform an
+///   `Acquire` load.
 ///
-/// - **Read-Modify-Write operations** (`swap`, `compare_set`, `fetch_*`):
-///   Use `AcqRel` ordering to combine both `Acquire` and `Release`
-///   semantics, ensuring proper synchronization in both directions.
+/// - **Read-Modify-Write operations** (`swap`, `compare_set`, `fetch_*`): Use
+///   `AcqRel` ordering to combine both `Acquire` and `Release` semantics,
+///   ensuring proper synchronization in both directions.
 ///
-/// - **CAS failure**: Use `Acquire` ordering on failure to observe the
-///   actual value written by another thread.
+/// - **CAS failure**: Use `Acquire` ordering on failure to observe the actual
+///   value written by another thread.
 ///
 /// These orderings provide a balance between performance and correctness
 /// for typical concurrent programming patterns.
@@ -70,7 +67,6 @@ use crate::atomic::atomic_ops::AtomicOps;
 /// handle.join().unwrap();
 /// assert_eq!(flag.load(), true);
 /// ```
-///
 #[repr(transparent)]
 pub struct AtomicBool {
     /// Standard-library atomic boolean used as the storage backend.
@@ -108,8 +104,8 @@ impl AtomicBool {
     /// # Memory Ordering
     ///
     /// Uses `Acquire` ordering. This ensures that:
-    /// - All writes from other threads that happened before a `Release`
-    ///   store are visible after this load.
+    /// - All writes from other threads that happened before a `Release` store
+    ///   are visible after this load.
     /// - Forms a synchronizes-with relationship with `Release` stores.
     /// - Prevents reordering of subsequent reads/writes before this load.
     ///
@@ -168,8 +164,8 @@ impl AtomicBool {
     /// # Memory Ordering
     ///
     /// Uses `AcqRel` ordering. This ensures that:
-    /// - **Acquire**: All writes from other threads that happened before
-    ///   their `Release` operations are visible after this operation.
+    /// - **Acquire**: All writes from other threads that happened before their
+    ///   `Release` operations are visible after this operation.
     /// - **Release**: All prior writes in this thread are visible to other
     ///   threads that perform subsequent `Acquire` operations.
     ///
@@ -285,9 +281,18 @@ impl AtomicBool {
     /// assert_eq!(flag.load(), true);
     /// ```
     #[inline]
-    pub fn compare_set_weak(&self, current: bool, new: bool) -> Result<(), bool> {
+    pub fn compare_set_weak(
+        &self,
+        current: bool,
+        new: bool,
+    ) -> Result<(), bool> {
         self.inner
-            .compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire)
+            .compare_exchange_weak(
+                current,
+                new,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            )
             .map(|_| ())
     }
 
@@ -322,10 +327,12 @@ impl AtomicBool {
     /// ```
     #[inline]
     pub fn compare_and_exchange(&self, current: bool, new: bool) -> bool {
-        match self
-            .inner
-            .compare_exchange(current, new, Ordering::AcqRel, Ordering::Acquire)
-        {
+        match self.inner.compare_exchange(
+            current,
+            new,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        ) {
             Ok(prev) => prev,
             Err(actual) => actual,
         }
@@ -367,9 +374,17 @@ impl AtomicBool {
     /// assert_eq!(flag.load(), true);
     /// ```
     #[inline]
-    pub fn compare_and_exchange_weak(&self, current: bool, new: bool) -> Result<bool, bool> {
-        self.inner
-            .compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire)
+    pub fn compare_and_exchange_weak(
+        &self,
+        current: bool,
+        new: bool,
+    ) -> Result<bool, bool> {
+        self.inner.compare_exchange_weak(
+            current,
+            new,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        )
     }
 
     /// Atomically sets the value to `true`, returning the old value.
@@ -735,7 +750,8 @@ impl AtomicBool {
         }
     }
 
-    /// Conditionally updates the value using a function, returning the new value.
+    /// Conditionally updates the value using a function, returning the new
+    /// value.
     ///
     /// Internally uses a CAS loop until the update succeeds or the closure
     /// rejects the current value by returning `None`.
@@ -851,7 +867,11 @@ impl AtomicOps for AtomicBool {
     }
 
     #[inline]
-    fn compare_exchange_weak(&self, current: bool, new: bool) -> Result<bool, bool> {
+    fn compare_exchange_weak(
+        &self,
+        current: bool,
+        new: bool,
+    ) -> Result<bool, bool> {
         self.compare_and_exchange_weak(current, new)
     }
 

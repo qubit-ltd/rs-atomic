@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::sync::Arc;
 
@@ -60,5 +58,8 @@ fn test_arc_atomic_count_default_debug_display() {
     counter.add(42);
 
     assert_eq!(format!("{counter}"), "42");
-    assert_eq!(format!("{counter:?}"), "ArcAtomicCount { value: 42, strong_count: 1 }",);
+    assert_eq!(
+        format!("{counter:?}"),
+        "ArcAtomicCount { value: 42, strong_count: 1 }",
+    );
 }

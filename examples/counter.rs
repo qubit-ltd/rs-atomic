@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 //! # Atomic Counter Example
 //!
 //! Demonstrates using atomic integers as thread-safe counters.
@@ -92,7 +90,11 @@ fn main() {
     println!("   Initial value: {}", counter.load());
 
     let old = counter.fetch_accumulate(2, |a, b| a * b);
-    println!("   After multiplying by 2 - old: {}, new: {}", old, counter.load());
+    println!(
+        "   After multiplying by 2 - old: {}, new: {}",
+        old,
+        counter.load()
+    );
 
     let new = counter.accumulate_and_get(3, |a, b| a + b);
     println!("   After adding 3 - new: {}", new);

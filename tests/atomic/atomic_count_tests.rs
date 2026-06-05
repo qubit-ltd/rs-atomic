@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::sync::Arc;
 use std::thread;
@@ -221,7 +219,9 @@ fn test_concurrent_inc() {
     }
 
     for handle in handles {
-        handle.join().expect("counter increment thread should not panic");
+        handle
+            .join()
+            .expect("counter increment thread should not panic");
     }
 
     assert_eq!(counter.get(), THREAD_COUNT * ITERATIONS);
@@ -245,7 +245,9 @@ fn test_concurrent_dec_to_zero() {
     }
 
     for handle in handles {
-        handle.join().expect("counter decrement thread should not panic");
+        handle
+            .join()
+            .expect("counter decrement thread should not panic");
     }
 
     assert_eq!(counter.get(), 0);

@@ -1,20 +1,20 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::sync::Arc;
 use std::thread;
 
 use qubit_atomic::AtomicSignedCount;
 
-static CONST_INITIALIZED_COUNTER: AtomicSignedCount = AtomicSignedCount::new(-42);
-static CONST_INITIALIZED_ZERO_COUNTER: AtomicSignedCount = AtomicSignedCount::zero();
+static CONST_INITIALIZED_COUNTER: AtomicSignedCount =
+    AtomicSignedCount::new(-42);
+static CONST_INITIALIZED_ZERO_COUNTER: AtomicSignedCount =
+    AtomicSignedCount::zero();
 
 #[test]
 fn test_new_get() {
@@ -229,7 +229,9 @@ fn test_concurrent_add() {
     }
 
     for handle in handles {
-        handle.join().expect("signed counter add thread should not panic");
+        handle
+            .join()
+            .expect("signed counter add thread should not panic");
     }
 
     assert_eq!(counter.get(), (THREAD_COUNT * ITERATIONS) as isize);
@@ -262,7 +264,9 @@ fn test_concurrent_add_and_sub() {
     }
 
     for handle in handles {
-        handle.join().expect("signed counter worker thread should not panic");
+        handle
+            .join()
+            .expect("signed counter worker thread should not panic");
     }
 
     assert_eq!(counter.get(), 0);

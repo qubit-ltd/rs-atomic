@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 //! # Atomic Performance Benchmarks
 //!
 //! Benchmarks for atomic operations to measure performance.
@@ -40,7 +38,10 @@ const BENCHMARKS: &[(&str, &str)] = &[
         "functional_update",
         "Atomic<i32>::fetch_update loop, 1,000,000 operations",
     ),
-    ("read_operations", "Atomic<i32>::load loop, 10,000,000 operations"),
+    (
+        "read_operations",
+        "Atomic<i32>::load loop, 10,000,000 operations",
+    ),
 ];
 
 /// Runs the custom benchmark executable.
@@ -93,7 +94,9 @@ fn print_help() {
     println!("  {RUN_COMMAND} -- --list");
     println!("  {RUN_COMMAND} -- --help");
     println!();
-    println!("Set {FORCE_RUN_ENV}=1 to force execution under cargo test or in debug profile.");
+    println!(
+        "Set {FORCE_RUN_ENV}=1 to force execution under cargo test or in debug profile."
+    );
 }
 
 /// Prints the benchmark scenarios supported by this target.
@@ -125,7 +128,10 @@ fn run_benchmarks() {
     }
     let duration = start.elapsed();
     println!("   Time: {:?}", duration);
-    println!("   Operations/sec: {:.2}", 1_000_000.0 / duration.as_secs_f64());
+    println!(
+        "   Operations/sec: {:.2}",
+        1_000_000.0 / duration.as_secs_f64()
+    );
     println!("   Final value: {}", black_box(counter.load()));
 
     // Benchmark 2: Multi-threaded increment
@@ -150,7 +156,10 @@ fn run_benchmarks() {
 
     let duration = start.elapsed();
     println!("   Time: {:?}", duration);
-    println!("   Operations/sec: {:.2}", 1_000_000.0 / duration.as_secs_f64());
+    println!(
+        "   Operations/sec: {:.2}",
+        1_000_000.0 / duration.as_secs_f64()
+    );
     println!("   Final value: {}", counter.load());
 
     // Benchmark 3: Compare-and-swap
@@ -164,7 +173,10 @@ fn run_benchmarks() {
     }
     let duration = start.elapsed();
     println!("   Time: {:?}", duration);
-    println!("   Operations/sec: {:.2}", 1_000_000.0 / duration.as_secs_f64());
+    println!(
+        "   Operations/sec: {:.2}",
+        1_000_000.0 / duration.as_secs_f64()
+    );
     println!("   Final value: {}", black_box(counter.load()));
 
     // Benchmark 4: Functional update
@@ -176,7 +188,10 @@ fn run_benchmarks() {
     }
     let duration = start.elapsed();
     println!("   Time: {:?}", duration);
-    println!("   Operations/sec: {:.2}", 1_000_000.0 / duration.as_secs_f64());
+    println!(
+        "   Operations/sec: {:.2}",
+        1_000_000.0 / duration.as_secs_f64()
+    );
     println!("   Final value: {}", black_box(counter.load()));
 
     // Benchmark 5: Read operations
@@ -189,7 +204,10 @@ fn run_benchmarks() {
     }
     let duration = start.elapsed();
     println!("   Time: {:?}", duration);
-    println!("   Operations/sec: {:.2}", 10_000_000.0 / duration.as_secs_f64());
+    println!(
+        "   Operations/sec: {:.2}",
+        10_000_000.0 / duration.as_secs_f64()
+    );
     println!("   Sum: {} (to prevent optimization)", sum);
 
     println!("\n=== Benchmarks completed ===");

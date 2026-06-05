@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::cell::Cell;
 use std::sync::Arc;
@@ -419,7 +417,8 @@ fn test_concurrent_cas() {
                 let new = Arc::new(*current + 1);
                 match atomic.compare_set(&current, new) {
                     Ok(_) => {
-                        success_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                        success_count
+                            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                         break;
                     }
                     Err(actual) => current = actual,
@@ -580,13 +579,17 @@ fn test_arc_reference_counting() {
 #[test]
 fn test_compare_set_success_no_arc_leak() {
     let drops = Arc::new(AtomicUsize::new(0));
-    let initial = Arc::new(DropTracked { drops: drops.clone() });
+    let initial = Arc::new(DropTracked {
+        drops: drops.clone(),
+    });
     let atomic = AtomicRef::new(initial.clone());
 
     const ITERATIONS: usize = 100;
     for _ in 0..ITERATIONS {
         let current = atomic.load();
-        let new_value = Arc::new(DropTracked { drops: drops.clone() });
+        let new_value = Arc::new(DropTracked {
+            drops: drops.clone(),
+        });
         assert!(atomic.compare_set(&current, new_value).is_ok());
     }
 

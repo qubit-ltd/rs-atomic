@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use loom::sync::Arc;
 use loom::sync::atomic::{
@@ -22,7 +20,12 @@ fn increment_once(counter: &AtomicUsize) {
     let mut current = counter.load(Ordering::Acquire);
     loop {
         let new = current + 1;
-        match counter.compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire) {
+        match counter.compare_exchange_weak(
+            current,
+            new,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        ) {
             Ok(_) => return,
             Err(actual) => current = actual,
         }

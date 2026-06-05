@@ -1,18 +1,15 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 //! # Atomic 64-bit Floating Point
 //!
 //! Provides an easy-to-use atomic 64-bit floating point type with sensible
 //! default memory orderings. Implemented using bit conversion with AtomicU64.
-//!
 
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
@@ -29,18 +26,18 @@ use crate::atomic::atomic_ops::AtomicOps;
 ///
 /// This type uses the same memory ordering strategy as atomic integers:
 ///
-/// - **Read operations** (`load`): Use `Acquire` ordering to ensure
-///   visibility of prior writes from other threads.
+/// - **Read operations** (`load`): Use `Acquire` ordering to ensure visibility
+///   of prior writes from other threads.
 ///
 /// - **Write operations** (`store`): Use `Release` ordering to ensure
 ///   visibility of prior writes to other threads.
 ///
-/// - **Read-Modify-Write operations** (`swap`, `compare_set`): Use
-///   `AcqRel` ordering for full synchronization.
+/// - **Read-Modify-Write operations** (`swap`, `compare_set`): Use `AcqRel`
+///   ordering for full synchronization.
 ///
-/// - **CAS-based arithmetic** (`fetch_add`, `fetch_sub`, etc.): Use
-///   `AcqRel` on success and `Acquire` on failure within the CAS loop.
-///   The loop ensures eventual consistency.
+/// - **CAS-based arithmetic** (`fetch_add`, `fetch_sub`, etc.): Use `AcqRel` on
+///   success and `Acquire` on failure within the CAS loop. The loop ensures
+///   eventual consistency.
 ///
 /// # Implementation Details
 ///
@@ -59,8 +56,8 @@ use crate::atomic::atomic_ops::AtomicOps;
 /// # Limitations
 ///
 /// - Arithmetic operations use CAS loops (slower than integer operations)
-/// - CAS comparisons use exact IEEE-754 bit patterns, so different NaN
-///   payloads and `0.0`/`-0.0` are treated as different values
+/// - CAS comparisons use exact IEEE-754 bit patterns, so different NaN payloads
+///   and `0.0`/`-0.0` are treated as different values
 /// - No max/min operations (complex floating point semantics)
 ///
 /// # Example
@@ -72,7 +69,6 @@ use crate::atomic::atomic_ops::AtomicOps;
 /// atomic.fetch_add(1.0);
 /// assert_eq!(atomic.load(), 4.14159);
 /// ```
-///
 #[repr(transparent)]
 pub struct AtomicF64 {
     /// Raw-bit atomic storage for the `f64` value.
@@ -167,8 +163,8 @@ impl AtomicF64 {
     ///
     /// # Memory Ordering
     ///
-    /// - **Success**: Uses `AcqRel` ordering on the underlying `AtomicU64`
-    ///   to ensure full synchronization when the exchange succeeds.
+    /// - **Success**: Uses `AcqRel` ordering on the underlying `AtomicU64` to
+    ///   ensure full synchronization when the exchange succeeds.
     /// - **Failure**: Uses `Acquire` ordering to observe the actual value
     ///   written by another thread.
     ///
@@ -188,7 +184,12 @@ impl AtomicF64 {
     #[inline]
     pub fn compare_set(&self, current: f64, new: f64) -> Result<(), f64> {
         self.inner
-            .compare_exchange(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
+            .compare_exchange(
+                current.to_bits(),
+                new.to_bits(),
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            )
             .map(|_| ())
             .map_err(f64::from_bits)
     }
@@ -219,7 +220,12 @@ impl AtomicF64 {
     #[inline]
     pub fn compare_set_weak(&self, current: f64, new: f64) -> Result<(), f64> {
         self.inner
-            .compare_exchange_weak(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
+            .compare_exchange_weak(
+                current.to_bits(),
+                new.to_bits(),
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            )
             .map(|_| ())
             .map_err(f64::from_bits)
     }
@@ -244,10 +250,12 @@ impl AtomicF64 {
     /// otherwise it is the actual value that prevented the exchange.
     #[inline]
     pub fn compare_and_exchange(&self, current: f64, new: f64) -> f64 {
-        match self
-            .inner
-            .compare_exchange(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
-        {
+        match self.inner.compare_exchange(
+            current.to_bits(),
+            new.to_bits(),
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        ) {
             Ok(prev_bits) => f64::from_bits(prev_bits),
             Err(actual_bits) => f64::from_bits(actual_bits),
         }
@@ -271,9 +279,18 @@ impl AtomicF64 {
     /// comparison failed, including possible spurious failure. Values preserve
     /// their exact raw bit patterns.
     #[inline]
-    pub fn compare_and_exchange_weak(&self, current: f64, new: f64) -> Result<f64, f64> {
+    pub fn compare_and_exchange_weak(
+        &self,
+        current: f64,
+        new: f64,
+    ) -> Result<f64, f64> {
         self.inner
-            .compare_exchange_weak(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
+            .compare_exchange_weak(
+                current.to_bits(),
+                new.to_bits(),
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            )
             .map(f64::from_bits)
             .map_err(f64::from_bits)
     }
@@ -503,7 +520,8 @@ impl AtomicF64 {
         }
     }
 
-    /// Conditionally updates the value using a function, returning the new value.
+    /// Conditionally updates the value using a function, returning the new
+    /// value.
     ///
     /// Internally uses a CAS loop until the update succeeds or the closure
     /// rejects the current value by returning `None`.
@@ -590,7 +608,11 @@ impl AtomicOps for AtomicF64 {
     }
 
     #[inline]
-    fn compare_exchange_weak(&self, current: f64, new: f64) -> Result<f64, f64> {
+    fn compare_exchange_weak(
+        &self,
+        current: f64,
+        new: f64,
+    ) -> Result<f64, f64> {
         self.compare_and_exchange_weak(current, new)
     }
 

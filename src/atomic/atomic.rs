@@ -1,17 +1,14 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 //! # Generic Atomic Wrapper
 //!
 //! Provides the public [`Atomic<T>`] wrapper for supported primitive values.
-//!
 
 use std::{
     fmt,
@@ -73,8 +70,9 @@ use super::atomic_value::AtomicValue;
 /// [`to_bits`](f32::to_bits) representations, not [`PartialEq`]. This means
 /// distinct bit patterns that compare equal, such as `0.0` and `-0.0`, do not
 /// match for CAS, and NaN payloads must match exactly. Prefer
-/// [`compare_set`](Self::compare_set) or [`compare_set_weak`](Self::compare_set_weak)
-/// when the caller needs an explicit success indicator for `f32` or `f64`.
+/// [`compare_set`](Self::compare_set) or
+/// [`compare_set_weak`](Self::compare_set_weak) when the caller needs an
+/// explicit success indicator for `f32` or `f64`.
 ///
 /// # Example
 ///
@@ -105,7 +103,6 @@ use super::atomic_value::AtomicValue;
 /// ```
 ///
 /// [turbofish]: https://doc.rust-lang.org/book/appendix-02-operators.html#the-turbofish
-///
 #[doc(alias = "AtomicBool")]
 #[doc(alias = "AtomicI8")]
 #[doc(alias = "AtomicU8")]
@@ -155,7 +152,8 @@ where
     ///
     /// To pick a concrete `T` when inference would be ambiguous (for example
     /// `0` as `u64` vs `i32`), write `Atomic::<T>::new(...)` (turbofish) or add
-    /// a type annotation on the binding (for example `let x: Atomic<u64> = ...`):
+    /// a type annotation on the binding (for example `let x: Atomic<u64> =
+    /// ...`):
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -401,7 +399,11 @@ where
     /// assert_eq!(atomic.load(), 10);
     /// ```
     #[inline]
-    pub fn compare_and_exchange_weak(&self, current: T, new: T) -> Result<T, T> {
+    pub fn compare_and_exchange_weak(
+        &self,
+        current: T,
+        new: T,
+    ) -> Result<T, T> {
         AtomicOps::compare_exchange_weak(&self.primitive, current, new)
     }
 
@@ -500,7 +502,8 @@ where
         AtomicOps::try_update(&self.primitive, f)
     }
 
-    /// Conditionally updates the value with a function and returns the new value.
+    /// Conditionally updates the value with a function and returns the new
+    /// value.
     ///
     /// The update uses a CAS loop until it succeeds or the closure rejects the
     /// observed current value by returning `None`. The closure may be called
@@ -974,7 +977,8 @@ where
         T::fetch_accumulate(&self.primitive, value, f)
     }
 
-    /// Updates the value by accumulating it with `value` and returns the new value.
+    /// Updates the value by accumulating it with `value` and returns the new
+    /// value.
     ///
     /// # Parameters
     ///
@@ -1304,7 +1308,9 @@ where
     /// ```
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Atomic").field("value", &self.load()).finish()
+        f.debug_struct("Atomic")
+            .field("value", &self.load())
+            .finish()
     }
 }
 
@@ -1312,7 +1318,8 @@ impl<T> fmt::Display for Atomic<T>
 where
     T: AtomicValue + fmt::Display,
 {
-    /// Formats the loaded value using its [`Display`](fmt::Display) implementation.
+    /// Formats the loaded value using its [`Display`](fmt::Display)
+    /// implementation.
     ///
     /// # Example
     ///

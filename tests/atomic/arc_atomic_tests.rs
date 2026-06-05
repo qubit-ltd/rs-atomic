@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::sync::Arc;
 use std::thread;
@@ -24,7 +22,9 @@ fn test_arc_atomic_shared_owner() {
     let handle = thread::spawn(move || {
         shared.fetch_inc();
     });
-    handle.join().expect("shared atomic increment thread should not panic");
+    handle
+        .join()
+        .expect("shared atomic increment thread should not panic");
 
     assert_eq!(counter.load(), 1);
     assert_eq!(counter.strong_count(), 1);
@@ -63,5 +63,8 @@ fn test_arc_atomic_debug_display() {
     let atomic = ArcAtomic::new(42i32);
 
     assert_eq!(format!("{atomic}"), "42");
-    assert_eq!(format!("{atomic:?}"), "ArcAtomic { value: 42, strong_count: 1 }",);
+    assert_eq!(
+        format!("{atomic:?}"),
+        "ArcAtomic { value: 42, strong_count: 1 }",
+    );
 }

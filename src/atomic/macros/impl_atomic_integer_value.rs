@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 //! Macro for implementing hidden integer marker operations.
 
@@ -22,7 +20,10 @@ macro_rules! impl_atomic_integer_value {
             }
 
             #[inline]
-            fn fetch_inc_with_ordering(primitive: &Self::Primitive, ordering: Ordering) -> Self {
+            fn fetch_inc_with_ordering(
+                primitive: &Self::Primitive,
+                ordering: Ordering,
+            ) -> Self {
                 primitive.fetch_inc_with_ordering(ordering)
             }
 
@@ -32,17 +33,28 @@ macro_rules! impl_atomic_integer_value {
             }
 
             #[inline]
-            fn fetch_dec_with_ordering(primitive: &Self::Primitive, ordering: Ordering) -> Self {
+            fn fetch_dec_with_ordering(
+                primitive: &Self::Primitive,
+                ordering: Ordering,
+            ) -> Self {
                 primitive.fetch_dec_with_ordering(ordering)
             }
 
             #[inline]
-            fn fetch_add_with_ordering(primitive: &Self::Primitive, value: Self, ordering: Ordering) -> Self {
+            fn fetch_add_with_ordering(
+                primitive: &Self::Primitive,
+                value: Self,
+                ordering: Ordering,
+            ) -> Self {
                 primitive.fetch_add_with_ordering(value, ordering)
             }
 
             #[inline]
-            fn fetch_sub_with_ordering(primitive: &Self::Primitive, value: Self, ordering: Ordering) -> Self {
+            fn fetch_sub_with_ordering(
+                primitive: &Self::Primitive,
+                value: Self,
+                ordering: Ordering,
+            ) -> Self {
                 primitive.fetch_sub_with_ordering(value, ordering)
             }
 
@@ -67,7 +79,11 @@ macro_rules! impl_atomic_integer_value {
             }
 
             #[inline]
-            fn fetch_accumulate<F>(primitive: &Self::Primitive, value: Self, f: F) -> Self
+            fn fetch_accumulate<F>(
+                primitive: &Self::Primitive,
+                value: Self,
+                f: F,
+            ) -> Self
             where
                 F: FnMut(Self, Self) -> Self,
             {
@@ -75,7 +91,11 @@ macro_rules! impl_atomic_integer_value {
             }
 
             #[inline]
-            fn accumulate_and_get<F>(primitive: &Self::Primitive, value: Self, f: F) -> Self
+            fn accumulate_and_get<F>(
+                primitive: &Self::Primitive,
+                value: Self,
+                f: F,
+            ) -> Self
             where
                 F: FnMut(Self, Self) -> Self,
             {

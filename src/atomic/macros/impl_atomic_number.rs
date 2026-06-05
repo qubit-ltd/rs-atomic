@@ -1,18 +1,15 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2025 - 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2025 - 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 //! # Atomic Integer Macro
 //!
 //! Provides a macro to generate atomic integer types with consistent
 //! implementations.
-//!
 
 /// Macro to generate atomic integer types.
 ///
@@ -25,8 +22,8 @@
 /// * `$inner_type` - The underlying std atomic type (e.g.,
 ///   `std::sync::atomic::AtomicI32`)
 /// * `$value_type` - The value type (e.g., `i32`)
-/// * `$doc_type` - The type description for documentation (e.g., "32-bit
-///   signed integer")
+/// * `$doc_type` - The type description for documentation (e.g., "32-bit signed
+///   integer")
 macro_rules! impl_atomic_number {
     ($name:ident, $inner_type:ty, $value_type:ty, $doc_type:expr) => {
         #[doc = concat!("Atomic ", $doc_type, ".")]
