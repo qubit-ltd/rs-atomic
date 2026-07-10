@@ -36,6 +36,8 @@ use super::atomic_value::AtomicValue;
 ///
 /// The `i128` and `u128` specializations use `portable-atomic` internally
 /// because the corresponding standard-library atomic types are not yet stable.
+/// Native lock-free support is target-dependent, and the backend fallback may
+/// use locks on targets without suitable atomic instructions.
 ///
 /// # Specialization API
 ///

@@ -18,7 +18,8 @@
 //! - **Ease of Use**: Hides memory ordering complexity with reasonable defaults
 //! - **Completeness**: Provides high-level operations similar to JDK atomic
 //! - **Safety**: Guarantees memory safety and thread safety
-//! - **Performance**: Zero-cost abstraction with no additional overhead
+//! - **Performance**: Thin primitive forwarding, with inherent costs retained
+//!   for CAS loops, checked counters, and reference operations
 //! - **Flexibility**: Exposes ordered integer RMW helpers and `inner()` for
 //!   advanced users
 //!

@@ -50,7 +50,7 @@ use crate::atomic::atomic_ops::AtomicOps;
 ///
 /// - Automatic memory ordering selection
 /// - Arithmetic operations via CAS loops
-/// - Zero-cost abstraction with inline methods
+/// - Inline API over raw-bit atomic storage and CAS loops
 /// - Access to underlying type via `inner()` for advanced use cases
 ///
 /// # Limitations

@@ -50,6 +50,12 @@ pub use atomic_count::AtomicCount;
 pub use atomic_ref::AtomicRef;
 pub use atomic_signed_count::AtomicSignedCount;
 
+/// Hidden implementation hooks used by integration and model tests.
+#[doc(hidden)]
+pub mod testing {
+    pub use super::atomic_count::try_update_atomic_count;
+}
+
 /// Concrete primitive atomic wrappers for const initialization use cases.
 ///
 /// Prefer [`Atomic<T>`](Atomic) for normal usage. These concrete wrappers are

@@ -13,23 +13,25 @@ use loom::sync::atomic::{
     Ordering,
 };
 use loom::thread;
+use qubit_atomic::atomic::testing::try_update_atomic_count;
 
-/// Performs one increment with the same weak-CAS retry pattern used by this
-/// crate's `fetch_update`/`compare_set_weak` loops.
+/// Performs one checked increment through the production `AtomicCount` core.
 fn increment_once(counter: &AtomicUsize) {
-    let mut current = counter.load(Ordering::Acquire);
-    loop {
-        let new = current + 1;
-        match counter.compare_exchange_weak(
-            current,
-            new,
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
-            Ok(_) => return,
-            Err(actual) => current = actual,
-        }
-    }
+    assert!(
+        try_update_atomic_count(
+            || counter.load(Ordering::Acquire),
+            |current, next| {
+                counter.compare_exchange_weak(
+                    current,
+                    next,
+                    Ordering::AcqRel,
+                    Ordering::Acquire,
+                )
+            },
+            |current| current.checked_add(1),
+        )
+        .is_some()
+    );
 }
 
 #[test]
@@ -55,8 +57,54 @@ fn test_loom_release_acquire_visibility() {
             assert_eq!(data_reader.load(Ordering::Relaxed), 42);
         });
 
-        writer.join().unwrap();
-        reader.join().unwrap();
+        writer.join().expect("writer thread panicked");
+        reader.join().expect("reader thread panicked");
+    });
+}
+
+#[test]
+fn test_loom_checked_update_prevents_underflow() {
+    loom::model(|| {
+        let counter = Arc::new(AtomicUsize::new(1));
+
+        let c1 = counter.clone();
+        let t1 = thread::spawn(move || {
+            try_update_atomic_count(
+                || c1.load(Ordering::Acquire),
+                |current, next| {
+                    c1.compare_exchange_weak(
+                        current,
+                        next,
+                        Ordering::AcqRel,
+                        Ordering::Acquire,
+                    )
+                },
+                |current| current.checked_sub(1),
+            )
+        });
+
+        let c2 = counter.clone();
+        let t2 = thread::spawn(move || {
+            try_update_atomic_count(
+                || c2.load(Ordering::Acquire),
+                |current, next| {
+                    c2.compare_exchange_weak(
+                        current,
+                        next,
+                        Ordering::AcqRel,
+                        Ordering::Acquire,
+                    )
+                },
+                |current| current.checked_sub(1),
+            )
+        });
+
+        let results = [
+            t1.join().expect("first decrement thread panicked"),
+            t2.join().expect("second decrement thread panicked"),
+        ];
+        assert_eq!(results.iter().filter(|result| result.is_some()).count(), 1);
+        assert_eq!(counter.load(Ordering::Acquire), 0);
     });
 }
 
@@ -75,8 +123,8 @@ fn test_loom_weak_cas_retry_linearizable() {
             increment_once(&c2);
         });
 
-        t1.join().unwrap();
-        t2.join().unwrap();
+        t1.join().expect("first increment thread panicked");
+        t2.join().expect("second increment thread panicked");
         assert_eq!(counter.load(Ordering::Acquire), 2);
     });
 }

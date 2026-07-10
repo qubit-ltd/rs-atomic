@@ -17,6 +17,46 @@ use std::sync::atomic::{
     Ordering,
 };
 
+/// Applies a checked update through the production weak-CAS retry loop.
+///
+/// This hidden test bridge lets Loom supply instrumented atomic operations
+/// while exercising the same retry core used by [`AtomicCount`].
+///
+/// # Parameters
+///
+/// * `load_acquire` - Loads the current value with acquire ordering.
+/// * `compare_exchange_weak_acqrel_acquire` - Performs weak CAS with
+///   acquire-release success ordering and acquire failure ordering.
+/// * `update` - Maps the observed value to a proposed next value, or returns
+///   `None` to reject the update.
+///
+/// # Returns
+///
+/// `Some(new_value)` after a successful update, or `None` when `update`
+/// rejects the observed value. The update and CAS callbacks may run more than
+/// once when a weak CAS fails.
+#[doc(hidden)]
+#[inline]
+pub fn try_update_atomic_count<L, C, F>(
+    mut load_acquire: L,
+    mut compare_exchange_weak_acqrel_acquire: C,
+    mut update: F,
+) -> Option<usize>
+where
+    L: FnMut() -> usize,
+    C: FnMut(usize, usize) -> Result<usize, usize>,
+    F: FnMut(usize) -> Option<usize>,
+{
+    let mut current = load_acquire();
+    loop {
+        let next = update(current)?;
+        match compare_exchange_weak_acqrel_acquire(current, next) {
+            Ok(_) => return Some(next),
+            Err(actual) => current = actual,
+        }
+    }
+}
+
 /// A non-negative atomic counter with synchronization-oriented operations.
 ///
 /// Use this type when the counter value is part of a concurrent state machine,
@@ -340,23 +380,22 @@ impl AtomicCount {
     /// rejects the current value. A rejected update leaves the counter
     /// unchanged.
     #[inline]
-    fn try_update<F>(&self, mut update: F) -> Option<usize>
+    fn try_update<F>(&self, update: F) -> Option<usize>
     where
         F: FnMut(usize) -> Option<usize>,
     {
-        let mut current = self.get();
-        loop {
-            let next = update(current)?;
-            match self.inner.compare_exchange_weak(
-                current,
-                next,
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            ) {
-                Ok(_) => return Some(next),
-                Err(actual) => current = actual,
-            }
-        }
+        try_update_atomic_count(
+            || self.inner.load(Ordering::Acquire),
+            |current, next| {
+                self.inner.compare_exchange_weak(
+                    current,
+                    next,
+                    Ordering::AcqRel,
+                    Ordering::Acquire,
+                )
+            },
+            update,
+        )
     }
 }
 

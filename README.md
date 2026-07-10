@@ -11,14 +11,15 @@ User-friendly atomic operations wrapper providing JDK-like atomic API for Rust.
 
 ## Overview
 
-Qubit Atomic is a comprehensive atomic operations library that provides easy-to-use atomic types with reasonable default memory orderings, similar to Java's `java.util.concurrent.atomic` package. It hides the complexity of memory ordering while maintaining zero-cost abstraction and allowing advanced users to access underlying types for fine-grained control.
+Qubit Atomic is a comprehensive atomic operations library that provides easy-to-use atomic types with reasonable default memory orderings, similar to Java's `java.util.concurrent.atomic` package. It hides the complexity of memory ordering, keeps primitive forwarding wrappers thin, and allows advanced users to access underlying types for fine-grained control.
 
 ## Design Goals
 
 - **Ease of Use**: Hides memory ordering complexity with reasonable defaults
 - **Completeness**: Provides high-level operations similar to JDK atomic classes
 - **Safety**: Guarantees memory safety and thread safety
-- **Performance**: Zero-cost abstraction with no additional overhead
+- **Performance**: Thin primitive forwarding wrappers, with explicit
+  benchmarks for higher-level operations
 - **Flexibility**: Exposes narrowly scoped ordered integer RMW helpers and
   `inner()` for advanced users
 - **Simplicity**: Default APIs keep common cases free of explicit ordering
@@ -28,6 +29,9 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 
 ### 🔢 **Generic Atomic Primitive Types**
 - **Integer Specializations**: `Atomic<i8>`, `Atomic<u8>`, `Atomic<i16>`, `Atomic<u16>`, `Atomic<i32>`, `Atomic<u32>`, `Atomic<i64>`, `Atomic<u64>`, `Atomic<i128>`, `Atomic<u128>`, `Atomic<isize>`, `Atomic<usize>`
+- **128-bit Portability**: `Atomic<i128>` and `Atomic<u128>` use
+  `portable-atomic`; native lock-free support is target-dependent, and its
+  fallback may use locks on targets without suitable atomic instructions
 - **Boolean Specialization**: `Atomic<bool>` with set, clear, negate, logical AND/OR/XOR, and conditional CAS helpers
 - **Floating-Point Specializations**: `Atomic<f32>` and `Atomic<f64>` with arithmetic operations implemented through CAS loops
 - **Rich Operations**: increment, decrement, add, subtract, multiply, divide, bitwise operations, max/min
@@ -571,9 +575,9 @@ or compare `to_bits()` values yourself.
 
 | Operation Type | Default Ordering | Reason |
 |---------------|------------------|--------|
-| **Pure Read** (`load()`) | `Acquire` | Ensure reading latest value |
-| **Pure Write** (`store()`) | `Release` | Ensure write visibility |
-| **Read-Modify-Write** (`swap()`, CAS) | `AcqRel` | Ensure both read and write correctness |
+| **Pure Read** (`load()`) | `Acquire` | If the load observes a release sequence, subsequent operations observe data published before that release; it does not guarantee the globally newest value |
+| **Pure Write** (`store()`) | `Release` | Publish prior writes to an acquire operation that observes this store or its release sequence |
+| **Read-Modify-Write** (`swap()`, CAS) | `AcqRel` | Acquire from an observed release and publish prior writes through the successful modification |
 | **`Atomic<T>` counter arithmetic** (`fetch_inc()`, `fetch_dec()`, `fetch_add()`, `fetch_sub()`) | `Relaxed` | Pure metrics; no need to sync other data |
 | **Ordered integer counter arithmetic** (`fetch_*_with_ordering`) | Caller-provided | State-signal counters that need explicit synchronization |
 | **CAS-based arithmetic and updates** (`fetch_mul()`, `fetch_div()`, `fetch_update()`, `update_and_get()`, `try_update()`, `try_update_and_get()`, `fetch_accumulate()`, `accumulate_and_get()`) | `AcqRel` / `Acquire` | CAS loop standard semantics |
@@ -592,7 +596,7 @@ use qubit_atomic::Atomic;
 
 let atomic = Atomic::<i32>::new(0);
 
-// 99% of scenarios: use simple API
+// Common case: use the wrapper default
 let value = atomic.load();
 
 // State-signal counter: keep the wrapper while choosing ordering explicitly
@@ -613,16 +617,18 @@ atomic.inner().store(42, Ordering::Release);
 | **Reference Type** | `AtomicReference<V>` | `AtomicRef<T>` | Rust uses `Arc<T>` |
 | **`AtomicCount` / `AtomicSignedCount`** | Manual composition | `AtomicCount`, `AtomicSignedCount` | Non-negative / signed counts for state tracking |
 | **Shared Ownership** | Usually object references | `ArcAtomic<T>`, `ArcAtomicRef<T>`, `ArcAtomicCount`, `ArcAtomicSignedCount` | Convenience wrappers for shared atomic containers |
-| **Nullability** | Allows `null` | Use `Option<Arc<T>>` | Rust no null pointers |
+| **Nullability** | Allows `null` | Not provided by `AtomicRef<T>` | Use `arc_swap::ArcSwapOption<T>` or another synchronization type when atomic nullable references are required |
 | **Bitwise Operations** | Partial support | Full support | Rust more powerful |
 | **Max/Min Operations** | Java 9+ support | Supported | Equivalent |
 | **API Count** | ~20 methods/type | ~29 methods/type | Rust provides more convenience methods |
 
 ## Performance Considerations
 
-### Zero-Cost Abstraction
+### Thin Primitive Forwarding
 
-Primitive wrappers use `#[repr(transparent)]` and `#[inline]` so the generic API compiles down to the backend atomic operations:
+Primitive wrappers use `#[repr(transparent)]` and `#[inline]`. In optimized
+builds, simple forwarding methods are intended to compile down to the
+corresponding backend atomic operations:
 
 ```rust
 use qubit_atomic::Atomic;
@@ -632,21 +638,28 @@ use std::sync::atomic::Ordering;
 let atomic = Atomic::<i32>::new(0);
 let value = atomic.load();
 
-// Compiles to the same code as
+// Equivalent backend operation
 let atomic = std::sync::atomic::AtomicI32::new(0);
 let value = atomic.load(Ordering::Acquire);
 ```
 
+This scope does not cover operations with inherent work: floating-point and
+checked-count updates use CAS retry loops, while `AtomicRef<T>` retains
+`ArcSwap`'s reference-counting, reclamation, and retry costs. Measure on the
+target workload instead of assuming identical code generation.
+
 ### When to Use `inner()`
 
-**99% of scenarios**: Use default API, which already provides optimal performance.
-
-**1% of scenarios**: Use `inner()` only when:
-- Extreme performance optimization (need `Relaxed` ordering)
-- Complex lock-free algorithms (need precise memory ordering control)
+Use the default API when its ordering and operation semantics fit. Reach for
+`inner()` only when:
+- A required ordering is not exposed by the focused wrapper API
+- A measured hot path benefits from a different valid ordering
+- A low-level algorithm needs precise backend control
 - Interoperating with code that directly uses standard library or `portable-atomic` backend types
 
-**Golden Rule**: Default API first, `inner()` as last resort.
+The Criterion benchmark target compares representative wrapper operations with
+equivalent `std` and `arc-swap` baselines. Results remain target- and
+workload-specific.
 
 ## Testing & Code Coverage
 
@@ -683,7 +696,9 @@ See [COVERAGE.md](COVERAGE.md) for detailed coverage statistics.
 Runtime dependencies are intentionally small:
 
 - `arc-swap` powers `AtomicRef<T>`.
-- `portable-atomic` provides the stable backend for `Atomic<i128>` and `Atomic<u128>`.
+- `portable-atomic` provides the stable backend for `Atomic<i128>` and
+  `Atomic<u128>`; its lock-free guarantees and fallback strategy depend on the
+  compilation target.
 
 ## License
 

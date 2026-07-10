@@ -47,7 +47,7 @@ use crate::atomic::atomic_ops::AtomicOps;
 ///
 /// - Automatic memory ordering selection
 /// - Rich set of boolean-specific operations
-/// - Zero-cost abstraction with inline methods
+/// - Thin `#[repr(transparent)]` wrapper with inline forwarding methods
 /// - Access to underlying type via `inner()` for advanced use cases
 ///
 /// # Example
