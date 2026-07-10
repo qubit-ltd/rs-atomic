@@ -34,7 +34,7 @@ use std::sync::Arc;
 /// - Automatic memory ordering selection
 /// - Thread-safe reference counting via `Arc`
 /// - Functional update operations
-/// - Zero-cost abstraction with inline methods
+/// - Inline convenience API over `ArcSwap` operations
 ///
 /// # Example
 ///

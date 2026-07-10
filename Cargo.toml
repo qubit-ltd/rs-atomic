@@ -34,6 +34,8 @@ arc-swap = "1.9"
 portable-atomic = "1.13"
 
 [dev-dependencies]
+# For statistically robust benchmark comparisons
+criterion = { version = "0.8", features = ["html_reports"] }
 # For concurrent model checking
 loom = "0.7"
 

@@ -56,7 +56,7 @@ weak CAS 允许虚假失败。因此 `compare_and_exchange_weak` 不应返回裸
 
 | 操作类别 | 默认内存序 | 理由 |
 | --- | --- | --- |
-| `load` | `Acquire` | 观察 release 操作发布的数据。 |
+| `load` | `Acquire` | 当 load 观察到 release sequence 时，让后续操作看到该 release 之前发布的数据；这不保证读到全局最新值。 |
 | `store` | `Release` | 向 acquire 读取方发布之前的写入。 |
 | `swap` 与 CAS | 成功 `AcqRel`，失败 `Acquire` | 标准读-改-写同步语义。 |
 | 整数 `fetch_add/sub/inc/dec` | `Relaxed` | 常用于纯指标和计数。 |
@@ -92,6 +92,19 @@ weak CAS 允许虚假失败。因此 `compare_and_exchange_weak` 不应返回裸
 使用 `compare_set` 或 `compare_set_weak`。
 
 浮点算术通过 CAS loop 实现。它提供便利性，但不替代高竞争场景下的数值稳定累加方案。
+
+## 性能与可移植性边界
+
+性能主张应保持窄范围。基础类型 wrapper 使用 `#[repr(transparent)]`，简单 inline 转发
+方法旨在优化为对应的后端操作。CAS-loop 算术、checked counter 更新与引用操作仍然保留
+其固有的重试、引用计数、回收或分配成本。
+
+`i128` 和 `u128` 特例使用 `portable-atomic`。是否原生 lock-free 取决于目标平台；目标
+缺少合适原子指令时，其 fallback 可能使用锁。调用方不能从 crate API 推导出跨平台的
+lock-free 保证。
+
+基准应使用 Criterion，把代表性的 wrapper 操作与语义等价的 `std` 或 `arc-swap` 基线
+比较。测量结果只对具体目标与工作负载构成证据，不是可移植的零开销保证。
 
 ## 引用语义
 
@@ -138,6 +151,8 @@ weak CAS 允许虚假失败。因此 `compare_and_exchange_weak` 不应返回裸
 - 浮点 CAS 的 raw-bit 行为；
 - 引用 CAS 的指针身份行为；
 - CAS loop 下回调可能重试的行为；
+- 通过后端适配器在 Loom 下检查生产环境的 checked-counter CAS 核心；
+- 与语义等价直接后端进行 Criterion 对照；
 - rustdoc 不覆盖的 Markdown Rust 示例。
 
 Markdown 示例测试应从 README 抽取 Rust code fence，生成临时 crate，并通过本地 path

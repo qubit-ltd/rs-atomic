@@ -63,7 +63,7 @@ The default memory ordering policy is deliberately simple:
 
 | Operation class | Default ordering | Rationale |
 | --- | --- | --- |
-| `load` | `Acquire` | Observe data published by release operations. |
+| `load` | `Acquire` | When the load observes a release sequence, make data published before that release visible to subsequent operations; this does not promise the newest global value. |
 | `store` | `Release` | Publish prior writes to acquire readers. |
 | `swap` and CAS | success `AcqRel`, failure `Acquire` | Standard read-modify-write synchronization. |
 | Integer `fetch_add/sub/inc/dec` | `Relaxed` | Commonly used for pure metrics and counters. |
@@ -103,6 +103,24 @@ explicit success indicator.
 
 Floating-point arithmetic uses CAS loops. It is convenient, not a replacement
 for numerically stable accumulation in high-contention workloads.
+
+## Performance and Portability Boundary
+
+The performance claim is deliberately narrow. Primitive wrappers are
+`#[repr(transparent)]`, and simple inline forwarding methods are intended to
+optimize to their backend operations. CAS-loop arithmetic, checked counter
+updates, and reference operations retain their inherent retries, reference
+counting, reclamation, or allocation costs.
+
+The `i128` and `u128` specializations use `portable-atomic`. Native lock-free
+support is target-dependent; its fallback may use locks when the target lacks
+suitable atomic instructions. Code must not infer a universal lock-free
+guarantee from the crate API.
+
+Benchmarks should use Criterion and compare representative wrapper operations
+against semantics-equivalent `std` or `arc-swap` baselines. Measurements are
+evidence for a particular target and workload, not a portable zero-overhead
+guarantee.
 
 ## Reference Semantics
 
@@ -153,6 +171,8 @@ The test suite should cover:
 - raw-bit floating-point CAS behavior;
 - pointer-identity reference CAS behavior;
 - callback retry behavior for CAS loops;
+- the production checked-counter CAS core under Loom through a backend adapter;
+- Criterion comparisons against semantics-equivalent direct backends;
 - Markdown Rust examples that are not covered by rustdoc.
 
 Markdown example tests should compile README snippets against the local crate

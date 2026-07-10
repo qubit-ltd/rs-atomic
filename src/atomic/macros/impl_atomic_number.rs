@@ -68,7 +68,7 @@ macro_rules! impl_atomic_number {
         /// - Automatic memory ordering selection
         /// - Rich set of integer operations (increment, decrement,
         ///   arithmetic, etc.)
-        /// - Zero-cost abstraction with inline methods
+        /// - Thin `#[repr(transparent)]` wrapper with inline methods
         /// - Access to underlying type via `inner()` for advanced use
         ///   cases
         ///
@@ -239,12 +239,14 @@ macro_rules! impl_atomic_number {
             ///
             /// - **Success**: Uses `AcqRel` ordering (both Acquire and
             ///   Release) to synchronize with other threads.
-            /// - **Failure**: Uses `Acquire` ordering to see the latest
-            ///   value written by other threads.
+            /// - **Failure**: Uses `Acquire` ordering to observe the value
+            ///   returned by the failed CAS and any release it synchronizes
+            ///   with.
             ///
             /// This is the standard CAS pattern: on success, we need
-            /// Release to publish our write; on failure, we need Acquire
-            /// to see what value actually exists.
+            /// Release to publish our write; on failure, Acquire can
+            /// synchronize with the release sequence supplying the observed
+            /// value.
             ///
             /// # Parameters
             ///
