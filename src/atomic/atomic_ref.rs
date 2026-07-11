@@ -562,6 +562,7 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*original.load(), 2);
     /// assert_eq!(*forked.load(), 1);
     /// ```
+    #[must_use = "use fork() when you need a separate AtomicRef container"]
     #[inline]
     pub fn fork(&self) -> Self {
         Self::new(self.load())
