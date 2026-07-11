@@ -60,6 +60,8 @@ Qubit Atomic is a comprehensive atomic operations library that provides easy-to-
 - **Atomic<T>**: Generic entry point for primitive atomic values
 - **`atomic::primitive::*`**: concrete primitive wrappers for `const fn new` use cases
 - **AtomicRef<T>**: Atomic `Arc<T>` reference wrapper
+- **Explicit Reference Fork**: `AtomicRef::fork()` snapshots the currently
+  observed `Arc<T>` into an independent atomic container
 - **`AtomicCount` / `AtomicSignedCount`**: checked state-oriented semantics (no silent wrap)
 - **`ArcAtomic*` wrappers**: ergonomic shared ownership without spelling `Arc<...>` at every use site
 
@@ -69,7 +71,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-qubit-atomic = "0.13"
+qubit-atomic = "0.14"
 ```
 
 ## Quick Start

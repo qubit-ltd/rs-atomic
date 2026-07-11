@@ -437,13 +437,13 @@ fn test_concurrent_cas() {
 }
 
 #[test]
-fn test_clone() {
+fn test_fork_creates_independent_container() {
     let data = Arc::new(TestData {
         value: 42,
         name: "test".to_string(),
     });
     let atomic1 = AtomicRef::new(data);
-    let atomic2 = atomic1.clone();
+    let atomic2 = atomic1.fork();
 
     assert_eq!(atomic1.load().value, 42);
     assert_eq!(atomic2.load().value, 42);
@@ -801,13 +801,13 @@ fn test_inner_compare_exchange() {
 }
 
 #[test]
-fn test_clone_independence() {
+fn test_fork_independence() {
     let data = Arc::new(TestData {
         value: 42,
         name: "test".to_string(),
     });
     let atomic1 = AtomicRef::new(data);
-    let atomic2 = atomic1.clone();
+    let atomic2 = atomic1.fork();
 
     assert_eq!(atomic1.load().value, 42);
     assert_eq!(atomic2.load().value, 42);

@@ -113,9 +113,11 @@ lock-free 保证。
 它只暴露强指针 CAS。weak 别名在 `arc_swap` 后端上没有独立语义，反而会让调用方以为
 这里存在 weak CAS 的重试规则。
 
-`AtomicRef<T>::clone()` 会创建一个新的 atomic container，并用当前引用初始化；它不会
-创建共享同一 container 的另一个句柄。如果 clone 后应该共享同一容器，请使用
-`ArcAtomicRef<T>`。
+`AtomicRef<T>` 刻意不实现 `Clone`。显式的 `fork()` 方法会创建一个新的 atomic
+container，并用一次 acquire load 观察到的 `Arc<T>` 初始化。两个容器最初共享同一个
+`T`，但后续原子操作彼此独立。与并发写入竞争时，`fork()` 可能观察到较旧的值，不保证
+获得全局最新值。多个所有者需要共享同一 atomic container 时，应使用
+`ArcAtomicRef<T>` 或 `Arc<AtomicRef<T>>`。
 
 `load_guard()` 适合短生命周期读取，可在 fast path 避免克隆 `Arc`。需要可移动、可保存
 的 `Arc<T>` 时使用 `load()`。

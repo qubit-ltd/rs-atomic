@@ -38,12 +38,12 @@ fn test_arc_atomic_ref_shared_owner() {
 }
 
 #[test]
-fn test_arc_atomic_ref_clone_differs_from_atomic_ref_clone() {
+fn test_arc_atomic_ref_clone_differs_from_atomic_ref_fork() {
     let shared = ArcAtomicRef::from_value(TestData {
         value: 1,
         name: "one".to_string(),
     });
-    let independent = AtomicRef::clone(&*shared);
+    let independent = shared.fork();
 
     shared.store(Arc::new(TestData {
         value: 2,
