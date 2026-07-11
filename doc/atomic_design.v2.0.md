@@ -130,9 +130,13 @@ It exposes strong pointer CAS only. A weak alias would not provide distinct
 semantics over the `arc_swap` backend and would make weak-CAS retry rules look
 available where they are not.
 
-`AtomicRef<T>::clone()` creates a new atomic container initialized with the
-current reference. It does not create another handle to the same container. Use
-`ArcAtomicRef<T>` when clones should share one atomic container.
+`AtomicRef<T>` deliberately does not implement `Clone`. Its explicit `fork()`
+method creates a new atomic container initialized with the `Arc<T>` observed by
+an acquire load. The two containers initially share the same `T`, but subsequent
+atomic operations are independent. A racing writer may mean `fork()` observes
+an older value; it does not guarantee the globally latest value. Use
+`ArcAtomicRef<T>` or `Arc<AtomicRef<T>>` when owners should share one atomic
+container.
 
 `load_guard()` is available for short-lived reads that can avoid cloning the
 `Arc` on the fast path. Use `load()` when the caller needs an owned `Arc<T>`.

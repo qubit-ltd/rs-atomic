@@ -23,8 +23,8 @@ use super::atomic_ref::AtomicRef;
 /// [`ArcAtomicRef`] clones the shared owner handle, so all clones operate on
 /// the same atomic reference container.
 ///
-/// This is different from [`AtomicRef::clone`], which creates a new independent
-/// atomic container that initially points to the same value.
+/// This is different from [`AtomicRef::fork`], which explicitly creates a new
+/// independent atomic container that initially points to the same value.
 ///
 /// # Example
 ///

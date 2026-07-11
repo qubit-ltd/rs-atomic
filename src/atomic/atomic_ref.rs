@@ -36,6 +36,17 @@ use std::sync::Arc;
 /// - Functional update operations
 /// - Inline convenience API over `ArcSwap` operations
 ///
+/// `AtomicRef<T>` deliberately does not implement [`Clone`]. Use
+/// [`AtomicRef::fork`] to create an independent container explicitly, or use
+/// [`crate::ArcAtomicRef`] when owners must share one atomic container.
+///
+/// ```compile_fail
+/// use qubit_atomic::AtomicRef;
+///
+/// let reference = AtomicRef::from_value(1usize);
+/// let _copy = reference.clone();
+/// ```
+///
 /// # Example
 ///
 /// ```rust
@@ -517,20 +528,42 @@ impl<T> AtomicRef<T> {
     pub fn inner(&self) -> &ArcSwap<T> {
         &self.inner
     }
-}
 
-impl<T> Clone for AtomicRef<T> {
-    /// Clones the atomic reference.
+    /// Creates an independent atomic container from the currently observed
+    /// reference.
     ///
-    /// Creates a new `AtomicRef` that initially points to the same value as
-    /// the original, but subsequent atomic operations are independent.
+    /// The returned container initially stores an [`Arc`] pointing to the same
+    /// `T`; this method does not clone `T`. Subsequent `store`, `swap`, and CAS
+    /// operations on either container are independent and are not observed by
+    /// the other container.
+    ///
+    /// If this method races with a writer, the new container captures the value
+    /// observed by this method's acquire load. It does not guarantee the
+    /// globally latest value.
+    ///
+    /// Use [`crate::ArcAtomicRef`] or `Arc<AtomicRef<T>>` when multiple owners
+    /// must operate on the same atomic container.
     ///
     /// # Returns
     ///
-    /// A new atomic reference initialized with a clone of the currently loaded
-    /// `Arc`.
+    /// A new independent atomic container initialized with the currently
+    /// observed shared reference.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use qubit_atomic::AtomicRef;
+    /// use std::sync::Arc;
+    ///
+    /// let original = AtomicRef::from_value(1usize);
+    /// let forked = original.fork();
+    /// original.store(Arc::new(2));
+    ///
+    /// assert_eq!(*original.load(), 2);
+    /// assert_eq!(*forked.load(), 1);
+    /// ```
     #[inline]
-    fn clone(&self) -> Self {
+    pub fn fork(&self) -> Self {
         Self::new(self.load())
     }
 }
