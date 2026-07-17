@@ -60,7 +60,7 @@ use crate::atomic::atomic_ops::AtomicOps;
 ///   and `0.0`/`-0.0` are treated as different values
 /// - No max/min operations (complex floating point semantics)
 ///
-/// # Example
+/// # Examples
 ///
 /// ```rust
 /// use qubit_atomic::Atomic;
@@ -105,7 +105,7 @@ impl AtomicF32 {
     ///
     /// An atomic `f32` initialized to `value`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -132,7 +132,7 @@ impl AtomicF32 {
     ///
     /// The current value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -140,7 +140,8 @@ impl AtomicF32 {
     /// let atomic = Atomic::<f32>::new(3.14);
     /// assert_eq!(atomic.load(), 3.14);
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn load(&self) -> f32 {
         f32::from_bits(self.inner.load(Ordering::Acquire))
     }
@@ -157,7 +158,7 @@ impl AtomicF32 {
     ///
     /// * `value` - The new value to set.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -166,7 +167,7 @@ impl AtomicF32 {
     /// atomic.store(3.14);
     /// assert_eq!(atomic.load(), 3.14);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn store(&self, value: f32) {
         self.inner.store(value.to_bits(), Ordering::Release);
     }
@@ -186,7 +187,7 @@ impl AtomicF32 {
     ///
     /// The old value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -196,7 +197,8 @@ impl AtomicF32 {
     /// assert_eq!(old, 1.0);
     /// assert_eq!(atomic.load(), 2.0);
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn swap(&self, value: f32) -> f32 {
         f32::from_bits(self.inner.swap(value.to_bits(), Ordering::AcqRel))
     }
@@ -236,7 +238,7 @@ impl AtomicF32 {
     /// NaN values compare by raw bits. A stored NaN and `current` must have
     /// the same payload bits for the CAS to succeed.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -245,7 +247,7 @@ impl AtomicF32 {
     /// assert!(atomic.compare_set(1.0, 2.0).is_ok());
     /// assert_eq!(atomic.load(), 2.0);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn compare_set(&self, current: f32, new: f32) -> Result<(), f32> {
         self.inner
             .compare_exchange(
@@ -282,7 +284,7 @@ impl AtomicF32 {
     /// comparison fails, including possible spurious failures. In that case,
     /// `new` is not stored.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -297,7 +299,7 @@ impl AtomicF32 {
     /// }
     /// assert_eq!(atomic.load(), 2.0);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn compare_set_weak(&self, current: f32, new: f32) -> Result<(), f32> {
         self.inner
             .compare_exchange_weak(
@@ -329,7 +331,7 @@ impl AtomicF32 {
     /// value has the same raw bits as `current`, the exchange succeeded;
     /// otherwise it is the actual value that prevented the exchange.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -339,6 +341,7 @@ impl AtomicF32 {
     /// assert_eq!(prev, 1.0);
     /// assert_eq!(atomic.load(), 2.0);
     /// ```
+    #[must_use]
     #[inline]
     pub fn compare_and_exchange(&self, current: f32, new: f32) -> f32 {
         match self.inner.compare_exchange(
@@ -370,7 +373,7 @@ impl AtomicF32 {
     /// comparison failed, including possible spurious failure. Values preserve
     /// their exact raw bit patterns.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -385,7 +388,7 @@ impl AtomicF32 {
     /// }
     /// assert_eq!(atomic.load(), 2.0);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn compare_and_exchange_weak(
         &self,
         current: f32,
@@ -423,7 +426,7 @@ impl AtomicF32 {
     ///
     /// The old value before adding.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -433,7 +436,7 @@ impl AtomicF32 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 15.5);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_add(&self, delta: f32) -> f32 {
         self.fetch_update(|current| current + delta)
     }
@@ -454,7 +457,7 @@ impl AtomicF32 {
     ///
     /// The old value before subtracting.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -464,7 +467,7 @@ impl AtomicF32 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 6.5);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_sub(&self, delta: f32) -> f32 {
         self.fetch_update(|current| current - delta)
     }
@@ -485,7 +488,7 @@ impl AtomicF32 {
     ///
     /// The old value before multiplying.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -495,7 +498,7 @@ impl AtomicF32 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 25.0);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_mul(&self, factor: f32) -> f32 {
         self.fetch_update(|current| current * factor)
     }
@@ -516,7 +519,7 @@ impl AtomicF32 {
     ///
     /// The old value before dividing.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -526,7 +529,7 @@ impl AtomicF32 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 5.0);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_div(&self, divisor: f32) -> f32 {
         self.fetch_update(|current| current / divisor)
     }
@@ -551,7 +554,7 @@ impl AtomicF32 {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -561,7 +564,6 @@ impl AtomicF32 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 20.0);
     /// ```
-    #[inline]
     pub fn fetch_update<F>(&self, mut f: F) -> f32
     where
         F: FnMut(f32) -> f32,
@@ -592,7 +594,7 @@ impl AtomicF32 {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -602,7 +604,6 @@ impl AtomicF32 {
     /// assert_eq!(new, 20.0);
     /// assert_eq!(atomic.load(), 20.0);
     /// ```
-    #[inline]
     pub fn update_and_get<F>(&self, mut f: F) -> f32
     where
         F: FnMut(f32) -> f32,
@@ -635,7 +636,7 @@ impl AtomicF32 {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -646,7 +647,6 @@ impl AtomicF32 {
     /// assert_eq!(atomic.try_update(|x| (x < 0.0).then_some(x * 2.0)), None);
     /// assert_eq!(atomic.load(), 3.0);
     /// ```
-    #[inline]
     pub fn try_update<F>(&self, mut f: F) -> Option<f32>
     where
         F: FnMut(f32) -> Option<f32>,
@@ -680,7 +680,7 @@ impl AtomicF32 {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -697,7 +697,6 @@ impl AtomicF32 {
     /// );
     /// assert_eq!(atomic.load(), 3.0);
     /// ```
-    #[inline]
     pub fn try_update_and_get<F>(&self, mut f: F) -> Option<f32>
     where
         F: FnMut(f32) -> Option<f32>,
@@ -728,7 +727,7 @@ impl AtomicF32 {
     ///
     /// A reference to the underlying `std::sync::atomic::AtomicU32`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -739,7 +738,8 @@ impl AtomicF32 {
     /// let bits = atomic.inner().load(Ordering::Relaxed);
     /// assert_eq!(f32::from_bits(bits), 3.14);
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn inner(&self) -> &AtomicU32 {
         &self.inner
     }
@@ -748,37 +748,37 @@ impl AtomicF32 {
 impl AtomicOps for AtomicF32 {
     type Value = f32;
 
-    #[inline]
+    #[inline(always)]
     fn load(&self) -> f32 {
         self.load()
     }
 
-    #[inline]
+    #[inline(always)]
     fn store(&self, value: f32) {
         self.store(value);
     }
 
-    #[inline]
+    #[inline(always)]
     fn swap(&self, value: f32) -> f32 {
         self.swap(value)
     }
 
-    #[inline]
+    #[inline(always)]
     fn compare_set(&self, current: f32, new: f32) -> Result<(), f32> {
         self.compare_set(current, new)
     }
 
-    #[inline]
+    #[inline(always)]
     fn compare_set_weak(&self, current: f32, new: f32) -> Result<(), f32> {
         self.compare_set_weak(current, new)
     }
 
-    #[inline]
+    #[inline(always)]
     fn compare_exchange(&self, current: f32, new: f32) -> f32 {
         self.compare_and_exchange(current, new)
     }
 
-    #[inline]
+    #[inline(always)]
     fn compare_exchange_weak(
         &self,
         current: f32,
@@ -787,7 +787,7 @@ impl AtomicOps for AtomicF32 {
         self.compare_and_exchange_weak(current, new)
     }
 
-    #[inline]
+    #[inline(always)]
     fn fetch_update<F>(&self, f: F) -> f32
     where
         F: FnMut(f32) -> f32,
@@ -795,7 +795,7 @@ impl AtomicOps for AtomicF32 {
         self.fetch_update(f)
     }
 
-    #[inline]
+    #[inline(always)]
     fn update_and_get<F>(&self, f: F) -> f32
     where
         F: FnMut(f32) -> f32,
@@ -803,7 +803,7 @@ impl AtomicOps for AtomicF32 {
         self.update_and_get(f)
     }
 
-    #[inline]
+    #[inline(always)]
     fn try_update<F>(&self, f: F) -> Option<f32>
     where
         F: FnMut(f32) -> Option<f32>,
@@ -811,7 +811,7 @@ impl AtomicOps for AtomicF32 {
         self.try_update(f)
     }
 
-    #[inline]
+    #[inline(always)]
     fn try_update_and_get<F>(&self, f: F) -> Option<f32>
     where
         F: FnMut(f32) -> Option<f32>,
@@ -821,22 +821,22 @@ impl AtomicOps for AtomicF32 {
 }
 
 impl AtomicNumberOps for AtomicF32 {
-    #[inline]
+    #[inline(always)]
     fn fetch_add(&self, delta: f32) -> f32 {
         self.fetch_add(delta)
     }
 
-    #[inline]
+    #[inline(always)]
     fn fetch_sub(&self, delta: f32) -> f32 {
         self.fetch_sub(delta)
     }
 
-    #[inline]
+    #[inline(always)]
     fn fetch_mul(&self, factor: f32) -> f32 {
         self.fetch_mul(factor)
     }
 
-    #[inline]
+    #[inline(always)]
     fn fetch_div(&self, divisor: f32) -> f32 {
         self.fetch_div(divisor)
     }

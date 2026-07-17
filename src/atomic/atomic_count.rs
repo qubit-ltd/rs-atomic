@@ -36,7 +36,6 @@ use std::sync::atomic::{
 /// rejects the observed value. The update and CAS callbacks may run more than
 /// once when a weak CAS fails.
 #[doc(hidden)]
-#[inline]
 pub fn try_update_atomic_count<L, C, F>(
     mut load_acquire: L,
     mut compare_exchange_weak_acqrel_acquire: C,
@@ -73,7 +72,7 @@ where
 /// [`try_dec`](Self::try_dec), or [`try_sub`](Self::try_sub) when overflow or
 /// underflow is a normal business outcome.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```rust
 /// use qubit_atomic::AtomicCount;
@@ -104,7 +103,7 @@ impl AtomicCount {
     ///
     /// A counter initialized to `value`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicCount;
@@ -125,7 +124,7 @@ impl AtomicCount {
     ///
     /// A counter whose current value is zero.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicCount;
@@ -133,7 +132,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::zero();
     /// assert!(counter.is_zero());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub const fn zero() -> Self {
         Self::new(0)
     }
@@ -144,7 +143,7 @@ impl AtomicCount {
     ///
     /// The current counter value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicCount;
@@ -152,7 +151,8 @@ impl AtomicCount {
     /// let counter = AtomicCount::new(7);
     /// assert_eq!(counter.get(), 7);
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn get(&self) -> usize {
         self.inner.load(Ordering::Acquire)
     }
@@ -163,7 +163,7 @@ impl AtomicCount {
     ///
     /// `true` if the current value is zero, otherwise `false`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicCount;
@@ -171,7 +171,17 @@ impl AtomicCount {
     /// let counter = AtomicCount::zero();
     /// assert!(counter.is_zero());
     /// ```
-    #[inline]
+    ///
+    /// The result must be observed:
+    ///
+    /// ```compile_fail
+    /// #![deny(unused_must_use)]
+    /// use qubit_atomic::AtomicCount;
+    ///
+    /// AtomicCount::zero().is_zero();
+    /// ```
+    #[must_use]
+    #[inline(always)]
     pub fn is_zero(&self) -> bool {
         self.get() == 0
     }
@@ -182,7 +192,7 @@ impl AtomicCount {
     ///
     /// `true` if the current value is greater than zero, otherwise `false`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicCount;
@@ -190,7 +200,8 @@ impl AtomicCount {
     /// let counter = AtomicCount::new(1);
     /// assert!(counter.is_positive());
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn is_positive(&self) -> bool {
         self.get() > 0
     }
@@ -205,7 +216,7 @@ impl AtomicCount {
     ///
     /// Panics if the increment would overflow [`usize::MAX`].
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicCount;
@@ -213,7 +224,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::zero();
     /// assert_eq!(counter.inc(), 1);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn inc(&self) -> usize {
         self.add(1)
     }
@@ -232,7 +243,7 @@ impl AtomicCount {
     ///
     /// Panics if the addition would overflow [`usize::MAX`].
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicCount;
@@ -240,7 +251,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::new(2);
     /// assert_eq!(counter.add(3), 5);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn add(&self, delta: usize) -> usize {
         self.try_add(delta).expect("atomic counter overflow")
     }
@@ -256,7 +267,7 @@ impl AtomicCount {
     /// `Some(new_value)` if the addition succeeds, or `None` if it would
     /// overflow [`usize::MAX`]. On `None`, the counter is left unchanged.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicCount;
@@ -264,7 +275,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::new(2);
     /// assert_eq!(counter.try_add(3), Some(5));
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn try_add(&self, delta: usize) -> Option<usize> {
         self.try_update(|current| current.checked_add(delta))
     }
@@ -289,7 +300,7 @@ impl AtomicCount {
     /// # Panics
     ///
     /// Panics if the current value is zero.
-    #[inline]
+    #[inline(always)]
     pub fn dec(&self) -> usize {
         self.try_dec().expect("atomic counter underflow")
     }
@@ -301,7 +312,7 @@ impl AtomicCount {
     /// `Some(new_value)` if the decrement succeeds, or `None` if the current
     /// value is zero. On `None`, the counter is left unchanged.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicCount;
@@ -310,7 +321,7 @@ impl AtomicCount {
     /// assert_eq!(counter.try_dec(), Some(0));
     /// assert_eq!(counter.try_dec(), None);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn try_dec(&self) -> Option<usize> {
         self.try_sub(1)
     }
@@ -329,7 +340,7 @@ impl AtomicCount {
     ///
     /// Panics if the subtraction would make the counter negative.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicCount;
@@ -337,7 +348,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::new(5);
     /// assert_eq!(counter.sub(2), 3);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn sub(&self, delta: usize) -> usize {
         self.try_sub(delta).expect("atomic counter underflow")
     }
@@ -353,7 +364,7 @@ impl AtomicCount {
     /// `Some(new_value)` if the subtraction succeeds, or `None` if it would
     /// make the counter negative. On `None`, the counter is left unchanged.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicCount;
@@ -362,7 +373,7 @@ impl AtomicCount {
     /// assert_eq!(counter.try_sub(2), Some(1));
     /// assert_eq!(counter.try_sub(2), None);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn try_sub(&self, delta: usize) -> Option<usize> {
         self.try_update(|current| current.checked_sub(delta))
     }
@@ -405,7 +416,7 @@ impl Default for AtomicCount {
     /// # Returns
     ///
     /// A counter whose current value is zero.
-    #[inline]
+    #[inline(always)]
     fn default() -> Self {
         Self::zero()
     }
@@ -421,7 +432,7 @@ impl From<usize> for AtomicCount {
     /// # Returns
     ///
     /// A counter initialized to `value`.
-    #[inline]
+    #[inline(always)]
     fn from(value: usize) -> Self {
         Self::new(value)
     }

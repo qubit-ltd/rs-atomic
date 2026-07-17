@@ -47,7 +47,7 @@ use std::sync::Arc;
 /// let _copy = reference.clone();
 /// ```
 ///
-/// # Example
+/// # Examples
 ///
 /// ```rust
 /// use qubit_atomic::AtomicRef;
@@ -92,7 +92,7 @@ impl<T> AtomicRef<T> {
     ///
     /// An atomic reference initialized to `value`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -123,7 +123,7 @@ impl<T> AtomicRef<T> {
     ///
     /// An atomic reference initialized to `Arc::new(value)`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -131,7 +131,7 @@ impl<T> AtomicRef<T> {
     /// let atomic = AtomicRef::from_value(42);
     /// assert_eq!(*atomic.load(), 42);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn from_value(value: T) -> Self {
         Self::new(Arc::new(value))
     }
@@ -142,7 +142,7 @@ impl<T> AtomicRef<T> {
     ///
     /// A cloned `Arc` pointing to the current value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -152,7 +152,8 @@ impl<T> AtomicRef<T> {
     /// let value = atomic.load();
     /// assert_eq!(*value, 42);
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn load(&self) -> Arc<T> {
         self.inner.load_full()
     }
@@ -167,7 +168,7 @@ impl<T> AtomicRef<T> {
     ///
     /// A guard pointing to the current `Arc`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -177,7 +178,7 @@ impl<T> AtomicRef<T> {
     /// let guard = atomic.load_guard();
     /// assert_eq!(**guard, 42);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn load_guard(&self) -> Guard<Arc<T>> {
         self.inner.load()
     }
@@ -188,7 +189,7 @@ impl<T> AtomicRef<T> {
     ///
     /// * `value` - The new reference to set.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -198,7 +199,7 @@ impl<T> AtomicRef<T> {
     /// atomic.store(Arc::new(100));
     /// assert_eq!(*atomic.load(), 100);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn store(&self, value: Arc<T>) {
         self.inner.store(value);
     }
@@ -214,7 +215,7 @@ impl<T> AtomicRef<T> {
     ///
     /// The old reference.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -225,7 +226,8 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*old, 10);
     /// assert_eq!(*atomic.load(), 20);
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn swap(&self, value: Arc<T>) -> Arc<T> {
         self.inner.swap(value)
     }
@@ -254,7 +256,7 @@ impl<T> AtomicRef<T> {
     ///
     /// Comparison uses pointer equality (`Arc::ptr_eq`), not value equality.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -266,7 +268,7 @@ impl<T> AtomicRef<T> {
     /// assert!(atomic.compare_set(&current, Arc::new(20)).is_ok());
     /// assert_eq!(*atomic.load(), 20);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn compare_set(
         &self,
         current: &Arc<T>,
@@ -303,7 +305,7 @@ impl<T> AtomicRef<T> {
     ///
     /// Comparison uses pointer equality (`Arc::ptr_eq`), not value equality.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -316,6 +318,7 @@ impl<T> AtomicRef<T> {
     /// assert!(Arc::ptr_eq(&prev, &current));
     /// assert_eq!(*atomic.load(), 20);
     /// ```
+    #[must_use]
     #[inline]
     pub fn compare_and_exchange(
         &self,
@@ -341,7 +344,7 @@ impl<T> AtomicRef<T> {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -352,7 +355,6 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*old, 10);
     /// assert_eq!(*atomic.load(), 20);
     /// ```
-    #[inline]
     pub fn fetch_update<F>(&self, mut f: F) -> Arc<T>
     where
         F: FnMut(&Arc<T>) -> Arc<T>,
@@ -383,7 +385,7 @@ impl<T> AtomicRef<T> {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -394,7 +396,6 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*new, 20);
     /// assert_eq!(*atomic.load(), 20);
     /// ```
-    #[inline]
     pub fn update_and_get<F>(&self, mut f: F) -> Arc<T>
     where
         F: FnMut(&Arc<T>) -> Arc<T>,
@@ -428,7 +429,7 @@ impl<T> AtomicRef<T> {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -447,7 +448,6 @@ impl<T> AtomicRef<T> {
     ///     .is_none());
     /// assert_eq!(*atomic.load(), 4);
     /// ```
-    #[inline]
     pub fn try_update<F>(&self, mut f: F) -> Option<Arc<T>>
     where
         F: FnMut(&Arc<T>) -> Option<Arc<T>>,
@@ -481,7 +481,7 @@ impl<T> AtomicRef<T> {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -500,7 +500,6 @@ impl<T> AtomicRef<T> {
     ///     .is_none());
     /// assert_eq!(*atomic.load(), 4);
     /// ```
-    #[inline]
     pub fn try_update_and_get<F>(&self, mut f: F) -> Option<Arc<T>>
     where
         F: FnMut(&Arc<T>) -> Option<Arc<T>>,
@@ -524,7 +523,8 @@ impl<T> AtomicRef<T> {
     /// # Returns
     ///
     /// A reference to the underlying `arc_swap::ArcSwap<T>`.
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn inner(&self) -> &ArcSwap<T> {
         &self.inner
     }
@@ -549,7 +549,7 @@ impl<T> AtomicRef<T> {
     /// A new independent atomic container initialized with the currently
     /// observed shared reference.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicRef;
@@ -563,7 +563,7 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*forked.load(), 1);
     /// ```
     #[must_use = "use fork() when you need a separate AtomicRef container"]
-    #[inline]
+    #[inline(always)]
     pub fn fork(&self) -> Self {
         Self::new(self.load())
     }

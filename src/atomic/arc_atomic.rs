@@ -26,7 +26,7 @@ use super::atomic_value::AtomicValue;
 /// Use [`Atomic<T>`] when ownership stays local, and use [`ArcAtomic<T>`] when
 /// the same atomic value must be shared across threads or components.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```rust
 /// use qubit_atomic::ArcAtomic;
@@ -73,7 +73,7 @@ where
     /// # Returns
     ///
     /// A shared atomic wrapper owning `atomic`.
-    #[inline]
+    #[inline(always)]
     pub fn from_atomic(atomic: Atomic<T>) -> Self {
         Self {
             inner: Arc::new(atomic),
@@ -89,7 +89,7 @@ where
     /// # Returns
     ///
     /// A wrapper around `inner`.
-    #[inline]
+    #[inline(always)]
     pub fn from_arc(inner: Arc<Atomic<T>>) -> Self {
         Self { inner }
     }
@@ -99,7 +99,8 @@ where
     /// # Returns
     ///
     /// A shared reference to the underlying `Arc<Atomic<T>>`.
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn as_arc(&self) -> &Arc<Atomic<T>> {
         &self.inner
     }
@@ -109,7 +110,7 @@ where
     /// # Returns
     ///
     /// The underlying `Arc<Atomic<T>>`.
-    #[inline]
+    #[inline(always)]
     pub fn into_arc(self) -> Arc<Atomic<T>> {
         self.inner
     }
@@ -119,7 +120,8 @@ where
     /// # Returns
     ///
     /// The current strong reference count of the shared atomic container.
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn strong_count(&self) -> usize {
         Arc::strong_count(&self.inner)
     }
@@ -134,7 +136,7 @@ where
     /// # Returns
     ///
     /// A new wrapper pointing to the same underlying atomic container.
-    #[inline]
+    #[inline(always)]
     fn clone(&self) -> Self {
         Self {
             inner: Arc::clone(&self.inner),
@@ -153,7 +155,7 @@ where
     /// # Returns
     ///
     /// A shared reference to the atomic container.
-    #[inline]
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         self.inner.as_ref()
     }
@@ -172,7 +174,7 @@ where
     /// # Returns
     ///
     /// A shared atomic wrapper initialized to `value`.
-    #[inline]
+    #[inline(always)]
     fn from(value: T) -> Self {
         Self::new(value)
     }
@@ -191,7 +193,7 @@ where
     /// # Returns
     ///
     /// A shared atomic wrapper owning `atomic`.
-    #[inline]
+    #[inline(always)]
     fn from(atomic: Atomic<T>) -> Self {
         Self::from_atomic(atomic)
     }
@@ -210,7 +212,7 @@ where
     /// # Returns
     ///
     /// A wrapper around `inner`.
-    #[inline]
+    #[inline(always)]
     fn from(inner: Arc<Atomic<T>>) -> Self {
         Self::from_arc(inner)
     }
