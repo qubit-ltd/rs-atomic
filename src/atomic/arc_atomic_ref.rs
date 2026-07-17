@@ -26,7 +26,7 @@ use super::atomic_ref::AtomicRef;
 /// This is different from [`AtomicRef::fork`], which explicitly creates a new
 /// independent atomic container that initially points to the same value.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```rust
 /// use qubit_atomic::ArcAtomicRef;
@@ -68,7 +68,7 @@ impl<T> ArcAtomicRef<T> {
     /// # Returns
     ///
     /// A shared atomic reference wrapper initialized to `Arc::new(value)`.
-    #[inline]
+    #[inline(always)]
     pub fn from_value(value: T) -> Self {
         Self::from_atomic_ref(AtomicRef::from_value(value))
     }
@@ -82,7 +82,7 @@ impl<T> ArcAtomicRef<T> {
     /// # Returns
     ///
     /// A shared atomic reference wrapper owning `atomic_ref`.
-    #[inline]
+    #[inline(always)]
     pub fn from_atomic_ref(atomic_ref: AtomicRef<T>) -> Self {
         Self {
             inner: Arc::new(atomic_ref),
@@ -98,7 +98,7 @@ impl<T> ArcAtomicRef<T> {
     /// # Returns
     ///
     /// A wrapper around `inner`.
-    #[inline]
+    #[inline(always)]
     pub fn from_arc(inner: Arc<AtomicRef<T>>) -> Self {
         Self { inner }
     }
@@ -108,7 +108,8 @@ impl<T> ArcAtomicRef<T> {
     /// # Returns
     ///
     /// A shared reference to the underlying `Arc<AtomicRef<T>>`.
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn as_arc(&self) -> &Arc<AtomicRef<T>> {
         &self.inner
     }
@@ -118,7 +119,7 @@ impl<T> ArcAtomicRef<T> {
     /// # Returns
     ///
     /// The underlying `Arc<AtomicRef<T>>`.
-    #[inline]
+    #[inline(always)]
     pub fn into_arc(self) -> Arc<AtomicRef<T>> {
         self.inner
     }
@@ -129,7 +130,8 @@ impl<T> ArcAtomicRef<T> {
     ///
     /// The current strong reference count of the shared atomic reference
     /// container.
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn strong_count(&self) -> usize {
         Arc::strong_count(&self.inner)
     }
@@ -142,7 +144,7 @@ impl<T> Clone for ArcAtomicRef<T> {
     ///
     /// A new wrapper pointing to the same underlying atomic reference
     /// container.
-    #[inline]
+    #[inline(always)]
     fn clone(&self) -> Self {
         Self {
             inner: Arc::clone(&self.inner),
@@ -158,7 +160,7 @@ impl<T> Deref for ArcAtomicRef<T> {
     /// # Returns
     ///
     /// A shared reference to the atomic reference container.
-    #[inline]
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         self.inner.as_ref()
     }
@@ -174,7 +176,7 @@ impl<T> From<AtomicRef<T>> for ArcAtomicRef<T> {
     /// # Returns
     ///
     /// A shared atomic reference wrapper owning `atomic_ref`.
-    #[inline]
+    #[inline(always)]
     fn from(atomic_ref: AtomicRef<T>) -> Self {
         Self::from_atomic_ref(atomic_ref)
     }
@@ -190,7 +192,7 @@ impl<T> From<Arc<AtomicRef<T>>> for ArcAtomicRef<T> {
     /// # Returns
     ///
     /// A wrapper around `inner`.
-    #[inline]
+    #[inline(always)]
     fn from(inner: Arc<AtomicRef<T>>) -> Self {
         Self::from_arc(inner)
     }

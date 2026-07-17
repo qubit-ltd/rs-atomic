@@ -76,7 +76,7 @@ use super::atomic_value::AtomicValue;
 /// [`compare_set_weak`](Self::compare_set_weak) when the caller needs an
 /// explicit success indicator for `f32` or `f64`.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```rust
 /// use qubit_atomic::Atomic;
@@ -143,7 +143,7 @@ where
     ///
     /// An atomic wrapper initialized to `value`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -181,7 +181,7 @@ where
     ///
     /// The current value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -189,7 +189,8 @@ where
     /// let atomic = Atomic::new(7);
     /// assert_eq!(atomic.load(), 7);
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn load(&self) -> T {
         AtomicOps::load(&self.primitive)
     }
@@ -202,7 +203,7 @@ where
     ///
     /// * `value` - The new value to store.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -211,7 +212,7 @@ where
     /// atomic.store(2);
     /// assert_eq!(atomic.load(), 2);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn store(&self, value: T) {
         AtomicOps::store(&self.primitive, value);
     }
@@ -232,7 +233,7 @@ where
     ///
     /// The previous value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -247,7 +248,8 @@ where
     /// assert_eq!(b.swap(200), 100);
     /// assert_eq!(b.load(), 200);
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn swap(&self, value: T) -> T {
         AtomicOps::swap(&self.primitive, value)
     }
@@ -270,7 +272,7 @@ where
     /// Returns `Err(actual)` with the observed value when the comparison
     /// fails. In that case, `new` is not stored.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -280,7 +282,7 @@ where
     /// assert_eq!(atomic.load(), 2);
     /// assert_eq!(atomic.compare_set(1, 3), Err(2));
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn compare_set(&self, current: T, new: T) -> Result<(), T> {
         AtomicOps::compare_set(&self.primitive, current, new)
     }
@@ -304,7 +306,7 @@ where
     /// fails, including possible spurious failures. In that case, `new` is not
     /// stored.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -318,7 +320,7 @@ where
     /// }
     /// assert_eq!(atomic.load(), 2);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn compare_set_weak(&self, current: T, new: T) -> Result<(), T> {
         AtomicOps::compare_set_weak(&self.primitive, current, new)
     }
@@ -345,7 +347,7 @@ where
     /// success; use [`compare_set`](Self::compare_set) for an explicit
     /// `Ok`/`Err`, or compare [`to_bits`](f32::to_bits) values yourself.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -355,7 +357,8 @@ where
     /// assert_eq!(atomic.load(), 10);
     /// assert_eq!(atomic.compare_and_exchange(5, 0), 10);
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn compare_and_exchange(&self, current: T, new: T) -> T {
         AtomicOps::compare_exchange(&self.primitive, current, new)
     }
@@ -380,7 +383,7 @@ where
     /// or compare [`to_bits`](f32::to_bits) values when distinguishing success
     /// from failure matters.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// Weak CAS may fail spuriously; retry on `Err(actual)`.
     ///
@@ -400,7 +403,7 @@ where
     /// }
     /// assert_eq!(atomic.load(), 10);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn compare_and_exchange_weak(
         &self,
         current: T,
@@ -422,7 +425,7 @@ where
     ///
     /// The value before the successful update.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -431,7 +434,7 @@ where
     /// assert_eq!(atomic.fetch_update(|x| x * 2), 3);
     /// assert_eq!(atomic.load(), 6);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_update<F>(&self, f: F) -> T
     where
         F: FnMut(T) -> T,
@@ -452,7 +455,7 @@ where
     ///
     /// The value committed by the successful update.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -461,7 +464,7 @@ where
     /// assert_eq!(atomic.update_and_get(|x| x * 2), 6);
     /// assert_eq!(atomic.load(), 6);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn update_and_get<F>(&self, f: F) -> T
     where
         F: FnMut(T) -> T,
@@ -485,7 +488,7 @@ where
     /// `Some(old_value)` with the value before the successful update, or `None`
     /// when `f` rejects the observed current value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -496,7 +499,7 @@ where
     /// assert_eq!(atomic.try_update(|x| (x % 2 == 1).then_some(x + 1)), None);
     /// assert_eq!(atomic.load(), 4);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn try_update<F>(&self, f: F) -> Option<T>
     where
         F: FnMut(T) -> Option<T>,
@@ -521,7 +524,7 @@ where
     /// `Some(new_value)` with the value committed by the successful update, or
     /// `None` when `f` rejects the observed current value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -538,7 +541,7 @@ where
     /// );
     /// assert_eq!(atomic.load(), 4);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn try_update_and_get<F>(&self, f: F) -> Option<T>
     where
         F: FnMut(T) -> Option<T>,
@@ -555,7 +558,7 @@ where
     ///
     /// A shared reference to the raw backend atomic value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -564,7 +567,8 @@ where
     /// let atomic = Atomic::<i32>::new(0);
     /// assert_eq!(atomic.inner().load(Ordering::Relaxed), 0);
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn inner(&self) -> &T::Inner {
         T::inner(&self.primitive)
     }
@@ -589,7 +593,7 @@ where
     ///
     /// The value before the addition.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -598,7 +602,7 @@ where
     /// assert_eq!(atomic.fetch_add(3), 10);
     /// assert_eq!(atomic.load(), 13);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_add(&self, delta: T) -> T {
         AtomicNumberOps::fetch_add(&self.primitive, delta)
     }
@@ -617,7 +621,7 @@ where
     ///
     /// The value before the subtraction.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -626,7 +630,7 @@ where
     /// assert_eq!(atomic.fetch_sub(3), 10);
     /// assert_eq!(atomic.load(), 7);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_sub(&self, delta: T) -> T {
         AtomicNumberOps::fetch_sub(&self.primitive, delta)
     }
@@ -644,7 +648,7 @@ where
     ///
     /// The value before the multiplication.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -653,7 +657,7 @@ where
     /// assert_eq!(atomic.fetch_mul(4), 3);
     /// assert_eq!(atomic.load(), 12);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_mul(&self, factor: T) -> T {
         AtomicNumberOps::fetch_mul(&self.primitive, factor)
     }
@@ -677,7 +681,7 @@ where
     /// specializations follow IEEE-754 division semantics and do not panic
     /// solely because `divisor` is zero.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -686,7 +690,7 @@ where
     /// assert_eq!(atomic.fetch_div(4), 20);
     /// assert_eq!(atomic.load(), 5);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_div(&self, divisor: T) -> T {
         AtomicNumberOps::fetch_div(&self.primitive, divisor)
     }
@@ -702,7 +706,7 @@ where
     ///
     /// The value before the increment.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -711,7 +715,7 @@ where
     /// assert_eq!(atomic.fetch_inc(), 0);
     /// assert_eq!(atomic.load(), 1);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_inc(&self) -> T {
         T::fetch_inc(&self.primitive)
     }
@@ -730,7 +734,7 @@ where
     ///
     /// The value before the increment.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -740,7 +744,7 @@ where
     /// assert_eq!(atomic.fetch_inc_with_ordering(Ordering::AcqRel), 0);
     /// assert_eq!(atomic.load(), 1);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_inc_with_ordering(&self, ordering: Ordering) -> T {
         T::fetch_inc_with_ordering(&self.primitive, ordering)
     }
@@ -751,7 +755,7 @@ where
     ///
     /// The value before the decrement.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -760,7 +764,7 @@ where
     /// assert_eq!(atomic.fetch_dec(), 1);
     /// assert_eq!(atomic.load(), 0);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_dec(&self) -> T {
         T::fetch_dec(&self.primitive)
     }
@@ -779,7 +783,7 @@ where
     ///
     /// The value before the decrement.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -789,7 +793,7 @@ where
     /// assert_eq!(atomic.fetch_dec_with_ordering(Ordering::AcqRel), 1);
     /// assert_eq!(atomic.load(), 0);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_dec_with_ordering(&self, ordering: Ordering) -> T {
         T::fetch_dec_with_ordering(&self.primitive, ordering)
     }
@@ -810,7 +814,7 @@ where
     ///
     /// The value before the addition.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -820,7 +824,7 @@ where
     /// assert_eq!(atomic.fetch_add_with_ordering(5, Ordering::AcqRel), 10);
     /// assert_eq!(atomic.load(), 15);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_add_with_ordering(&self, delta: T, ordering: Ordering) -> T {
         T::fetch_add_with_ordering(&self.primitive, delta, ordering)
     }
@@ -841,7 +845,7 @@ where
     ///
     /// The value before the subtraction.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -851,7 +855,7 @@ where
     /// assert_eq!(atomic.fetch_sub_with_ordering(3, Ordering::AcqRel), 10);
     /// assert_eq!(atomic.load(), 7);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_sub_with_ordering(&self, delta: T, ordering: Ordering) -> T {
         T::fetch_sub_with_ordering(&self.primitive, delta, ordering)
     }
@@ -866,7 +870,7 @@ where
     ///
     /// The value before the operation.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -875,7 +879,7 @@ where
     /// assert_eq!(atomic.fetch_and(0b1010), 0b1111);
     /// assert_eq!(atomic.load(), 0b1010);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_and(&self, value: T) -> T {
         T::fetch_and(&self.primitive, value)
     }
@@ -890,7 +894,7 @@ where
     ///
     /// The value before the operation.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -899,7 +903,7 @@ where
     /// assert_eq!(atomic.fetch_or(0b0011), 0b1000);
     /// assert_eq!(atomic.load(), 0b1011);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_or(&self, value: T) -> T {
         T::fetch_or(&self.primitive, value)
     }
@@ -914,7 +918,7 @@ where
     ///
     /// The value before the operation.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -923,7 +927,7 @@ where
     /// assert_eq!(atomic.fetch_xor(0b1010), 0b1111);
     /// assert_eq!(atomic.load(), 0b0101);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_xor(&self, value: T) -> T {
         T::fetch_xor(&self.primitive, value)
     }
@@ -934,7 +938,7 @@ where
     ///
     /// The value before the operation.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -943,7 +947,7 @@ where
     /// assert_eq!(atomic.fetch_not(), 0);
     /// assert_eq!(atomic.load(), !0);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_not(&self) -> T {
         T::fetch_not(&self.primitive)
     }
@@ -962,7 +966,7 @@ where
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -971,7 +975,7 @@ where
     /// assert_eq!(atomic.fetch_accumulate(5, |a, b| a + b), 10);
     /// assert_eq!(atomic.load(), 15);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_accumulate<F>(&self, value: T, f: F) -> T
     where
         F: FnMut(T, T) -> T,
@@ -994,7 +998,7 @@ where
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1003,7 +1007,7 @@ where
     /// assert_eq!(atomic.accumulate_and_get(5, |a, b| a + b), 15);
     /// assert_eq!(atomic.load(), 15);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn accumulate_and_get<F>(&self, value: T, f: F) -> T
     where
         F: FnMut(T, T) -> T,
@@ -1021,7 +1025,7 @@ where
     ///
     /// The value before the operation.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1030,7 +1034,7 @@ where
     /// assert_eq!(atomic.fetch_max(10), 3);
     /// assert_eq!(atomic.load(), 10);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_max(&self, value: T) -> T {
         T::fetch_max(&self.primitive, value)
     }
@@ -1045,7 +1049,7 @@ where
     ///
     /// The value before the operation.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1054,7 +1058,7 @@ where
     /// assert_eq!(atomic.fetch_min(3), 10);
     /// assert_eq!(atomic.load(), 3);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_min(&self, value: T) -> T {
         T::fetch_min(&self.primitive, value)
     }
@@ -1067,7 +1071,7 @@ impl Atomic<bool> {
     ///
     /// The previous value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1076,7 +1080,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_set(), false);
     /// assert!(flag.load());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_set(&self) -> bool {
         self.primitive.fetch_set()
     }
@@ -1087,7 +1091,7 @@ impl Atomic<bool> {
     ///
     /// The previous value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1096,7 +1100,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_clear(), true);
     /// assert!(!flag.load());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_clear(&self) -> bool {
         self.primitive.fetch_clear()
     }
@@ -1107,7 +1111,7 @@ impl Atomic<bool> {
     ///
     /// The previous value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1116,7 +1120,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_not(), false);
     /// assert!(flag.load());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_not(&self) -> bool {
         self.primitive.fetch_not()
     }
@@ -1131,7 +1135,7 @@ impl Atomic<bool> {
     ///
     /// The previous value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1140,7 +1144,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_and(false), true);
     /// assert!(!flag.load());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_and(&self, value: bool) -> bool {
         self.primitive.fetch_and(value)
     }
@@ -1155,7 +1159,7 @@ impl Atomic<bool> {
     ///
     /// The previous value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1164,7 +1168,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_or(true), false);
     /// assert!(flag.load());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_or(&self, value: bool) -> bool {
         self.primitive.fetch_or(value)
     }
@@ -1179,7 +1183,7 @@ impl Atomic<bool> {
     ///
     /// The previous value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1188,7 +1192,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_xor(true), true);
     /// assert!(!flag.load());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn fetch_xor(&self, value: bool) -> bool {
         self.primitive.fetch_xor(value)
     }
@@ -1208,7 +1212,7 @@ impl Atomic<bool> {
     /// Returns `Err(true)` if the observed current value was already `true`.
     /// In that case, `new` is not stored.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1218,7 +1222,7 @@ impl Atomic<bool> {
     /// assert!(flag.load());
     /// assert!(flag.set_if_false(false).is_err());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn set_if_false(&self, new: bool) -> Result<(), bool> {
         self.primitive.set_if_false(new)
     }
@@ -1238,7 +1242,7 @@ impl Atomic<bool> {
     /// Returns `Err(false)` if the observed current value was already `false`.
     /// In that case, `new` is not stored.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1248,7 +1252,7 @@ impl Atomic<bool> {
     /// assert!(!flag.load());
     /// assert!(flag.set_if_true(true).is_err());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn set_if_true(&self, new: bool) -> Result<(), bool> {
         self.primitive.set_if_true(new)
     }
@@ -1260,7 +1264,7 @@ where
 {
     /// Creates an atomic with [`Default::default`] as the initial value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1268,7 +1272,7 @@ where
     /// let atomic = Atomic::<i32>::default();
     /// assert_eq!(atomic.load(), 0);
     /// ```
-    #[inline]
+    #[inline(always)]
     fn default() -> Self {
         Self::new(T::default())
     }
@@ -1280,7 +1284,7 @@ where
 {
     /// Converts `value` into an [`Atomic`] via [`Atomic::new`].
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1288,7 +1292,7 @@ where
     /// let atomic = Atomic::from(42i32);
     /// assert_eq!(atomic.load(), 42);
     /// ```
-    #[inline]
+    #[inline(always)]
     fn from(value: T) -> Self {
         Self::new(value)
     }
@@ -1300,7 +1304,7 @@ where
 {
     /// Formats the loaded value as `Atomic { value: ... }`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;
@@ -1323,7 +1327,7 @@ where
     /// Formats the loaded value using its [`Display`](fmt::Display)
     /// implementation.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::Atomic;

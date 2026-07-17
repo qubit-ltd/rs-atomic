@@ -26,6 +26,7 @@ pub trait AtomicOps {
     /// # Returns
     ///
     /// The current value.
+    #[must_use]
     fn load(&self) -> Self::Value;
 
     /// Stores a new value.
@@ -49,6 +50,7 @@ pub trait AtomicOps {
     /// # Returns
     ///
     /// The old value.
+    #[must_use]
     fn swap(&self, value: Self::Value) -> Self::Value;
 
     /// Compares and sets the value atomically.
@@ -132,6 +134,7 @@ pub trait AtomicOps {
     /// operation succeeded for non-floating-point backends. Floating-point
     /// backends compare raw bit patterns, so callers must compare raw bits or
     /// use `compare_set` when they need an explicit success indicator.
+    #[must_use]
     fn compare_exchange(
         &self,
         current: Self::Value,

@@ -33,7 +33,7 @@ use std::sync::atomic::{
 /// panic. Use [`try_add`](Self::try_add) or [`try_sub`](Self::try_sub) when
 /// overflow is a normal business outcome.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```rust
 /// use qubit_atomic::AtomicSignedCount;
@@ -61,7 +61,7 @@ impl AtomicSignedCount {
     ///
     /// A signed counter initialized to `value`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -82,7 +82,7 @@ impl AtomicSignedCount {
     ///
     /// A signed counter whose current value is zero.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -90,7 +90,7 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::zero();
     /// assert!(counter.is_zero());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub const fn zero() -> Self {
         Self::new(0)
     }
@@ -101,7 +101,7 @@ impl AtomicSignedCount {
     ///
     /// The current counter value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -109,7 +109,8 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::new(-7);
     /// assert_eq!(counter.get(), -7);
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn get(&self) -> isize {
         self.inner.load(Ordering::Acquire)
     }
@@ -120,7 +121,7 @@ impl AtomicSignedCount {
     ///
     /// `true` if the current value is zero, otherwise `false`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -128,7 +129,8 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::zero();
     /// assert!(counter.is_zero());
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn is_zero(&self) -> bool {
         self.get() == 0
     }
@@ -139,7 +141,7 @@ impl AtomicSignedCount {
     ///
     /// `true` if the current value is greater than zero, otherwise `false`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -147,7 +149,8 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::new(1);
     /// assert!(counter.is_positive());
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn is_positive(&self) -> bool {
         self.get() > 0
     }
@@ -158,7 +161,7 @@ impl AtomicSignedCount {
     ///
     /// `true` if the current value is less than zero, otherwise `false`.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -166,7 +169,8 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::new(-1);
     /// assert!(counter.is_negative());
     /// ```
-    #[inline]
+    #[must_use]
+    #[inline(always)]
     pub fn is_negative(&self) -> bool {
         self.get() < 0
     }
@@ -181,7 +185,7 @@ impl AtomicSignedCount {
     ///
     /// Panics if the increment would overflow [`isize::MAX`].
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -189,7 +193,7 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::zero();
     /// assert_eq!(counter.inc(), 1);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn inc(&self) -> isize {
         self.add(1)
     }
@@ -204,7 +208,7 @@ impl AtomicSignedCount {
     ///
     /// Panics if the decrement would underflow [`isize::MIN`].
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -212,7 +216,7 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::zero();
     /// assert_eq!(counter.dec(), -1);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn dec(&self) -> isize {
         self.sub(1)
     }
@@ -231,7 +235,7 @@ impl AtomicSignedCount {
     ///
     /// Panics if the addition would overflow or underflow the signed range.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -239,7 +243,7 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::new(2);
     /// assert_eq!(counter.add(-5), -3);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn add(&self, delta: isize) -> isize {
         self.try_add(delta)
             .expect("atomic signed counter out of range")
@@ -257,7 +261,7 @@ impl AtomicSignedCount {
     /// overflow or underflow the signed range. On `None`, the counter is left
     /// unchanged.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -265,7 +269,7 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::new(-2);
     /// assert_eq!(counter.try_add(5), Some(3));
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn try_add(&self, delta: isize) -> Option<isize> {
         self.try_update(|current| current.checked_add(delta))
     }
@@ -284,7 +288,7 @@ impl AtomicSignedCount {
     ///
     /// Panics if the subtraction would overflow or underflow the signed range.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -292,7 +296,7 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::new(2);
     /// assert_eq!(counter.sub(5), -3);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn sub(&self, delta: isize) -> isize {
         self.try_sub(delta)
             .expect("atomic signed counter out of range")
@@ -310,7 +314,7 @@ impl AtomicSignedCount {
     /// overflow or underflow the signed range. On `None`, the counter is left
     /// unchanged.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// use qubit_atomic::AtomicSignedCount;
@@ -318,7 +322,7 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::new(2);
     /// assert_eq!(counter.try_sub(5), Some(-3));
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn try_sub(&self, delta: isize) -> Option<isize> {
         self.try_update(|current| current.checked_sub(delta))
     }
@@ -335,7 +339,6 @@ impl AtomicSignedCount {
     /// `Some(new_value)` if the update succeeds, or `None` if `update`
     /// rejects the current value. A rejected update leaves the counter
     /// unchanged.
-    #[inline]
     fn try_update<F>(&self, mut update: F) -> Option<isize>
     where
         F: FnMut(isize) -> Option<isize>,
@@ -362,7 +365,7 @@ impl Default for AtomicSignedCount {
     /// # Returns
     ///
     /// A signed counter whose current value is zero.
-    #[inline]
+    #[inline(always)]
     fn default() -> Self {
         Self::zero()
     }
@@ -378,7 +381,7 @@ impl From<isize> for AtomicSignedCount {
     /// # Returns
     ///
     /// A signed counter initialized to `value`.
-    #[inline]
+    #[inline(always)]
     fn from(value: isize) -> Self {
         Self::new(value)
     }

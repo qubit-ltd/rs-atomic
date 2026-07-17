@@ -52,6 +52,7 @@ pub trait AtomicValue: sealed::Sealed + Copy {
     /// # Returns
     ///
     /// A shared reference to the backend atomic storage.
+    #[must_use]
     fn inner(primitive: &Self::Primitive) -> &Self::Inner;
 }
 
