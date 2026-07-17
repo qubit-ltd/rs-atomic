@@ -650,36 +650,6 @@ let value = atomic.load(Ordering::Acquire);
 Criterion 基准会把代表性的 wrapper 操作与等价的 `std`、`arc-swap` 基线对比；结果仍然
 取决于目标平台和实际工作负载。
 
-## 测试与代码覆盖率
-
-本项目保持全面的测试覆盖，对所有功能进行详细验证。
-
-### 运行测试
-
-```bash
-# 运行所有测试
-cargo test
-
-# 运行基准测试
-cargo bench --bench atomic_bench
-
-# 列出基准测试场景
-cargo bench --bench atomic_bench -- --list
-
-# 运行覆盖率报告
-./coverage.sh
-
-# 生成文本格式报告
-./coverage.sh text
-
-# 运行 CI 检查（格式化、clippy、测试、覆盖率）
-./ci-check.sh
-```
-
-### 覆盖率指标
-
-详细的覆盖率统计请参见 [COVERAGE.zh_CN.md](COVERAGE.zh_CN.md)。
-
 ## 依赖项
 
 运行时依赖保持很少：
@@ -688,41 +658,36 @@ cargo bench --bench atomic_bench -- --list
 - `portable-atomic` 为 `Atomic<i128>` 和 `Atomic<u128>` 提供稳定后端；其 lock-free
   保证和 fallback 策略取决于编译目标。
 
+## 测试
+
+```bash
+# 使用默认的空 feature 集测试核心 API
+cargo test --no-default-features
+
+# 测试核心 API 和正则校验
+cargo test --all-features
+
+# 运行项目 CI 检查
+./ci-check.sh
+
+# 检查代码覆盖率
+./coverage.sh
+```
+
 ## 许可证
 
-Copyright (c) 2025 - 2026. Haixing Hu, Qubit Co. Ltd. All rights reserved.
+Copyright (c) 2025 - 2026. Haixing Hu. All rights reserved.
 
-根据 Apache 许可证 2.0 版（"许可证"）授权；
-除非遵守许可证，否则您不得使用此文件。
-您可以在以下位置获取许可证副本：
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-除非适用法律要求或书面同意，否则根据许可证分发的软件
-按"原样"分发，不附带任何明示或暗示的担保或条件。
-有关许可证下的特定语言管理权限和限制，请参阅许可证。
-
-完整的许可证文本请参阅 [LICENSE](LICENSE)。
+本项目基于 Apache License 2.0 授权。完整许可证文本请参阅
+[LICENSE](LICENSE)。
 
 ## 贡献
 
-欢迎贡献！请随时提交 Pull Request。
-
-### 开发指南
-
-- 遵循 Rust API 指南
-- 保持全面的测试覆盖
-- 为所有公共 API 编写文档和示例
-- 提交 PR 前确保所有测试通过
+欢迎贡献。请遵循 Rust API 指南，及时更新公共 API 文档与测试，并在提交
+Pull Request 前运行 `./align-ci.sh`格式化代码，运行`./ci-check.sh`对齐CI要求。
 
 ## 作者
 
-**胡海星** - *Qubit Co. Ltd.*
-
-## 相关项目
-
-Qubit 旗下的更多 Rust 库发布在 GitHub 组织 [qubit-ltd](https://github.com/qubit-ltd)。
-
----
+**Haixing Hu** - *Qubit Co. Ltd.*
 
 仓库地址：[https://github.com/qubit-ltd/rs-atomic](https://github.com/qubit-ltd/rs-atomic)

@@ -663,36 +663,6 @@ The Criterion benchmark target compares representative wrapper operations with
 equivalent `std` and `arc-swap` baselines. Results remain target- and
 workload-specific.
 
-## Testing & Code Coverage
-
-This project maintains comprehensive test coverage with detailed validation of all functionality.
-
-### Running Tests
-
-```bash
-# Run all tests
-cargo test
-
-# Run benchmarks
-cargo bench --bench atomic_bench
-
-# List benchmark scenarios
-cargo bench --bench atomic_bench -- --list
-
-# Run with coverage report
-./coverage.sh
-
-# Generate text format report
-./coverage.sh text
-
-# Run CI checks (format, clippy, test, coverage)
-./ci-check.sh
-```
-
-### Coverage Metrics
-
-See [COVERAGE.md](COVERAGE.md) for detailed coverage statistics.
-
 ## Dependencies
 
 Runtime dependencies are intentionally small:
@@ -702,43 +672,37 @@ Runtime dependencies are intentionally small:
   `Atomic<u128>`; its lock-free guarantees and fallback strategy depend on the
   compilation target.
 
+## Testing
+
+```bash
+# Core API with the default empty feature set
+cargo test --no-default-features
+
+# Core API plus regex validation
+cargo test --all-features
+
+# Project CI checks
+./ci-check.sh
+
+# Check code coverage
+./coverage.sh
+```
+
 ## License
 
-Copyright (c) 2025 - 2026. Haixing Hu, Qubit Co. Ltd. All rights reserved.
+Copyright (c) 2025 - 2026. Haixing Hu. All rights reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-See [LICENSE](LICENSE) for the full license text.
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the
+full license text.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Development Guidelines
-
-- Follow the Rust API guidelines
-- Maintain comprehensive test coverage
-- Document all public APIs with examples
-- Ensure all tests pass before submitting PR
+Contributions are welcome. Please follow the Rust API guidelines, keep public
+API documentation and tests current, and run `./align-ci.sh` to format code and
+`./ci-check.sh` to satisfy CI requirements before submitting a pull request.
 
 ## Author
 
 **Haixing Hu** - *Qubit Co. Ltd.*
-
-## Related Projects
-
-More Rust libraries from Qubit are published under the [qubit-ltd](https://github.com/qubit-ltd) organization on GitHub.
-
----
 
 Repository: [https://github.com/qubit-ltd/rs-atomic](https://github.com/qubit-ltd/rs-atomic)
