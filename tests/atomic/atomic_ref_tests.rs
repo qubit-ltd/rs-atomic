@@ -16,22 +16,10 @@ use std::thread;
 
 use qubit_atomic::AtomicRef;
 
-#[derive(Debug, Clone, PartialEq)]
-struct TestData {
-    value: i32,
-    name: String,
-}
-
-#[derive(Debug)]
-struct DropTracked {
-    drops: Arc<AtomicUsize>,
-}
-
-impl Drop for DropTracked {
-    fn drop(&mut self) {
-        self.drops.fetch_add(1, Ordering::Relaxed);
-    }
-}
+use super::support::{
+    DropTracked,
+    TestData,
+};
 
 #[test]
 fn test_new() {
@@ -740,7 +728,7 @@ fn test_concurrent_swap() {
     for i in 0..10 {
         let atomic = atomic.clone();
         let handle = thread::spawn(move || {
-            atomic.swap(Arc::new(i));
+            let _ = atomic.swap(Arc::new(i));
         });
         handles.push(handle);
     }
