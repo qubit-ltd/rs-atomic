@@ -13,11 +13,7 @@ use qubit_atomic::{
     AtomicRef,
 };
 
-#[derive(Debug, Clone, PartialEq)]
-struct TestData {
-    value: i32,
-    name: String,
-}
+use super::support::TestData;
 
 #[test]
 fn test_arc_atomic_ref_shared_owner() {

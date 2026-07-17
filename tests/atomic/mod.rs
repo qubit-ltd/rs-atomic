@@ -8,6 +8,7 @@
 
 #[macro_use]
 mod macros;
+mod support;
 
 mod arc_atomic_count_tests;
 mod arc_atomic_ref_tests;
