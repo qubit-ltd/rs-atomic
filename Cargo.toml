@@ -24,6 +24,8 @@ include = [
     "/resources/**",
     "/src/**",
     "/tests/**",
+    "/fuzz/**",
+    "/benches/**",
 ]
 
 [lib]
