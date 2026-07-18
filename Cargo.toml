@@ -1,6 +1,6 @@
 [package]
 name = "qubit-atomic"
-version = "0.14.1"
+version = "0.15.0"
 edition = "2024"
 rust-version = "1.94"
 authors = ["Haixing Hu <starfish.hu@gmail.com>"]
@@ -33,7 +33,7 @@ name = "qubit_atomic"
 
 [dependencies]
 arc-swap = "1.9"
-portable-atomic = "1.13"
+portable-atomic = "1.14"
 
 [dev-dependencies]
 # For statistically robust benchmark comparisons
