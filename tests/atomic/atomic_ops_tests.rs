@@ -6,11 +6,10 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use qubit_atomic::{
-    Atomic,
-    AtomicRef,
-};
 use std::sync::Arc;
+
+use qubit_atomic::Atomic;
+use qubit_atomic::AtomicRef;
 
 #[test]
 fn test_atomic_ops_bool() {

@@ -10,10 +10,8 @@
 //!
 //! Provides the public [`Atomic<T>`] wrapper for supported primitive values.
 
-use std::{
-    fmt,
-    sync::atomic::Ordering,
-};
+use std::fmt;
+use std::sync::atomic::Ordering;
 
 use super::atomic_integer_value::AtomicIntegerValue;
 use super::atomic_number_ops::AtomicNumberOps;

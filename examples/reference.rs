@@ -9,9 +9,10 @@
 //!
 //! Demonstrates using atomic references for lock-free data structures.
 
-use qubit_atomic::AtomicRef;
 use std::sync::Arc;
 use std::thread;
+
+use qubit_atomic::AtomicRef;
 
 #[derive(Debug, Clone)]
 struct Config {

@@ -9,10 +9,11 @@
 //!
 //! Demonstrates using atomic booleans for thread synchronization.
 
-use qubit_atomic::Atomic;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
+
+use qubit_atomic::Atomic;
 
 fn main() {
     println!("=== Atomic Boolean Flag Example ===\n");

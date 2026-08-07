@@ -10,24 +10,19 @@
 //! Criterion comparisons between `qubit-atomic` wrappers and their direct
 //! standard-library or `arc-swap` equivalents.
 
-use arc_swap::ArcSwap;
-use criterion::{
-    Criterion,
-    criterion_group,
-    criterion_main,
-};
-use qubit_atomic::{
-    Atomic,
-    AtomicCount,
-    AtomicRef,
-};
 use std::hint::black_box;
 use std::sync::Arc;
-use std::sync::atomic::{
-    AtomicI32,
-    AtomicUsize,
-    Ordering,
-};
+use std::sync::atomic::AtomicI32;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
+
+use arc_swap::ArcSwap;
+use criterion::Criterion;
+use criterion::criterion_group;
+use criterion::criterion_main;
+use qubit_atomic::Atomic;
+use qubit_atomic::AtomicCount;
+use qubit_atomic::AtomicRef;
 
 /// Benchmarks acquire loads against the equivalent standard-library atomic.
 fn benchmark_primitive_load(c: &mut Criterion) {

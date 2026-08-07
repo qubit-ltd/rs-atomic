@@ -9,10 +9,8 @@
 use std::sync::Arc;
 use std::thread;
 
-use qubit_atomic::{
-    ArcAtomic,
-    Atomic,
-};
+use qubit_atomic::ArcAtomic;
+use qubit_atomic::Atomic;
 
 #[test]
 fn test_arc_atomic_shared_owner() {

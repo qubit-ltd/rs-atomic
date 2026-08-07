@@ -6,9 +6,11 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use qubit_atomic::Atomic;
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::thread;
+
+use qubit_atomic::Atomic;
 
 const EPSILON: f64 = 1e-10;
 
@@ -273,8 +275,6 @@ fn test_compare_and_exchange_weak() {
 
 #[test]
 fn test_inner() {
-    use std::sync::atomic::Ordering;
-
     let atomic = Atomic::<f64>::new(1.0);
     let bits = atomic.inner().load(Ordering::Relaxed);
     assert_eq!(f64::from_bits(bits), 1.0);
@@ -285,8 +285,6 @@ fn test_inner() {
 
 #[test]
 fn test_inner_cas() {
-    use std::sync::atomic::Ordering;
-
     let atomic = Atomic::<f64>::new(1.0);
     let current_bits = atomic.inner().load(Ordering::Relaxed);
     let new_bits = 2.0f64.to_bits();

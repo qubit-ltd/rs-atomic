@@ -12,10 +12,8 @@
 //! used as synchronization signals.
 
 use std::fmt;
-use std::sync::atomic::{
-    AtomicUsize as StdAtomicUsize,
-    Ordering,
-};
+use std::sync::atomic::AtomicUsize as StdAtomicUsize;
+use std::sync::atomic::Ordering;
 
 /// Applies a checked update through the production weak-CAS retry loop.
 ///

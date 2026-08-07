@@ -7,10 +7,8 @@
 // =============================================================================
 
 use std::sync::Arc;
-use std::sync::atomic::{
-    AtomicUsize,
-    Ordering,
-};
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
 
 /// Records how many instances have been dropped during an atomic-reference
 /// test.

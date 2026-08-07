@@ -74,13 +74,11 @@
 pub mod atomic;
 
 // Re-export the public atomic API.
-pub use atomic::{
-    ArcAtomic,
-    ArcAtomicCount,
-    ArcAtomicRef,
-    ArcAtomicSignedCount,
-    Atomic,
-    AtomicCount,
-    AtomicRef,
-    AtomicSignedCount,
-};
+pub use atomic::ArcAtomic;
+pub use atomic::ArcAtomicCount;
+pub use atomic::ArcAtomicRef;
+pub use atomic::ArcAtomicSignedCount;
+pub use atomic::Atomic;
+pub use atomic::AtomicCount;
+pub use atomic::AtomicRef;
+pub use atomic::AtomicSignedCount;

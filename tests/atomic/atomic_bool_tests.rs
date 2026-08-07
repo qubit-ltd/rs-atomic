@@ -6,9 +6,11 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use qubit_atomic::Atomic;
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::thread;
+
+use qubit_atomic::Atomic;
 
 fn compare_set_weak_until_success(
     atomic: &Atomic<bool>,
@@ -286,8 +288,6 @@ fn test_compare_and_exchange_weak() {
 
 #[test]
 fn test_inner() {
-    use std::sync::atomic::Ordering;
-
     let atomic = Atomic::<bool>::new(false);
     atomic.inner().store(true, Ordering::Relaxed);
     assert!(atomic.inner().load(Ordering::Relaxed));

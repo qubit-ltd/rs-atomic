@@ -6,10 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use qubit_atomic::{
-    Atomic,
-    AtomicRef,
-};
+use qubit_atomic::Atomic;
+use qubit_atomic::AtomicRef;
 
 #[test]
 fn test_sealed_atomic_types_are_send_and_sync() {
