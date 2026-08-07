@@ -11,12 +11,11 @@
 //! Provides an easy-to-use atomic reference type with sensible default memory
 //! orderings. Uses `Arc<T>` for thread-safe reference counting.
 
-use arc_swap::{
-    ArcSwap,
-    Guard,
-};
 use std::fmt;
 use std::sync::Arc;
+
+use arc_swap::ArcSwap;
+use arc_swap::Guard;
 
 /// Atomic reference type.
 ///

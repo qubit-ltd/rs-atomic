@@ -6,13 +6,13 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+use loom::model;
 use loom::sync::Arc;
-use loom::sync::atomic::{
-    AtomicBool,
-    AtomicUsize,
-    Ordering,
-};
-use loom::thread;
+use loom::sync::atomic::AtomicBool;
+use loom::sync::atomic::AtomicUsize;
+use loom::sync::atomic::Ordering;
+use loom::thread::spawn;
+use loom::thread::yield_now;
 use qubit_atomic::atomic::testing::try_update_atomic_count;
 
 /// Performs one checked increment through the production `AtomicCount` core.
@@ -36,13 +36,13 @@ fn increment_once(counter: &AtomicUsize) {
 
 #[test]
 fn test_loom_release_acquire_visibility() {
-    loom::model(|| {
+    model(|| {
         let data = Arc::new(AtomicUsize::new(0));
         let ready = Arc::new(AtomicBool::new(false));
 
         let data_writer = data.clone();
         let ready_writer = ready.clone();
-        let writer = thread::spawn(move || {
+        let writer = spawn(move || {
             // Publish data first, then publish the ready flag.
             data_writer.store(42, Ordering::Relaxed);
             ready_writer.store(true, Ordering::Release);
@@ -50,9 +50,9 @@ fn test_loom_release_acquire_visibility() {
 
         let data_reader = data.clone();
         let ready_reader = ready.clone();
-        let reader = thread::spawn(move || {
+        let reader = spawn(move || {
             while !ready_reader.load(Ordering::Acquire) {
-                thread::yield_now();
+                yield_now();
             }
             assert_eq!(data_reader.load(Ordering::Relaxed), 42);
         });
@@ -64,11 +64,11 @@ fn test_loom_release_acquire_visibility() {
 
 #[test]
 fn test_loom_checked_update_prevents_underflow() {
-    loom::model(|| {
+    model(|| {
         let counter = Arc::new(AtomicUsize::new(1));
 
         let c1 = counter.clone();
-        let t1 = thread::spawn(move || {
+        let t1 = spawn(move || {
             try_update_atomic_count(
                 || c1.load(Ordering::Acquire),
                 |current, next| {
@@ -84,7 +84,7 @@ fn test_loom_checked_update_prevents_underflow() {
         });
 
         let c2 = counter.clone();
-        let t2 = thread::spawn(move || {
+        let t2 = spawn(move || {
             try_update_atomic_count(
                 || c2.load(Ordering::Acquire),
                 |current, next| {
@@ -110,16 +110,16 @@ fn test_loom_checked_update_prevents_underflow() {
 
 #[test]
 fn test_loom_weak_cas_retry_linearizable() {
-    loom::model(|| {
+    model(|| {
         let counter = Arc::new(AtomicUsize::new(0));
 
         let c1 = counter.clone();
-        let t1 = thread::spawn(move || {
+        let t1 = spawn(move || {
             increment_once(&c1);
         });
 
         let c2 = counter.clone();
-        let t2 = thread::spawn(move || {
+        let t2 = spawn(move || {
             increment_once(&c2);
         });
 

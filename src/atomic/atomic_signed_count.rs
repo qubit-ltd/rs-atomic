@@ -12,10 +12,8 @@
 //! negative.
 
 use std::fmt;
-use std::sync::atomic::{
-    AtomicIsize as StdAtomicIsize,
-    Ordering,
-};
+use std::sync::atomic::AtomicIsize as StdAtomicIsize;
+use std::sync::atomic::Ordering;
 
 /// A signed atomic counter with synchronization-oriented operations.
 ///

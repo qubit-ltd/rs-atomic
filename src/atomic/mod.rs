@@ -53,6 +53,7 @@ pub use atomic_signed_count::AtomicSignedCount;
 /// Hidden implementation hooks used by integration and model tests.
 #[doc(hidden)]
 pub mod testing {
+
     pub use super::atomic_count::try_update_atomic_count;
 }
 
@@ -62,6 +63,7 @@ pub mod testing {
 /// exposed under an explicit module path so callers opt into them intentionally
 /// when they need a `const fn new` constructor.
 pub mod primitive {
+
     pub use super::atomic_bool::AtomicBool;
     pub use super::atomic_f32::AtomicF32;
     pub use super::atomic_f64::AtomicF64;

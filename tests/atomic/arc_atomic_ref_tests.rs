@@ -8,10 +8,8 @@
 
 use std::sync::Arc;
 
-use qubit_atomic::{
-    ArcAtomicRef,
-    AtomicRef,
-};
+use qubit_atomic::ArcAtomicRef;
+use qubit_atomic::AtomicRef;
 
 use super::support::TestData;
 

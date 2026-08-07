@@ -6,20 +6,15 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use qubit_atomic::{
-    Atomic,
-    AtomicRef,
-};
-use std::sync::atomic::{
-    AtomicUsize as StdAtomicUsize,
-    Ordering,
-};
-use std::sync::{
-    Arc,
-    Barrier,
-};
+use std::sync::Arc;
+use std::sync::Barrier;
+use std::sync::atomic::AtomicUsize as StdAtomicUsize;
+use std::sync::atomic::Ordering;
 use std::thread;
 use std::time::Duration;
+
+use qubit_atomic::Atomic;
+use qubit_atomic::AtomicRef;
 
 const NUM_THREADS: usize = 10;
 const ITERATIONS_PER_THREAD: usize = 1000;

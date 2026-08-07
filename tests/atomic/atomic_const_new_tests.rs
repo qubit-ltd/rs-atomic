@@ -6,23 +6,21 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use qubit_atomic::atomic::primitive::{
-    AtomicBool,
-    AtomicF32,
-    AtomicF64,
-    AtomicI8,
-    AtomicI16,
-    AtomicI32,
-    AtomicI64,
-    AtomicI128,
-    AtomicIsize,
-    AtomicU8,
-    AtomicU16,
-    AtomicU32,
-    AtomicU64,
-    AtomicU128,
-    AtomicUsize,
-};
+use qubit_atomic::atomic::primitive::AtomicBool;
+use qubit_atomic::atomic::primitive::AtomicF32;
+use qubit_atomic::atomic::primitive::AtomicF64;
+use qubit_atomic::atomic::primitive::AtomicI8;
+use qubit_atomic::atomic::primitive::AtomicI16;
+use qubit_atomic::atomic::primitive::AtomicI32;
+use qubit_atomic::atomic::primitive::AtomicI64;
+use qubit_atomic::atomic::primitive::AtomicI128;
+use qubit_atomic::atomic::primitive::AtomicIsize;
+use qubit_atomic::atomic::primitive::AtomicU8;
+use qubit_atomic::atomic::primitive::AtomicU16;
+use qubit_atomic::atomic::primitive::AtomicU32;
+use qubit_atomic::atomic::primitive::AtomicU64;
+use qubit_atomic::atomic::primitive::AtomicU128;
+use qubit_atomic::atomic::primitive::AtomicUsize;
 
 static BOOL_ATOMIC: AtomicBool = AtomicBool::new(true);
 static I8_ATOMIC: AtomicI8 = AtomicI8::new(42);

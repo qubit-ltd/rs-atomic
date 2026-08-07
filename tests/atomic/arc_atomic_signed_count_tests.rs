@@ -8,10 +8,8 @@
 
 use std::sync::Arc;
 
-use qubit_atomic::{
-    ArcAtomicSignedCount,
-    AtomicSignedCount,
-};
+use qubit_atomic::ArcAtomicSignedCount;
+use qubit_atomic::AtomicSignedCount;
 
 #[test]
 fn test_arc_atomic_signed_count_shared_owner() {

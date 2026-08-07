@@ -9,9 +9,10 @@
 //!
 //! Demonstrates using atomic integers as thread-safe counters.
 
-use qubit_atomic::Atomic;
 use std::sync::Arc;
 use std::thread;
+
+use qubit_atomic::Atomic;
 
 fn main() {
     println!("=== Atomic Counter Example ===\n");

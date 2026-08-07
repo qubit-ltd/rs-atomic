@@ -13,22 +13,20 @@
 
 use std::sync::atomic::Ordering;
 
-use super::{
-    atomic_i8,
-    atomic_i16,
-    atomic_i32,
-    atomic_i64,
-    atomic_i128,
-    atomic_isize,
-    atomic_u8,
-    atomic_u16,
-    atomic_u32,
-    atomic_u64,
-    atomic_u128,
-    atomic_usize,
-    atomic_value::AtomicValue,
-    sealed,
-};
+use super::atomic_i8;
+use super::atomic_i16;
+use super::atomic_i32;
+use super::atomic_i64;
+use super::atomic_i128;
+use super::atomic_isize;
+use super::atomic_u8;
+use super::atomic_u16;
+use super::atomic_u32;
+use super::atomic_u64;
+use super::atomic_u128;
+use super::atomic_usize;
+use super::atomic_value::AtomicValue;
+use super::sealed;
 
 /// Marker trait for integer values supported by integer-only operations.
 ///

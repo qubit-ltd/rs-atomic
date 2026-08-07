@@ -11,13 +11,11 @@
 //! Defines the hidden marker trait for values supported by
 //! [`crate::Atomic<T>`].
 
-use super::{
-    atomic_bool,
-    atomic_f32,
-    atomic_f64,
-    atomic_ops::AtomicOps,
-    sealed,
-};
+use super::atomic_bool;
+use super::atomic_f32;
+use super::atomic_f64;
+use super::atomic_ops::AtomicOps;
+use super::sealed;
 
 /// Marker trait for values supported by [`crate::Atomic<T>`].
 ///

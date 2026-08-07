@@ -11,10 +11,11 @@
 macro_rules! test_atomic_integer {
     ($value_type:ty, $test_mod:ident) => {
         mod $test_mod {
-            use qubit_atomic::Atomic;
             use std::sync::Arc;
             use std::sync::atomic::Ordering;
             use std::thread;
+
+            use qubit_atomic::Atomic;
 
             fn compare_set_weak_until_success(atomic: &Atomic<$value_type>, current: $value_type, new: $value_type) {
                 for _ in 0..128 {
@@ -715,8 +716,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_operations() {
-                use std::sync::atomic::Ordering;
-
                 let atomic = Atomic::<$value_type>::new(10);
                 atomic.inner().store(100, Ordering::Relaxed);
                 assert_eq!(atomic.inner().load(Ordering::Relaxed), 100);
@@ -881,8 +880,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_compare_exchange_failure() {
-                use std::sync::atomic::Ordering;
-
                 let atomic = Atomic::<$value_type>::new(10);
                 let result = atomic
                     .inner()
@@ -894,7 +891,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_compare_exchange_weak_failure() {
-                use std::sync::atomic::Ordering;
 
                 let atomic = Atomic::<$value_type>::new(10);
                 let result = atomic
@@ -907,7 +903,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_fetch_operations_all() {
-                use std::sync::atomic::Ordering;
 
                 let atomic = Atomic::<$value_type>::new(10);
 
@@ -935,7 +930,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_fetch_max_min() {
-                use std::sync::atomic::Ordering;
 
                 let atomic = Atomic::<$value_type>::new(10);
 
@@ -986,7 +980,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_compare_exchange_success() {
-                use std::sync::atomic::Ordering;
 
                 let atomic = Atomic::<$value_type>::new(10);
                 let result = atomic
@@ -999,7 +992,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_compare_exchange_weak_success() {
-                use std::sync::atomic::Ordering;
 
                 let atomic = Atomic::<$value_type>::new(10);
                 let result = atomic

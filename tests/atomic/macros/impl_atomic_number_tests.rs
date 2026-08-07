@@ -6,9 +6,10 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+use std::sync::atomic::Ordering;
+
 use qubit_atomic::Atomic;
 use qubit_atomic::atomic::primitive::AtomicI64;
-use std::sync::atomic::Ordering;
 
 #[test]
 fn test_impl_atomic_number_generated_methods() {

@@ -8,18 +8,14 @@
 
 use std::cell::Cell;
 use std::sync::Arc;
-use std::sync::atomic::{
-    AtomicUsize,
-    Ordering,
-};
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
 use std::thread;
 
 use qubit_atomic::AtomicRef;
 
-use super::support::{
-    DropTracked,
-    TestData,
-};
+use super::support::DropTracked;
+use super::support::TestData;
 
 #[test]
 fn test_new() {
