@@ -1,0 +1,11 @@
+[package]
+name = "qubit-atomic-loom"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+qubit-atomic = { path = ".." }
+
+[dev-dependencies]
+loom = "0.7"

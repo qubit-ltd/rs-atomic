@@ -43,7 +43,6 @@ fn test_loom_release_acquire_visibility() {
         let data_writer = data.clone();
         let ready_writer = ready.clone();
         let writer = spawn(move || {
-            // Publish data first, then publish the ready flag.
             data_writer.store(42, Ordering::Relaxed);
             ready_writer.store(true, Ordering::Release);
         });
@@ -72,12 +71,7 @@ fn test_loom_checked_update_prevents_underflow() {
             try_update_atomic_count(
                 || c1.load(Ordering::Acquire),
                 |current, next| {
-                    c1.compare_exchange_weak(
-                        current,
-                        next,
-                        Ordering::AcqRel,
-                        Ordering::Acquire,
-                    )
+                    c1.compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire)
                 },
                 |current| current.checked_sub(1),
             )
@@ -88,12 +82,7 @@ fn test_loom_checked_update_prevents_underflow() {
             try_update_atomic_count(
                 || c2.load(Ordering::Acquire),
                 |current, next| {
-                    c2.compare_exchange_weak(
-                        current,
-                        next,
-                        Ordering::AcqRel,
-                        Ordering::Acquire,
-                    )
+                    c2.compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire)
                 },
                 |current| current.checked_sub(1),
             )
