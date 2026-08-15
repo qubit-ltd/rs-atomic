@@ -24,18 +24,20 @@ include = [
     "/benches/**",
 ]
 
+[workspace]
+members = ["loom"]
+resolver = "3"
+
 [lib]
 name = "qubit_atomic"
 
 [dependencies]
 arc-swap = "1.9"
-portable-atomic = "1.14"
+portable-atomic = "1.15"
 
 [dev-dependencies]
 # For statistically robust benchmark comparisons
 criterion = { version = "0.8", features = ["html_reports"] }
-# For concurrent model checking
-loom = "0.7"
 
 [[bench]]
 name = "atomic_bench"
