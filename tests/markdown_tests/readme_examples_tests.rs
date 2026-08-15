@@ -15,7 +15,8 @@ use std::process::Command;
 #[test]
 fn test_readme_rust_examples_compile() {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let output_dir = manifest_dir.join("target/markdown-doctest");
+    let output_dir =
+        markdown_doctest_output_dir(&manifest_dir, std::process::id());
     recreate_dir(&output_dir);
 
     let readmes = [
@@ -32,6 +33,25 @@ fn test_readme_rust_examples_compile() {
         );
         compile_snippets(&manifest_dir, &output_dir, name, &snippets);
     }
+}
+
+/// Verifies that each test process uses an isolated markdown doctest directory.
+#[test]
+fn test_markdown_doctest_output_dir_is_process_scoped() {
+    let manifest_dir = Path::new("/workspace/rs-atomic");
+
+    assert_eq!(
+        markdown_doctest_output_dir(manifest_dir, 42),
+        manifest_dir.join("target/markdown-doctest-42"),
+    );
+}
+
+/// Builds a temporary markdown doctest directory unique to a test process.
+fn markdown_doctest_output_dir(
+    manifest_dir: &Path,
+    process_id: u32,
+) -> PathBuf {
+    manifest_dir.join(format!("target/markdown-doctest-{process_id}"))
 }
 
 fn recreate_dir(path: &Path) {
@@ -126,6 +146,8 @@ name = "qubit-atomic-{name}-markdown-doctest"
 version = "0.0.0"
 edition = "2024"
 publish = false
+
+[workspace]
 
 [dependencies]
 qubit-atomic = {{ path = "{manifest_path}" }}
