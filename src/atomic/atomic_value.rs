@@ -54,10 +54,6 @@ pub trait AtomicValue: sealed::Sealed + Copy {
     fn inner(primitive: &Self::Primitive) -> &Self::Inner;
 }
 
-impl_atomic_value!(
-    bool,
-    atomic_bool::AtomicBool,
-    std::sync::atomic::AtomicBool
-);
+impl_atomic_value!(bool, atomic_bool::AtomicBool, std::sync::atomic::AtomicBool);
 impl_atomic_value!(f32, atomic_f32::AtomicF32, std::sync::atomic::AtomicU32);
 impl_atomic_value!(f64, atomic_f64::AtomicF64, std::sync::atomic::AtomicU64);

@@ -402,11 +402,7 @@ where
     /// assert_eq!(atomic.load(), 10);
     /// ```
     #[inline(always)]
-    pub fn compare_and_exchange_weak(
-        &self,
-        current: T,
-        new: T,
-    ) -> Result<T, T> {
+    pub fn compare_and_exchange_weak(&self, current: T, new: T) -> Result<T, T> {
         AtomicOps::compare_exchange_weak(&self.primitive, current, new)
     }
 
@@ -1312,9 +1308,7 @@ where
     /// ```
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Atomic")
-            .field("value", &self.load())
-            .finish()
+        f.debug_struct("Atomic").field("value", &self.load()).finish()
     }
 }
 

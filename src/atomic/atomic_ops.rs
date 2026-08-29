@@ -75,11 +75,7 @@ pub trait AtomicOps {
     ///
     /// Returns `Err(actual)` with the observed value when the comparison
     /// fails. In that case, `new` is not stored.
-    fn compare_set(
-        &self,
-        current: Self::Value,
-        new: Self::Value,
-    ) -> Result<(), Self::Value>;
+    fn compare_set(&self, current: Self::Value, new: Self::Value) -> Result<(), Self::Value>;
 
     /// Weak version of compare-and-set.
     ///
@@ -103,11 +99,7 @@ pub trait AtomicOps {
     /// Returns `Err(actual)` with the observed value when the comparison
     /// fails, including possible spurious failures. In that case, `new` is not
     /// stored.
-    fn compare_set_weak(
-        &self,
-        current: Self::Value,
-        new: Self::Value,
-    ) -> Result<(), Self::Value>;
+    fn compare_set_weak(&self, current: Self::Value, new: Self::Value) -> Result<(), Self::Value>;
 
     /// Compares and exchanges the value atomically, returning the
     /// previous value.
@@ -135,11 +127,7 @@ pub trait AtomicOps {
     /// backends compare raw bit patterns, so callers must compare raw bits or
     /// use `compare_set` when they need an explicit success indicator.
     #[must_use]
-    fn compare_exchange(
-        &self,
-        current: Self::Value,
-        new: Self::Value,
-    ) -> Self::Value;
+    fn compare_exchange(&self, current: Self::Value, new: Self::Value) -> Self::Value;
 
     /// Weak version of compare-and-exchange.
     ///
@@ -159,11 +147,7 @@ pub trait AtomicOps {
     /// `Ok(previous)` when the value was replaced, or `Err(actual)` when the
     /// comparison failed, including possible spurious failure. The returned
     /// value preserves the observed value in both cases.
-    fn compare_exchange_weak(
-        &self,
-        current: Self::Value,
-        new: Self::Value,
-    ) -> Result<Self::Value, Self::Value>;
+    fn compare_exchange_weak(&self, current: Self::Value, new: Self::Value) -> Result<Self::Value, Self::Value>;
 
     /// Updates the value using a function, returning the old value.
     ///

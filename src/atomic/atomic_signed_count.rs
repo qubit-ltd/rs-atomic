@@ -243,8 +243,7 @@ impl AtomicSignedCount {
     /// ```
     #[inline(always)]
     pub fn add(&self, delta: isize) -> isize {
-        self.try_add(delta)
-            .expect("atomic signed counter out of range")
+        self.try_add(delta).expect("atomic signed counter out of range")
     }
 
     /// Tries to add `delta` to the counter.
@@ -296,8 +295,7 @@ impl AtomicSignedCount {
     /// ```
     #[inline(always)]
     pub fn sub(&self, delta: isize) -> isize {
-        self.try_sub(delta)
-            .expect("atomic signed counter out of range")
+        self.try_sub(delta).expect("atomic signed counter out of range")
     }
 
     /// Tries to subtract `delta` from the counter.
@@ -344,12 +342,10 @@ impl AtomicSignedCount {
         let mut current = self.get();
         loop {
             let next = update(current)?;
-            match self.inner.compare_exchange_weak(
-                current,
-                next,
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            ) {
+            match self
+                .inner
+                .compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire)
+            {
                 Ok(_) => return Some(next),
                 Err(actual) => current = actual,
             }
@@ -397,9 +393,7 @@ impl fmt::Debug for AtomicSignedCount {
     /// A formatting result from the formatter.
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("AtomicSignedCount")
-            .field("value", &self.get())
-            .finish()
+        f.debug_struct("AtomicSignedCount").field("value", &self.get()).finish()
     }
 }
 

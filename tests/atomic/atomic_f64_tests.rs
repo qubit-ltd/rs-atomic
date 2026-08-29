@@ -14,11 +14,7 @@ use qubit_atomic::Atomic;
 
 const EPSILON: f64 = 1e-10;
 
-fn compare_set_weak_until_success(
-    atomic: &Atomic<f64>,
-    current: f64,
-    new: f64,
-) {
+fn compare_set_weak_until_success(atomic: &Atomic<f64>, current: f64, new: f64) {
     for _ in 0..128 {
         match atomic.compare_set_weak(current, new) {
             Ok(()) => return,
@@ -29,11 +25,7 @@ fn compare_set_weak_until_success(
     panic!("weak compare_set did not succeed after bounded retries");
 }
 
-fn compare_exchange_weak_until_success(
-    atomic: &Atomic<f64>,
-    current: f64,
-    new: f64,
-) -> f64 {
+fn compare_exchange_weak_until_success(atomic: &Atomic<f64>, current: f64, new: f64) -> f64 {
     for _ in 0..128 {
         match atomic.compare_and_exchange_weak(current, new) {
             Ok(previous) => return previous,
@@ -291,12 +283,7 @@ fn test_inner_cas() {
 
     atomic
         .inner()
-        .compare_exchange(
-            current_bits,
-            new_bits,
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        )
+        .compare_exchange(current_bits, new_bits, Ordering::AcqRel, Ordering::Acquire)
         .unwrap();
 
     assert!((atomic.load() - 2.0).abs() < EPSILON);
@@ -546,9 +533,7 @@ fn test_compare_and_set_weak_failure_path() {
 fn test_compare_and_exchange_weak_failure_path() {
     let atomic = Atomic::<f64>::new(10.0);
     let prev = atomic.compare_and_exchange_weak(5.0, 15.0);
-    assert!(
-        (prev.expect_err("weak exchange should fail") - 10.0).abs() < EPSILON
-    );
+    assert!((prev.expect_err("weak exchange should fail") - 10.0).abs() < EPSILON);
     assert!((atomic.load() - 10.0).abs() < EPSILON);
 }
 

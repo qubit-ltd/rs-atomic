@@ -186,12 +186,7 @@ impl AtomicF64 {
     #[inline(always)]
     pub fn compare_set(&self, current: f64, new: f64) -> Result<(), f64> {
         self.inner
-            .compare_exchange(
-                current.to_bits(),
-                new.to_bits(),
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            )
+            .compare_exchange(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
             .map(|_| ())
             .map_err(f64::from_bits)
     }
@@ -222,12 +217,7 @@ impl AtomicF64 {
     #[inline(always)]
     pub fn compare_set_weak(&self, current: f64, new: f64) -> Result<(), f64> {
         self.inner
-            .compare_exchange_weak(
-                current.to_bits(),
-                new.to_bits(),
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            )
+            .compare_exchange_weak(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
             .map(|_| ())
             .map_err(f64::from_bits)
     }
@@ -253,12 +243,10 @@ impl AtomicF64 {
     #[must_use]
     #[inline]
     pub fn compare_and_exchange(&self, current: f64, new: f64) -> f64 {
-        match self.inner.compare_exchange(
-            current.to_bits(),
-            new.to_bits(),
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
+        match self
+            .inner
+            .compare_exchange(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
+        {
             Ok(prev_bits) => f64::from_bits(prev_bits),
             Err(actual_bits) => f64::from_bits(actual_bits),
         }
@@ -282,18 +270,9 @@ impl AtomicF64 {
     /// comparison failed, including possible spurious failure. Values preserve
     /// their exact raw bit patterns.
     #[inline(always)]
-    pub fn compare_and_exchange_weak(
-        &self,
-        current: f64,
-        new: f64,
-    ) -> Result<f64, f64> {
+    pub fn compare_and_exchange_weak(&self, current: f64, new: f64) -> Result<f64, f64> {
         self.inner
-            .compare_exchange_weak(
-                current.to_bits(),
-                new.to_bits(),
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            )
+            .compare_exchange_weak(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
             .map(f64::from_bits)
             .map_err(f64::from_bits)
     }
@@ -608,11 +587,7 @@ impl AtomicOps for AtomicF64 {
     }
 
     #[inline(always)]
-    fn compare_exchange_weak(
-        &self,
-        current: f64,
-        new: f64,
-    ) -> Result<f64, f64> {
+    fn compare_exchange_weak(&self, current: f64, new: f64) -> Result<f64, f64> {
         self.compare_and_exchange_weak(current, new)
     }
 

@@ -250,12 +250,7 @@ impl AtomicF32 {
     #[inline(always)]
     pub fn compare_set(&self, current: f32, new: f32) -> Result<(), f32> {
         self.inner
-            .compare_exchange(
-                current.to_bits(),
-                new.to_bits(),
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            )
+            .compare_exchange(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
             .map(|_| ())
             .map_err(f32::from_bits)
     }
@@ -302,12 +297,7 @@ impl AtomicF32 {
     #[inline(always)]
     pub fn compare_set_weak(&self, current: f32, new: f32) -> Result<(), f32> {
         self.inner
-            .compare_exchange_weak(
-                current.to_bits(),
-                new.to_bits(),
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            )
+            .compare_exchange_weak(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
             .map(|_| ())
             .map_err(f32::from_bits)
     }
@@ -344,12 +334,10 @@ impl AtomicF32 {
     #[must_use]
     #[inline]
     pub fn compare_and_exchange(&self, current: f32, new: f32) -> f32 {
-        match self.inner.compare_exchange(
-            current.to_bits(),
-            new.to_bits(),
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
+        match self
+            .inner
+            .compare_exchange(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
+        {
             Ok(prev_bits) => f32::from_bits(prev_bits),
             Err(actual_bits) => f32::from_bits(actual_bits),
         }
@@ -389,18 +377,9 @@ impl AtomicF32 {
     /// assert_eq!(atomic.load(), 2.0);
     /// ```
     #[inline(always)]
-    pub fn compare_and_exchange_weak(
-        &self,
-        current: f32,
-        new: f32,
-    ) -> Result<f32, f32> {
+    pub fn compare_and_exchange_weak(&self, current: f32, new: f32) -> Result<f32, f32> {
         self.inner
-            .compare_exchange_weak(
-                current.to_bits(),
-                new.to_bits(),
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            )
+            .compare_exchange_weak(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
             .map(f32::from_bits)
             .map_err(f32::from_bits)
     }
@@ -779,11 +758,7 @@ impl AtomicOps for AtomicF32 {
     }
 
     #[inline(always)]
-    fn compare_exchange_weak(
-        &self,
-        current: f32,
-        new: f32,
-    ) -> Result<f32, f32> {
+    fn compare_exchange_weak(&self, current: f32, new: f32) -> Result<f32, f32> {
         self.compare_and_exchange_weak(current, new)
     }
 

@@ -283,18 +283,9 @@ impl AtomicBool {
     /// assert_eq!(flag.load(), true);
     /// ```
     #[inline(always)]
-    pub fn compare_set_weak(
-        &self,
-        current: bool,
-        new: bool,
-    ) -> Result<(), bool> {
+    pub fn compare_set_weak(&self, current: bool, new: bool) -> Result<(), bool> {
         self.inner
-            .compare_exchange_weak(
-                current,
-                new,
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            )
+            .compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire)
             .map(|_| ())
     }
 
@@ -330,12 +321,10 @@ impl AtomicBool {
     #[must_use]
     #[inline]
     pub fn compare_and_exchange(&self, current: bool, new: bool) -> bool {
-        match self.inner.compare_exchange(
-            current,
-            new,
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
+        match self
+            .inner
+            .compare_exchange(current, new, Ordering::AcqRel, Ordering::Acquire)
+        {
             Ok(prev) => prev,
             Err(actual) => actual,
         }
@@ -377,17 +366,9 @@ impl AtomicBool {
     /// assert_eq!(flag.load(), true);
     /// ```
     #[inline(always)]
-    pub fn compare_and_exchange_weak(
-        &self,
-        current: bool,
-        new: bool,
-    ) -> Result<bool, bool> {
-        self.inner.compare_exchange_weak(
-            current,
-            new,
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        )
+    pub fn compare_and_exchange_weak(&self, current: bool, new: bool) -> Result<bool, bool> {
+        self.inner
+            .compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire)
     }
 
     /// Atomically sets the value to `true`, returning the old value.
@@ -867,11 +848,7 @@ impl AtomicOps for AtomicBool {
     }
 
     #[inline(always)]
-    fn compare_exchange_weak(
-        &self,
-        current: bool,
-        new: bool,
-    ) -> Result<bool, bool> {
+    fn compare_exchange_weak(&self, current: bool, new: bool) -> Result<bool, bool> {
         self.compare_and_exchange_weak(current, new)
     }
 
