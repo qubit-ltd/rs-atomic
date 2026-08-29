@@ -396,12 +396,8 @@ impl AtomicCount {
         try_update_atomic_count(
             || self.inner.load(Ordering::Acquire),
             |current, next| {
-                self.inner.compare_exchange_weak(
-                    current,
-                    next,
-                    Ordering::AcqRel,
-                    Ordering::Acquire,
-                )
+                self.inner
+                    .compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire)
             },
             update,
         )
@@ -448,9 +444,7 @@ impl fmt::Debug for AtomicCount {
     /// A formatting result from the formatter.
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("AtomicCount")
-            .field("value", &self.get())
-            .finish()
+        f.debug_struct("AtomicCount").field("value", &self.get()).finish()
     }
 }
 

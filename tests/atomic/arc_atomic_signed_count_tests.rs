@@ -27,8 +27,7 @@ fn test_arc_atomic_signed_count_constructors_and_arc_access() {
     let from_value = ArcAtomicSignedCount::from(-3);
     assert_eq!(from_value.get(), -3);
 
-    let from_count =
-        ArcAtomicSignedCount::from_count(AtomicSignedCount::new(-5));
+    let from_count = ArcAtomicSignedCount::from_count(AtomicSignedCount::new(-5));
     assert_eq!(from_count.get(), -5);
 
     let raw = Arc::new(AtomicSignedCount::new(-7));

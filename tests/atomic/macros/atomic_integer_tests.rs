@@ -891,7 +891,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_compare_exchange_weak_failure() {
-
                 let atomic = Atomic::<$value_type>::new(10);
                 let result = atomic
                     .inner()
@@ -903,7 +902,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_fetch_operations_all() {
-
                 let atomic = Atomic::<$value_type>::new(10);
 
                 // Test fetch_sub
@@ -930,7 +928,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_fetch_max_min() {
-
                 let atomic = Atomic::<$value_type>::new(10);
 
                 // Test fetch_max with larger value
@@ -980,7 +977,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_compare_exchange_success() {
-
                 let atomic = Atomic::<$value_type>::new(10);
                 let result = atomic
                     .inner()
@@ -992,7 +988,6 @@ macro_rules! test_atomic_integer {
 
             #[test]
             fn test_inner_compare_exchange_weak_success() {
-
                 let atomic = Atomic::<$value_type>::new(10);
                 let result = atomic
                     .inner()

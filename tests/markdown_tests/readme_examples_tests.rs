@@ -15,8 +15,7 @@ use std::process::Command;
 #[test]
 fn test_readme_rust_examples_compile() {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let output_dir =
-        markdown_doctest_output_dir(&manifest_dir, std::process::id());
+    let output_dir = markdown_doctest_output_dir(&manifest_dir, std::process::id());
     recreate_dir(&output_dir);
 
     let readmes = [
@@ -26,11 +25,7 @@ fn test_readme_rust_examples_compile() {
 
     for (name, path) in readmes {
         let snippets = extract_rust_snippets(&path);
-        assert!(
-            !snippets.is_empty(),
-            "{} should contain Rust snippets",
-            path.display()
-        );
+        assert!(!snippets.is_empty(), "{} should contain Rust snippets", path.display());
         compile_snippets(&manifest_dir, &output_dir, name, &snippets);
     }
 }
@@ -47,25 +42,19 @@ fn test_markdown_doctest_output_dir_is_process_scoped() {
 }
 
 /// Builds a temporary markdown doctest directory unique to a test process.
-fn markdown_doctest_output_dir(
-    manifest_dir: &Path,
-    process_id: u32,
-) -> PathBuf {
+fn markdown_doctest_output_dir(manifest_dir: &Path, process_id: u32) -> PathBuf {
     manifest_dir.join(format!("target/markdown-doctest-{process_id}"))
 }
 
 fn recreate_dir(path: &Path) {
     if path.exists() {
-        fs::remove_dir_all(path)
-            .expect("failed to remove old markdown doctest directory");
+        fs::remove_dir_all(path).expect("failed to remove old markdown doctest directory");
     }
-    fs::create_dir_all(path)
-        .expect("failed to create markdown doctest directory");
+    fs::create_dir_all(path).expect("failed to create markdown doctest directory");
 }
 
 fn extract_rust_snippets(path: &Path) -> Vec<String> {
-    let content =
-        fs::read_to_string(path).expect("failed to read markdown file");
+    let content = fs::read_to_string(path).expect("failed to read markdown file");
     let mut snippets = Vec::new();
     let mut in_rust = false;
     let mut current = String::new();
@@ -100,25 +89,17 @@ fn is_rust_fence(language: &str) -> bool {
     matches!(tag, "rust" | "rs")
 }
 
-fn compile_snippets(
-    manifest_dir: &Path,
-    output_dir: &Path,
-    name: &str,
-    snippets: &[String],
-) {
+fn compile_snippets(manifest_dir: &Path, output_dir: &Path, name: &str, snippets: &[String]) {
     let crate_dir = output_dir.join(name);
     let bin_dir = crate_dir.join("src/bin");
-    fs::create_dir_all(&bin_dir)
-        .expect("failed to create snippet bin directory");
+    fs::create_dir_all(&bin_dir).expect("failed to create snippet bin directory");
 
     let manifest = build_markdown_doctest_manifest(name, manifest_dir);
-    fs::write(crate_dir.join("Cargo.toml"), manifest)
-        .expect("failed to write snippet Cargo.toml");
+    fs::write(crate_dir.join("Cargo.toml"), manifest).expect("failed to write snippet Cargo.toml");
 
     for (index, snippet) in snippets.iter().enumerate() {
         let source = normalize_snippet(snippet);
-        fs::write(bin_dir.join(format!("snippet_{index}.rs")), source)
-            .expect("failed to write snippet source");
+        fs::write(bin_dir.join(format!("snippet_{index}.rs")), source).expect("failed to write snippet source");
     }
 
     let status = Command::new("cargo")
@@ -130,10 +111,7 @@ fn compile_snippets(
         .status()
         .expect("failed to run cargo check for markdown snippets");
 
-    assert!(
-        status.success(),
-        "markdown Rust snippets failed to compile for {name}"
-    );
+    assert!(status.success(), "markdown Rust snippets failed to compile for {name}");
 }
 
 /// Builds the temporary manifest used for compiling README snippets.
@@ -168,8 +146,7 @@ fn toml_basic_string(value: &str) -> String {
             '"' => escaped.push_str("\\\""),
             '\\' => escaped.push_str("\\\\"),
             '\u{0000}'..='\u{001F}' | '\u{007F}' => {
-                write!(escaped, "\\u{:04X}", ch as u32)
-                    .expect("writing TOML escape to String should not fail");
+                write!(escaped, "\\u{:04X}", ch as u32).expect("writing TOML escape to String should not fail");
             }
             _ => escaped.push(ch),
         }
@@ -178,8 +155,7 @@ fn toml_basic_string(value: &str) -> String {
 }
 
 fn normalize_snippet(snippet: &str) -> String {
-    let allow_example_noise =
-        "#![allow(dead_code, unused_imports, unused_variables)]\n";
+    let allow_example_noise = "#![allow(dead_code, unused_imports, unused_variables)]\n";
     if snippet.contains("fn main") {
         format!("{allow_example_noise}{snippet}\n")
     } else {
@@ -190,15 +166,10 @@ fn normalize_snippet(snippet: &str) -> String {
 /// Verifies that Windows dependency paths are valid TOML basic strings.
 #[test]
 fn test_build_markdown_doctest_manifest_escapes_windows_dependency_path() {
-    let manifest = build_markdown_doctest_manifest(
-        "readme_en",
-        Path::new(r"D:\a\rs-atomic\rs-atomic"),
-    );
+    let manifest = build_markdown_doctest_manifest("readme_en", Path::new(r"D:\a\rs-atomic\rs-atomic"));
 
     assert!(
-        manifest.contains(
-            r#"qubit-atomic = { path = "D:\\a\\rs-atomic\\rs-atomic" }"#
-        ),
+        manifest.contains(r#"qubit-atomic = { path = "D:\\a\\rs-atomic\\rs-atomic" }"#),
         "Windows backslashes must be escaped in the generated TOML manifest:\n{manifest}"
     );
 }

@@ -90,12 +90,7 @@ fn checked_increment(counter: &AtomicUsize) -> usize {
     let mut current = counter.load(Ordering::Acquire);
     loop {
         let next = current.checked_add(1).expect("benchmark counter overflow");
-        match counter.compare_exchange_weak(
-            current,
-            next,
-            Ordering::AcqRel,
-            Ordering::Acquire,
-        ) {
+        match counter.compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire) {
             Ok(_) => return next,
             Err(actual) => current = actual,
         }

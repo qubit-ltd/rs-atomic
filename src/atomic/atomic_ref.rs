@@ -268,17 +268,9 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*atomic.load(), 20);
     /// ```
     #[inline(always)]
-    pub fn compare_set(
-        &self,
-        current: &Arc<T>,
-        new: Arc<T>,
-    ) -> Result<(), Arc<T>> {
+    pub fn compare_set(&self, current: &Arc<T>, new: Arc<T>) -> Result<(), Arc<T>> {
         let prev = Guard::into_inner(self.inner.compare_and_swap(current, new));
-        if Arc::ptr_eq(&prev, current) {
-            Ok(())
-        } else {
-            Err(prev)
-        }
+        if Arc::ptr_eq(&prev, current) { Ok(()) } else { Err(prev) }
     }
 
     /// Compares and exchanges the reference atomically, returning the
@@ -319,11 +311,7 @@ impl<T> AtomicRef<T> {
     /// ```
     #[must_use]
     #[inline]
-    pub fn compare_and_exchange(
-        &self,
-        current: &Arc<T>,
-        new: Arc<T>,
-    ) -> Arc<T> {
+    pub fn compare_and_exchange(&self, current: &Arc<T>, new: Arc<T>) -> Arc<T> {
         Guard::into_inner(self.inner.compare_and_swap(current, new))
     }
 
@@ -580,9 +568,7 @@ impl<T: fmt::Debug> fmt::Debug for AtomicRef<T> {
     /// A formatting result from the formatter.
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("AtomicRef")
-            .field("value", &self.load())
-            .finish()
+        f.debug_struct("AtomicRef").field("value", &self.load()).finish()
     }
 }
 

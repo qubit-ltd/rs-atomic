@@ -53,8 +53,7 @@ fn test_arc_atomic_ref_constructors_and_arc_access() {
     let from_arc_value = ArcAtomicRef::new(Arc::new(10));
     assert_eq!(*from_arc_value.load(), 10);
 
-    let from_atomic_ref =
-        ArcAtomicRef::from_atomic_ref(AtomicRef::from_value(20));
+    let from_atomic_ref = ArcAtomicRef::from_atomic_ref(AtomicRef::from_value(20));
     assert_eq!(*from_atomic_ref.load(), 20);
 
     let raw = Arc::new(AtomicRef::from_value(30));
@@ -82,8 +81,5 @@ fn test_arc_atomic_ref_debug_display() {
     let atomic = ArcAtomicRef::from_value(42);
 
     assert_eq!(format!("{atomic}"), "42");
-    assert_eq!(
-        format!("{atomic:?}"),
-        "ArcAtomicRef { value: 42, strong_count: 1 }",
-    );
+    assert_eq!(format!("{atomic:?}"), "ArcAtomicRef { value: 42, strong_count: 1 }",);
 }
