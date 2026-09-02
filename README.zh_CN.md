@@ -68,7 +68,7 @@ Qubit Atomic 是一个全面的原子操作库，提供易于使用的原子类�
 
 ```toml
 [dependencies]
-qubit-atomic = "0.16"
+qubit-atomic = "0.17"
 ```
 
 ## 快速开始
