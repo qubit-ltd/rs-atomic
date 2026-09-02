@@ -71,7 +71,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-qubit-atomic = "0.16"
+qubit-atomic = "0.17"
 ```
 
 ## Quick Start
