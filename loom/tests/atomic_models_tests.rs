@@ -20,14 +20,7 @@ fn increment_once(counter: &AtomicUsize) {
     assert!(
         try_update_atomic_count(
             || counter.load(Ordering::Acquire),
-            |current, next| {
-                counter.compare_exchange_weak(
-                    current,
-                    next,
-                    Ordering::AcqRel,
-                    Ordering::Acquire,
-                )
-            },
+            |current, next| { counter.compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire,) },
             |current| current.checked_add(1),
         )
         .is_some()
@@ -70,9 +63,7 @@ fn test_loom_checked_update_prevents_underflow() {
         let t1 = spawn(move || {
             try_update_atomic_count(
                 || c1.load(Ordering::Acquire),
-                |current, next| {
-                    c1.compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire)
-                },
+                |current, next| c1.compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire),
                 |current| current.checked_sub(1),
             )
         });
@@ -81,9 +72,7 @@ fn test_loom_checked_update_prevents_underflow() {
         let t2 = spawn(move || {
             try_update_atomic_count(
                 || c2.load(Ordering::Acquire),
-                |current, next| {
-                    c2.compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire)
-                },
+                |current, next| c2.compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire),
                 |current| current.checked_sub(1),
             )
         });
