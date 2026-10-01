@@ -1,4 +1,4 @@
-tasks = ["style", "clippy", "coverage-cfg-clippy", "verify", "strict-doc", "readme", "release-build", "feature-matrix", "project-hook", "loom", "package", "coverage", "audit"]
+tasks = ["style", "clippy", "coverage-cfg-clippy", "verify", "strict-doc", "readme", "release-build", "feature-matrix", "project-hook", "package", "coverage", "audit", "dependency"]
 
 [local]
 build_toolchain = "1.94.0"
@@ -11,4 +11,4 @@ fuzz_version = "0.13.2"
 coverage_cfg_clippy = false
 audit_cached_fallback = true
 matrix = ".infra/ci/cargo-matrix.json"
-hook = "project-ci-check.sh"
+hook = ".infra/bin/project-ci-check.sh"
