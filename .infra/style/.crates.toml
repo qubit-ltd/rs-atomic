@@ -1,0 +1,2 @@
+[v1]
+"qubit-infra-style 0.1.0 (git+https://github.com/qubit-ltd/rs-infra-style.git?rev=a8c684725727c8d05fdc41f05186da0063ce1bc6#a8c684725727c8d05fdc41f05186da0063ce1bc6)" = ["rs-infra-style"]
