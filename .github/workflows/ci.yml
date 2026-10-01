@@ -28,7 +28,7 @@ jobs:
         with:
           toolchain: 1.94
       - name: Check dependency baseline
-        run: ./dependency-update.sh --check
+        run: ./.infra/bin/dependency-update.sh --check
 
   verify:
     runs-on: ${{ matrix.os }}
@@ -50,16 +50,16 @@ jobs:
         if: runner.os == 'Linux'
         run: rustup toolchain install nightly-2026-06-05 --profile minimal --component rustfmt --component clippy
       - name: Run infrastructure CI orchestration
-        run: ./ci-check.sh --only=verify
+        run: ./.infra/bin/ci-check.sh --only=verify
       - name: Run style, hook, and coverage Clippy
         if: runner.os == 'Linux'
-        run: ./ci-check.sh --only=style,clippy,coverage-cfg-clippy,project-hook
+        run: ./.infra/bin/ci-check.sh --only=style,clippy,coverage-cfg-clippy,project-hook
       - name: Install Clippy toolchain on additional platforms
         if: runner.os != 'Linux'
         run: rustup toolchain install nightly-2026-06-05 --profile minimal --component clippy
       - name: Run Clippy on additional platforms
         if: runner.os != 'Linux'
-        run: ./ci-check.sh --only=clippy
+        run: ./.infra/bin/ci-check.sh --only=clippy
       - name: Install legacy CI build toolchain
         run: rustup toolchain install 1.94.0 --profile minimal
       - name: Run documentation tests
@@ -98,7 +98,7 @@ jobs:
           fi
       - name: Run configured feature and dependency matrix
         run: |
-          ./ci-check.sh --only=feature-matrix
+          ./.infra/bin/ci-check.sh --only=feature-matrix
 
   coverage:
     needs: [verify]
@@ -119,7 +119,7 @@ jobs:
         env:
           # Rust 1.94 non-incremental coverage can lose counters for inline functions.
           CARGO_INCREMENTAL: "1"
-        run: ./coverage.sh
+        run: ./.infra/bin/coverage.sh
       - name: Build project (release)
         if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
         run: |
