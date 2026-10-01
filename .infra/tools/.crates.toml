@@ -1,2 +1,2 @@
 [v1]
-"qubit-infra-tools 0.1.0 (git+https://github.com/qubit-ltd/rs-infra-tools.git?rev=48ee15938414b3349035905ac0879f3cbfaf509c#48ee15938414b3349035905ac0879f3cbfaf509c)" = ["rs-infra-tools"]
+"qubit-infra-tools 0.1.0 (git+https://github.com/qubit-ltd/rs-infra-tools.git?rev=9bb35c34e600ce7f6d78fecea0773bf6c2ffced7#9bb35c34e600ce7f6d78fecea0773bf6c2ffced7)" = ["rs-infra-tools"]
