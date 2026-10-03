@@ -13,6 +13,9 @@
 
 use std::sync::atomic::Ordering;
 
+use portable_atomic::AtomicI128;
+use portable_atomic::AtomicU128;
+
 use super::atomic_i8;
 use super::atomic_i16;
 use super::atomic_i32;
@@ -164,6 +167,11 @@ pub trait AtomicIntegerValue: AtomicValue {
 
     /// Accumulates a value and returns the previous value.
     ///
+    /// # Type Parameters
+    ///
+    /// * `F` - An accumulator closure that combines the current value with
+    ///   `value`.
+    ///
     /// # Parameters
     ///
     /// * `primitive` - The primitive wrapper to update.
@@ -181,6 +189,11 @@ pub trait AtomicIntegerValue: AtomicValue {
         F: FnMut(Self, Self) -> Self;
 
     /// Accumulates a value and returns the committed new value.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - An accumulator closure that combines the current value with
+    ///   `value`.
     ///
     /// # Parameters
     ///
@@ -231,7 +244,7 @@ impl_atomic_integer_value!(u32, atomic_u32::AtomicU32, std::sync::atomic::Atomic
 impl_atomic_integer_value!(i32, atomic_i32::AtomicI32, std::sync::atomic::AtomicI32);
 impl_atomic_integer_value!(u64, atomic_u64::AtomicU64, std::sync::atomic::AtomicU64);
 impl_atomic_integer_value!(i64, atomic_i64::AtomicI64, std::sync::atomic::AtomicI64);
-impl_atomic_integer_value!(u128, atomic_u128::AtomicU128, portable_atomic::AtomicU128);
-impl_atomic_integer_value!(i128, atomic_i128::AtomicI128, portable_atomic::AtomicI128);
+impl_atomic_integer_value!(u128, atomic_u128::AtomicU128, AtomicU128);
+impl_atomic_integer_value!(i128, atomic_i128::AtomicI128, AtomicI128);
 impl_atomic_integer_value!(usize, atomic_usize::AtomicUsize, std::sync::atomic::AtomicUsize);
 impl_atomic_integer_value!(isize, atomic_isize::AtomicIsize, std::sync::atomic::AtomicIsize);

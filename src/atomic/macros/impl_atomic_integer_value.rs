@@ -14,57 +14,57 @@ macro_rules! impl_atomic_integer_value {
         impl_atomic_value!($value_type, $primitive_type, $inner_type);
 
         impl AtomicIntegerValue for $value_type {
-            #[inline(always)]
+            #[inline]
             fn fetch_inc(primitive: &Self::Primitive) -> Self {
                 primitive.fetch_inc()
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_inc_with_ordering(primitive: &Self::Primitive, ordering: Ordering) -> Self {
                 primitive.fetch_inc_with_ordering(ordering)
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_dec(primitive: &Self::Primitive) -> Self {
                 primitive.fetch_dec()
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_dec_with_ordering(primitive: &Self::Primitive, ordering: Ordering) -> Self {
                 primitive.fetch_dec_with_ordering(ordering)
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_add_with_ordering(primitive: &Self::Primitive, value: Self, ordering: Ordering) -> Self {
                 primitive.fetch_add_with_ordering(value, ordering)
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_sub_with_ordering(primitive: &Self::Primitive, value: Self, ordering: Ordering) -> Self {
                 primitive.fetch_sub_with_ordering(value, ordering)
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_and(primitive: &Self::Primitive, value: Self) -> Self {
                 primitive.fetch_and(value)
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_or(primitive: &Self::Primitive, value: Self) -> Self {
                 primitive.fetch_or(value)
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_xor(primitive: &Self::Primitive, value: Self) -> Self {
                 primitive.fetch_xor(value)
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_not(primitive: &Self::Primitive) -> Self {
                 primitive.fetch_not()
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_accumulate<F>(primitive: &Self::Primitive, value: Self, f: F) -> Self
             where
                 F: FnMut(Self, Self) -> Self,
@@ -72,7 +72,7 @@ macro_rules! impl_atomic_integer_value {
                 primitive.fetch_accumulate(value, f)
             }
 
-            #[inline(always)]
+            #[inline]
             fn accumulate_and_get<F>(primitive: &Self::Primitive, value: Self, f: F) -> Self
             where
                 F: FnMut(Self, Self) -> Self,
@@ -80,12 +80,12 @@ macro_rules! impl_atomic_integer_value {
                 primitive.accumulate_and_get(value, f)
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_max(primitive: &Self::Primitive, value: Self) -> Self {
                 primitive.fetch_max(value)
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_min(primitive: &Self::Primitive, value: Self) -> Self {
                 primitive.fetch_min(value)
             }

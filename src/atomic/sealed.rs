@@ -9,4 +9,6 @@
 //! Sealing support for internal marker traits.
 
 /// Marker trait used to seal atomic value implementations.
-pub trait Sealed {}
+pub trait Sealed {
+    // empty
+}

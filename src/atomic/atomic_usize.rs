@@ -11,11 +11,7 @@
 //! Provides an easy-to-use atomic pointer-sized unsigned integer type with
 //! sensible default memory orderings.
 
+use std::sync::atomic::AtomicUsize as StdAtomicUsize;
 use std::sync::atomic::Ordering;
 
-impl_atomic_number!(
-    AtomicUsize,
-    std::sync::atomic::AtomicUsize,
-    usize,
-    "pointer-sized unsigned integer"
-);
+impl_atomic_number!(AtomicUsize, StdAtomicUsize, usize, "pointer-sized unsigned integer");

@@ -13,9 +13,6 @@
 
 use std::sync::atomic::Ordering;
 
-impl_atomic_number!(
-    AtomicU128,
-    portable_atomic::AtomicU128,
-    u128,
-    "128-bit unsigned integer"
-);
+use portable_atomic::AtomicU128 as PortableAtomicU128;
+
+impl_atomic_number!(AtomicU128, PortableAtomicU128, u128, "128-bit unsigned integer");

@@ -113,7 +113,7 @@ impl AtomicF64 {
     ///
     /// The current value.
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn load(&self) -> f64 {
         f64::from_bits(self.inner.load(Ordering::Acquire))
     }
@@ -129,7 +129,7 @@ impl AtomicF64 {
     /// # Parameters
     ///
     /// * `value` - The new value to set.
-    #[inline(always)]
+    #[inline]
     pub fn store(&self, value: f64) {
         self.inner.store(value.to_bits(), Ordering::Release);
     }
@@ -149,7 +149,7 @@ impl AtomicF64 {
     ///
     /// The old value.
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn swap(&self, value: f64) -> f64 {
         f64::from_bits(self.inner.swap(value.to_bits(), Ordering::AcqRel))
     }
@@ -183,7 +183,7 @@ impl AtomicF64 {
     ///
     /// Returns `Err(actual)` with the observed value when the raw-bit
     /// comparison fails. In that case, `new` is not stored.
-    #[inline(always)]
+    #[inline]
     pub fn compare_set(&self, current: f64, new: f64) -> Result<(), f64> {
         self.inner
             .compare_exchange(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
@@ -214,7 +214,7 @@ impl AtomicF64 {
     /// Returns `Err(actual)` with the observed value when the raw-bit
     /// comparison fails, including possible spurious failures. In that case,
     /// `new` is not stored.
-    #[inline(always)]
+    #[inline]
     pub fn compare_set_weak(&self, current: f64, new: f64) -> Result<(), f64> {
         self.inner
             .compare_exchange_weak(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
@@ -269,7 +269,12 @@ impl AtomicF64 {
     /// `Ok(previous)` when the value was replaced, or `Err(actual)` when the
     /// comparison failed, including possible spurious failure. Values preserve
     /// their exact raw bit patterns.
-    #[inline(always)]
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(actual)` when the raw-bit comparison fails or the operation
+    /// fails spuriously. In that case, `new` is not stored.
+    #[inline]
     pub fn compare_and_exchange_weak(&self, current: f64, new: f64) -> Result<f64, f64> {
         self.inner
             .compare_exchange_weak(current.to_bits(), new.to_bits(), Ordering::AcqRel, Ordering::Acquire)
@@ -308,7 +313,6 @@ impl AtomicF64 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 15.5);
     /// ```
-    #[inline(always)]
     pub fn fetch_add(&self, delta: f64) -> f64 {
         self.fetch_update(|current| current + delta)
     }
@@ -339,7 +343,6 @@ impl AtomicF64 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 6.5);
     /// ```
-    #[inline(always)]
     pub fn fetch_sub(&self, delta: f64) -> f64 {
         self.fetch_update(|current| current - delta)
     }
@@ -370,7 +373,6 @@ impl AtomicF64 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 25.0);
     /// ```
-    #[inline(always)]
     pub fn fetch_mul(&self, factor: f64) -> f64 {
         self.fetch_update(|current| current * factor)
     }
@@ -401,7 +403,6 @@ impl AtomicF64 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 5.0);
     /// ```
-    #[inline(always)]
     pub fn fetch_div(&self, divisor: f64) -> f64 {
         self.fetch_update(|current| current / divisor)
     }
@@ -413,6 +414,11 @@ impl AtomicF64 {
     /// Internally uses a CAS loop with `compare_set_weak`, which uses
     /// `AcqRel` on success and `Acquire` on failure. The loop ensures
     /// eventual consistency even under high contention.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - An update closure that may run more than once during CAS
+    ///   retries.
     ///
     /// # Parameters
     ///
@@ -443,6 +449,11 @@ impl AtomicF64 {
     ///
     /// Internally uses a CAS loop until the update succeeds.
     ///
+    /// # Type Parameters
+    ///
+    /// * `F` - An update closure that may run more than once during CAS
+    ///   retries.
+    ///
     /// # Parameters
     ///
     /// * `f` - A function that takes the current value and returns the new
@@ -472,6 +483,11 @@ impl AtomicF64 {
     ///
     /// Internally uses a CAS loop until the update succeeds or the closure
     /// rejects the current value by returning `None`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - A conditional update closure that may run more than once during
+    ///   CAS retries.
     ///
     /// # Parameters
     ///
@@ -504,6 +520,11 @@ impl AtomicF64 {
     ///
     /// Internally uses a CAS loop until the update succeeds or the closure
     /// rejects the current value by returning `None`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - A conditional update closure that may run more than once during
+    ///   CAS retries.
     ///
     /// # Parameters
     ///
@@ -547,7 +568,7 @@ impl AtomicF64 {
     ///
     /// A reference to the underlying `std::sync::atomic::AtomicU64`.
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn inner(&self) -> &AtomicU64 {
         &self.inner
     }
@@ -556,42 +577,42 @@ impl AtomicF64 {
 impl AtomicOps for AtomicF64 {
     type Value = f64;
 
-    #[inline(always)]
+    #[inline]
     fn load(&self) -> f64 {
         self.load()
     }
 
-    #[inline(always)]
+    #[inline]
     fn store(&self, value: f64) {
         self.store(value);
     }
 
-    #[inline(always)]
+    #[inline]
     fn swap(&self, value: f64) -> f64 {
         self.swap(value)
     }
 
-    #[inline(always)]
+    #[inline]
     fn compare_set(&self, current: f64, new: f64) -> Result<(), f64> {
         self.compare_set(current, new)
     }
 
-    #[inline(always)]
+    #[inline]
     fn compare_set_weak(&self, current: f64, new: f64) -> Result<(), f64> {
         self.compare_set_weak(current, new)
     }
 
-    #[inline(always)]
+    #[inline]
     fn compare_exchange(&self, current: f64, new: f64) -> f64 {
         self.compare_and_exchange(current, new)
     }
 
-    #[inline(always)]
+    #[inline]
     fn compare_exchange_weak(&self, current: f64, new: f64) -> Result<f64, f64> {
         self.compare_and_exchange_weak(current, new)
     }
 
-    #[inline(always)]
+    #[inline]
     fn fetch_update<F>(&self, f: F) -> f64
     where
         F: FnMut(f64) -> f64,
@@ -599,7 +620,7 @@ impl AtomicOps for AtomicF64 {
         self.fetch_update(f)
     }
 
-    #[inline(always)]
+    #[inline]
     fn update_and_get<F>(&self, f: F) -> f64
     where
         F: FnMut(f64) -> f64,
@@ -607,7 +628,7 @@ impl AtomicOps for AtomicF64 {
         self.update_and_get(f)
     }
 
-    #[inline(always)]
+    #[inline]
     fn try_update<F>(&self, f: F) -> Option<f64>
     where
         F: FnMut(f64) -> Option<f64>,
@@ -615,7 +636,7 @@ impl AtomicOps for AtomicF64 {
         self.try_update(f)
     }
 
-    #[inline(always)]
+    #[inline]
     fn try_update_and_get<F>(&self, f: F) -> Option<f64>
     where
         F: FnMut(f64) -> Option<f64>,
@@ -625,22 +646,22 @@ impl AtomicOps for AtomicF64 {
 }
 
 impl AtomicNumberOps for AtomicF64 {
-    #[inline(always)]
+    #[inline]
     fn fetch_add(&self, delta: f64) -> f64 {
         self.fetch_add(delta)
     }
 
-    #[inline(always)]
+    #[inline]
     fn fetch_sub(&self, delta: f64) -> f64 {
         self.fetch_sub(delta)
     }
 
-    #[inline(always)]
+    #[inline]
     fn fetch_mul(&self, factor: f64) -> f64 {
         self.fetch_mul(factor)
     }
 
-    #[inline(always)]
+    #[inline]
     fn fetch_div(&self, divisor: f64) -> f64 {
         self.fetch_div(divisor)
     }

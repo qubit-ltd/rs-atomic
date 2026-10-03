@@ -11,6 +11,7 @@
 //! Provides an easy-to-use atomic 32-bit unsigned integer type with sensible
 //! default memory orderings.
 
+use std::sync::atomic::AtomicU32 as StdAtomicU32;
 use std::sync::atomic::Ordering;
 
-impl_atomic_number!(AtomicU32, std::sync::atomic::AtomicU32, u32, "32-bit unsigned integer");
+impl_atomic_number!(AtomicU32, StdAtomicU32, u32, "32-bit unsigned integer");

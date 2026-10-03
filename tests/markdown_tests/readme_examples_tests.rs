@@ -46,6 +46,8 @@ fn markdown_doctest_output_dir(manifest_dir: &Path, process_id: u32) -> PathBuf 
     manifest_dir.join(format!("target/markdown-doctest-{process_id}"))
 }
 
+/// Removes any previous output for this test process, then creates its
+/// directory.
 fn recreate_dir(path: &Path) {
     if path.exists() {
         fs::remove_dir_all(path).expect("failed to remove old markdown doctest directory");
@@ -53,6 +55,8 @@ fn recreate_dir(path: &Path) {
     fs::create_dir_all(path).expect("failed to create markdown doctest directory");
 }
 
+/// Collects complete fenced code blocks tagged `rust` or `rs` from a Markdown
+/// file.
 fn extract_rust_snippets(path: &Path) -> Vec<String> {
     let content = fs::read_to_string(path).expect("failed to read markdown file");
     let mut snippets = Vec::new();
@@ -80,6 +84,7 @@ fn extract_rust_snippets(path: &Path) -> Vec<String> {
     snippets
 }
 
+/// Returns whether a fence language tag names Rust, allowing `rust` or `rs`.
 fn is_rust_fence(language: &str) -> bool {
     let tag = language
         .trim()
@@ -89,6 +94,8 @@ fn is_rust_fence(language: &str) -> bool {
     matches!(tag, "rust" | "rs")
 }
 
+/// Writes snippets as standalone binaries and checks them with the local crate
+/// dependency.
 fn compile_snippets(manifest_dir: &Path, output_dir: &Path, name: &str, snippets: &[String]) {
     let crate_dir = output_dir.join(name);
     let bin_dir = crate_dir.join("src/bin");
@@ -154,6 +161,8 @@ fn toml_basic_string(value: &str) -> String {
     escaped
 }
 
+/// Adds a `main` wrapper when absent and permits unused items from standalone
+/// examples.
 fn normalize_snippet(snippet: &str) -> String {
     let allow_example_noise = "#![allow(dead_code, unused_imports, unused_variables)]\n";
     if snippet.contains("fn main") {

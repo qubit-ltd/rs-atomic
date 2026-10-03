@@ -73,7 +73,7 @@ where
     /// # Returns
     ///
     /// A shared atomic wrapper owning `atomic`.
-    #[inline(always)]
+    #[inline]
     pub fn from_atomic(atomic: Atomic<T>) -> Self {
         Self {
             inner: Arc::new(atomic),
@@ -89,7 +89,7 @@ where
     /// # Returns
     ///
     /// A wrapper around `inner`.
-    #[inline(always)]
+    #[inline]
     pub fn from_arc(inner: Arc<Atomic<T>>) -> Self {
         Self { inner }
     }
@@ -100,7 +100,7 @@ where
     ///
     /// A shared reference to the underlying `Arc<Atomic<T>>`.
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn as_arc(&self) -> &Arc<Atomic<T>> {
         &self.inner
     }
@@ -110,7 +110,7 @@ where
     /// # Returns
     ///
     /// The underlying `Arc<Atomic<T>>`.
-    #[inline(always)]
+    #[inline]
     pub fn into_arc(self) -> Arc<Atomic<T>> {
         self.inner
     }
@@ -121,7 +121,7 @@ where
     ///
     /// The current strong reference count of the shared atomic container.
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn strong_count(&self) -> usize {
         Arc::strong_count(&self.inner)
     }
@@ -136,7 +136,7 @@ where
     /// # Returns
     ///
     /// A new wrapper pointing to the same underlying atomic container.
-    #[inline(always)]
+    #[inline]
     fn clone(&self) -> Self {
         Self {
             inner: Arc::clone(&self.inner),
@@ -155,7 +155,7 @@ where
     /// # Returns
     ///
     /// A shared reference to the atomic container.
-    #[inline(always)]
+    #[inline]
     fn deref(&self) -> &Self::Target {
         self.inner.as_ref()
     }
@@ -174,7 +174,7 @@ where
     /// # Returns
     ///
     /// A shared atomic wrapper initialized to `value`.
-    #[inline(always)]
+    #[inline]
     fn from(value: T) -> Self {
         Self::new(value)
     }
@@ -193,7 +193,7 @@ where
     /// # Returns
     ///
     /// A shared atomic wrapper owning `atomic`.
-    #[inline(always)]
+    #[inline]
     fn from(atomic: Atomic<T>) -> Self {
         Self::from_atomic(atomic)
     }
@@ -212,7 +212,7 @@ where
     /// # Returns
     ///
     /// A wrapper around `inner`.
-    #[inline(always)]
+    #[inline]
     fn from(inner: Arc<Atomic<T>>) -> Self {
         Self::from_arc(inner)
     }

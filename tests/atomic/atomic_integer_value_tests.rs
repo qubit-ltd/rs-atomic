@@ -75,5 +75,5 @@ fn test_atomic_integer_value_usize_operations() {
     assert_eq!(atomic.load(), 10);
 
     atomic.fetch_xor(0b1010);
-    let _ = atomic.load();
+    assert_eq!(atomic.load(), 0);
 }

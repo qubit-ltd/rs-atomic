@@ -157,7 +157,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 42);
             /// ```
             #[must_use]
-            #[inline(always)]
+            #[inline]
             pub fn load(&self) -> $value_type {
                 self.inner.load(Ordering::Acquire)
             }
@@ -188,7 +188,7 @@ macro_rules! impl_atomic_number {
             /// atomic.store(42);
             /// assert_eq!(atomic.load(), 42);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn store(&self, value: $value_type) {
                 self.inner.store(value, Ordering::Release);
             }
@@ -226,7 +226,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.load(), 20);
             /// ```
             #[must_use]
-            #[inline(always)]
+            #[inline]
             pub fn swap(&self, value: $value_type) -> $value_type {
                 self.inner.swap(value, Ordering::AcqRel)
             }
@@ -273,7 +273,7 @@ macro_rules! impl_atomic_number {
             /// assert!(atomic.compare_set(10, 20).is_ok());
             /// assert_eq!(atomic.load(), 20);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn compare_set(&self, current: $value_type, new: $value_type) -> Result<(), $value_type> {
                 self.inner
                     .compare_exchange(current, new, Ordering::AcqRel, Ordering::Acquire)
@@ -318,7 +318,7 @@ macro_rules! impl_atomic_number {
             /// }
             /// assert_eq!(atomic.load(), 11);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn compare_set_weak(&self, current: $value_type, new: $value_type) -> Result<(), $value_type> {
                 self.inner
                     .compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire)
@@ -405,7 +405,7 @@ macro_rules! impl_atomic_number {
             /// }
             /// assert_eq!(atomic.load(), 15);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn compare_and_exchange_weak(
                 &self,
                 current: $value_type,
@@ -448,7 +448,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 10);
             /// assert_eq!(atomic.load(), 11);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_inc(&self) -> $value_type {
                 self.inner.fetch_add(1, Ordering::Relaxed)
             }
@@ -479,7 +479,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 10);
             /// assert_eq!(atomic.load(), 11);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_inc_with_ordering(&self, ordering: Ordering) -> $value_type {
                 self.inner.fetch_add(1, ordering)
             }
@@ -505,7 +505,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 10);
             /// assert_eq!(atomic.load(), 9);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_dec(&self) -> $value_type {
                 self.inner.fetch_sub(1, Ordering::Relaxed)
             }
@@ -536,7 +536,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 10);
             /// assert_eq!(atomic.load(), 9);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_dec_with_ordering(&self, ordering: Ordering) -> $value_type {
                 self.inner.fetch_sub(1, ordering)
             }
@@ -571,7 +571,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 10);
             /// assert_eq!(atomic.load(), 15);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_add(&self, delta: $value_type) -> $value_type {
                 self.inner.fetch_add(delta, Ordering::Relaxed)
             }
@@ -603,7 +603,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 10);
             /// assert_eq!(atomic.load(), 15);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_add_with_ordering(&self, delta: $value_type, ordering: Ordering) -> $value_type {
                 self.inner.fetch_add(delta, ordering)
             }
@@ -633,7 +633,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 10);
             /// assert_eq!(atomic.load(), 7);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_sub(&self, delta: $value_type) -> $value_type {
                 self.inner.fetch_sub(delta, Ordering::Relaxed)
             }
@@ -665,7 +665,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 10);
             /// assert_eq!(atomic.load(), 7);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_sub_with_ordering(&self, delta: $value_type, ordering: Ordering) -> $value_type {
                 self.inner.fetch_sub(delta, ordering)
             }
@@ -698,7 +698,6 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 10);
             /// assert_eq!(atomic.load(), 30);
             /// ```
-            #[inline(always)]
             pub fn fetch_mul(&self, factor: $value_type) -> $value_type {
                 self.fetch_update(|current| current.wrapping_mul(factor))
             }
@@ -736,7 +735,6 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 30);
             /// assert_eq!(atomic.load(), 10);
             /// ```
-            #[inline(always)]
             pub fn fetch_div(&self, divisor: $value_type) -> $value_type {
                 assert!(divisor != 0, "division by zero");
                 self.fetch_update(|current| current.wrapping_div(divisor))
@@ -776,7 +774,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 0b1111);
             /// assert_eq!(atomic.load(), 0b1100);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_and(&self, value: $value_type) -> $value_type {
                 self.inner.fetch_and(value, Ordering::AcqRel)
             }
@@ -803,7 +801,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 0b1100);
             /// assert_eq!(atomic.load(), 0b1111);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_or(&self, value: $value_type) -> $value_type {
                 self.inner.fetch_or(value, Ordering::AcqRel)
             }
@@ -830,7 +828,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(old, 0b1100);
             /// assert_eq!(atomic.load(), 0b1010);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_xor(&self, value: $value_type) -> $value_type {
                 self.inner.fetch_xor(value, Ordering::AcqRel)
             }
@@ -862,7 +860,7 @@ macro_rules! impl_atomic_number {
             /// hardware and LLVM do not provide a native atomic NOT
             /// instruction. The compiler will optimize this into
             /// efficient machine code.
-            #[inline(always)]
+            #[inline]
             pub fn fetch_not(&self) -> $value_type {
                 self.inner.fetch_xor(!0, Ordering::AcqRel)
             }
@@ -1161,7 +1159,7 @@ macro_rules! impl_atomic_number {
             /// atomic.fetch_max(15);
             /// assert_eq!(atomic.load(), 20);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_max(&self, value: $value_type) -> $value_type {
                 self.inner.fetch_max(value, Ordering::AcqRel)
             }
@@ -1191,7 +1189,7 @@ macro_rules! impl_atomic_number {
             /// atomic.fetch_min(8);
             /// assert_eq!(atomic.load(), 5);
             /// ```
-            #[inline(always)]
+            #[inline]
             pub fn fetch_min(&self, value: $value_type) -> $value_type {
                 self.inner.fetch_min(value, Ordering::AcqRel)
             }
@@ -1217,7 +1215,7 @@ macro_rules! impl_atomic_number {
             /// assert_eq!(atomic.inner().load(Ordering::Relaxed), 42);
             /// ```
             #[must_use]
-            #[inline(always)]
+            #[inline]
             pub fn inner(&self) -> &$inner_type {
                 &self.inner
             }
@@ -1229,37 +1227,37 @@ macro_rules! impl_atomic_number {
         impl crate::atomic::atomic_ops::AtomicOps for $name {
             type Value = $value_type;
 
-            #[inline(always)]
+            #[inline]
             fn load(&self) -> $value_type {
                 self.load()
             }
 
-            #[inline(always)]
+            #[inline]
             fn store(&self, value: $value_type) {
                 self.store(value);
             }
 
-            #[inline(always)]
+            #[inline]
             fn swap(&self, value: $value_type) -> $value_type {
                 self.swap(value)
             }
 
-            #[inline(always)]
+            #[inline]
             fn compare_set(&self, current: $value_type, new: $value_type) -> Result<(), $value_type> {
                 self.compare_set(current, new)
             }
 
-            #[inline(always)]
+            #[inline]
             fn compare_set_weak(&self, current: $value_type, new: $value_type) -> Result<(), $value_type> {
                 self.compare_set_weak(current, new)
             }
 
-            #[inline(always)]
+            #[inline]
             fn compare_exchange(&self, current: $value_type, new: $value_type) -> $value_type {
                 self.compare_and_exchange(current, new)
             }
 
-            #[inline(always)]
+            #[inline]
             fn compare_exchange_weak(
                 &self,
                 current: $value_type,
@@ -1268,7 +1266,6 @@ macro_rules! impl_atomic_number {
                 self.compare_and_exchange_weak(current, new)
             }
 
-            #[inline(always)]
             fn fetch_update<F>(&self, f: F) -> $value_type
             where
                 F: FnMut($value_type) -> $value_type,
@@ -1276,7 +1273,6 @@ macro_rules! impl_atomic_number {
                 self.fetch_update(f)
             }
 
-            #[inline(always)]
             fn update_and_get<F>(&self, f: F) -> $value_type
             where
                 F: FnMut($value_type) -> $value_type,
@@ -1284,7 +1280,6 @@ macro_rules! impl_atomic_number {
                 self.update_and_get(f)
             }
 
-            #[inline(always)]
             fn try_update<F>(&self, f: F) -> Option<$value_type>
             where
                 F: FnMut($value_type) -> Option<$value_type>,
@@ -1292,7 +1287,6 @@ macro_rules! impl_atomic_number {
                 self.try_update(f)
             }
 
-            #[inline(always)]
             fn try_update_and_get<F>(&self, f: F) -> Option<$value_type>
             where
                 F: FnMut($value_type) -> Option<$value_type>,
@@ -1302,22 +1296,20 @@ macro_rules! impl_atomic_number {
         }
 
         impl crate::atomic::atomic_number_ops::AtomicNumberOps for $name {
-            #[inline(always)]
+            #[inline]
             fn fetch_add(&self, delta: $value_type) -> $value_type {
                 self.fetch_add(delta)
             }
 
-            #[inline(always)]
+            #[inline]
             fn fetch_sub(&self, delta: $value_type) -> $value_type {
                 self.fetch_sub(delta)
             }
 
-            #[inline(always)]
             fn fetch_mul(&self, factor: $value_type) -> $value_type {
                 self.fetch_mul(factor)
             }
 
-            #[inline(always)]
             fn fetch_div(&self, divisor: $value_type) -> $value_type {
                 self.fetch_div(divisor)
             }
