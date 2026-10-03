@@ -11,6 +11,10 @@
 //! Defines the hidden marker trait for values supported by
 //! [`crate::Atomic<T>`].
 
+use std::sync::atomic::AtomicBool as StdAtomicBool;
+use std::sync::atomic::AtomicU32 as StdAtomicU32;
+use std::sync::atomic::AtomicU64 as StdAtomicU64;
+
 use super::atomic_bool;
 use super::atomic_f32;
 use super::atomic_f64;
@@ -54,6 +58,6 @@ pub trait AtomicValue: sealed::Sealed + Copy {
     fn inner(primitive: &Self::Primitive) -> &Self::Inner;
 }
 
-impl_atomic_value!(bool, atomic_bool::AtomicBool, std::sync::atomic::AtomicBool);
-impl_atomic_value!(f32, atomic_f32::AtomicF32, std::sync::atomic::AtomicU32);
-impl_atomic_value!(f64, atomic_f64::AtomicF64, std::sync::atomic::AtomicU64);
+impl_atomic_value!(bool, atomic_bool::AtomicBool, StdAtomicBool);
+impl_atomic_value!(f32, atomic_f32::AtomicF32, StdAtomicU32);
+impl_atomic_value!(f64, atomic_f64::AtomicF64, StdAtomicU64);

@@ -18,7 +18,7 @@ use super::support::DropTracked;
 use super::support::TestData;
 
 #[test]
-fn test_new() {
+fn test_new_loads_initial_value() {
     let data = Arc::new(TestData {
         value: 42,
         name: "test".to_string(),
@@ -29,7 +29,7 @@ fn test_new() {
 }
 
 #[test]
-fn test_from_value() {
+fn test_from_value_loads_initial_value() {
     let atomic = AtomicRef::from_value(TestData {
         value: 42,
         name: "test".to_string(),
@@ -40,7 +40,7 @@ fn test_from_value() {
 }
 
 #[test]
-fn test_get_set() {
+fn test_store_replaces_loaded_value() {
     let data1 = Arc::new(TestData {
         value: 42,
         name: "first".to_string(),
@@ -78,7 +78,7 @@ fn test_load_guard_snapshot() {
 }
 
 #[test]
-fn test_swap() {
+fn test_swap_returns_previous_value() {
     let data1 = Arc::new(TestData {
         value: 42,
         name: "first".to_string(),
@@ -143,7 +143,7 @@ fn test_compare_and_set_with_struct_failure() {
 }
 
 #[test]
-fn test_compare_and_exchange_with_struct() {
+fn test_compare_and_exchange_with_struct_returns_previous_value() {
     let data1 = Arc::new(TestData {
         value: 42,
         name: "first".to_string(),
@@ -162,7 +162,7 @@ fn test_compare_and_exchange_with_struct() {
 }
 
 #[test]
-fn test_get_and_update() {
+fn test_fetch_update_returns_old_value_and_stores_new_value() {
     let data = Arc::new(TestData {
         value: 42,
         name: "test".to_string(),
@@ -183,7 +183,7 @@ fn test_get_and_update() {
 }
 
 #[test]
-fn test_update_and_get() {
+fn test_update_and_get_returns_stored_value() {
     let data = Arc::new(TestData {
         value: 42,
         name: "test".to_string(),
@@ -357,7 +357,7 @@ fn test_update_closures_accept_fn_mut() {
 }
 
 #[test]
-fn test_concurrent_updates() {
+fn test_fetch_update_applies_all_concurrent_updates() {
     let data = Arc::new(TestData {
         value: 0,
         name: "counter".to_string(),
@@ -386,10 +386,10 @@ fn test_concurrent_updates() {
 }
 
 #[test]
-fn test_concurrent_cas() {
+fn test_compare_set_retries_concurrent_updates() {
     let data = Arc::new(0);
     let atomic = Arc::new(AtomicRef::new(data));
-    let success_count = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let success_count = Arc::new(AtomicUsize::new(0));
     let mut handles = vec![];
 
     for _ in 0..10 {
@@ -401,7 +401,7 @@ fn test_concurrent_cas() {
                 let new = Arc::new(*current + 1);
                 match atomic.compare_set(&current, new) {
                     Ok(_) => {
-                        success_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                        success_count.fetch_add(1, Ordering::Relaxed);
                         break;
                     }
                     Err(actual) => current = actual,
@@ -416,7 +416,7 @@ fn test_concurrent_cas() {
     }
 
     assert_eq!(*atomic.load(), 10);
-    assert_eq!(success_count.load(std::sync::atomic::Ordering::Relaxed), 10);
+    assert_eq!(success_count.load(Ordering::Relaxed), 10);
 }
 
 #[test]
@@ -443,7 +443,7 @@ fn test_fork_creates_independent_container() {
 }
 
 #[test]
-fn test_trait_atomic() {
+fn test_atomic_trait_store_and_swap() {
     fn test_atomic(atomic: &AtomicRef<i32>) {
         atomic.store(Arc::new(42));
         assert_eq!(*atomic.load(), 42);
@@ -523,7 +523,7 @@ fn test_trait_atomic_update_and_get() {
 }
 
 #[test]
-fn test_debug_display() {
+fn test_debug_and_display_format_values() {
     let data = Arc::new(42);
     let atomic = AtomicRef::new(data);
     let debug_str = format!("{:?}", atomic);
@@ -533,7 +533,7 @@ fn test_debug_display() {
 }
 
 #[test]
-fn test_arc_reference_counting() {
+fn test_load_and_drop_update_arc_reference_counts() {
     let data = Arc::new(TestData {
         value: 42,
         name: "test".to_string(),
@@ -578,71 +578,7 @@ fn test_compare_set_success_no_arc_leak() {
 }
 
 #[test]
-fn test_compare_and_set_success() {
-    let data1 = Arc::new(TestData {
-        value: 42,
-        name: "first".to_string(),
-    });
-    let atomic = AtomicRef::new(data1.clone());
-
-    let data2 = Arc::new(TestData {
-        value: 100,
-        name: "second".to_string(),
-    });
-
-    let current = atomic.load();
-    assert!(atomic.compare_set(&current, data2).is_ok());
-    assert_eq!(atomic.load().value, 100);
-}
-
-#[test]
-fn test_compare_and_set_failure() {
-    let data1 = Arc::new(TestData {
-        value: 42,
-        name: "first".to_string(),
-    });
-    let atomic = AtomicRef::new(data1.clone());
-
-    let data2 = Arc::new(TestData {
-        value: 100,
-        name: "second".to_string(),
-    });
-
-    let wrong_ref = Arc::new(TestData {
-        value: 999,
-        name: "wrong".to_string(),
-    });
-
-    match atomic.compare_set(&wrong_ref, data2) {
-        Ok(_) => panic!("Should fail"),
-        Err(actual) => {
-            assert_eq!(actual.value, 42);
-            assert_eq!(actual.name, "first");
-        }
-    }
-}
-
-#[test]
-fn test_compare_and_exchange() {
-    let data1 = Arc::new(TestData {
-        value: 42,
-        name: "first".to_string(),
-    });
-    let atomic = AtomicRef::new(data1.clone());
-
-    let data2 = Arc::new(TestData {
-        value: 100,
-        name: "second".to_string(),
-    });
-
-    let current = atomic.load();
-    let prev = atomic.compare_and_exchange(&current, data2);
-    assert!(Arc::ptr_eq(&prev, &current));
-    assert_eq!(atomic.load().value, 100);
-}
-
-#[test]
-fn test_inner() {
+fn test_inner_exposes_underlying_arc_swap() {
     let data = Arc::new(TestData {
         value: 42,
         name: "test".to_string(),
@@ -664,13 +600,13 @@ fn test_inner() {
 }
 
 #[test]
-fn test_new_with_primitive() {
+fn test_new_loads_primitive_value() {
     let atomic = AtomicRef::new(Arc::new(42));
     assert_eq!(*atomic.load(), 42);
 }
 
 #[test]
-fn test_new_with_string() {
+fn test_new_loads_string_value() {
     let atomic = AtomicRef::new(Arc::new("hello".to_string()));
     assert_eq!(*atomic.load(), "hello");
 }
@@ -686,7 +622,7 @@ fn test_swap_same_value() {
 }
 
 #[test]
-fn test_concurrent_get() {
+fn test_load_observes_shared_value_concurrently() {
     let data = Arc::new(TestData {
         value: 42,
         name: "shared".to_string(),
@@ -711,7 +647,7 @@ fn test_concurrent_get() {
 }
 
 #[test]
-fn test_concurrent_swap() {
+fn test_swap_updates_value_concurrently() {
     let data = Arc::new(0);
     let atomic = Arc::new(AtomicRef::new(data));
     let mut handles = vec![];
@@ -734,7 +670,7 @@ fn test_concurrent_swap() {
 }
 
 #[test]
-fn test_update_with_closure() {
+fn test_fetch_update_applies_closure_results() {
     let data = Arc::new(10);
     let atomic = AtomicRef::new(data);
 
@@ -768,7 +704,7 @@ fn test_compare_and_set_in_loop() {
 }
 
 #[test]
-fn test_inner_compare_exchange() {
+fn test_inner_compare_exchange_updates_value() {
     let data = Arc::new(42);
     let atomic = AtomicRef::new(data.clone());
 
@@ -777,62 +713,6 @@ fn test_inner_compare_exchange() {
     let prev = atomic.inner().compare_and_swap(&current, new_data.clone());
     assert!(Arc::ptr_eq(&prev, &current));
     assert_eq!(*atomic.load(), 100);
-}
-
-#[test]
-fn test_fork_independence() {
-    let data = Arc::new(TestData {
-        value: 42,
-        name: "test".to_string(),
-    });
-    let atomic1 = AtomicRef::new(data);
-    let atomic2 = atomic1.fork();
-
-    assert_eq!(atomic1.load().value, 42);
-    assert_eq!(atomic2.load().value, 42);
-
-    atomic1.store(Arc::new(TestData {
-        value: 100,
-        name: "new".to_string(),
-    }));
-
-    // atomic2 should still have the old value
-    assert_eq!(atomic2.load().value, 42);
-}
-
-#[test]
-fn test_display_simple() {
-    let atomic = AtomicRef::new(Arc::new(42));
-    let display_str = format!("{}", atomic);
-    assert_eq!(display_str, "42");
-}
-
-#[test]
-fn test_debug_simple() {
-    let atomic = AtomicRef::new(Arc::new(42));
-    let debug_str = format!("{:?}", atomic);
-    assert!(debug_str.contains("42"));
-}
-
-#[test]
-fn test_trait_atomic_comprehensive() {
-    fn test_atomic(atomic: &AtomicRef<i32>) {
-        atomic.store(Arc::new(5));
-        assert_eq!(*atomic.load(), 5);
-
-        let old = atomic.swap(Arc::new(10));
-        assert_eq!(*old, 5);
-
-        let current = atomic.load();
-        assert!(atomic.compare_set(&current, Arc::new(15)).is_ok());
-
-        let current2 = atomic.load();
-        let prev = atomic.compare_and_exchange(&current2, Arc::new(20));
-        assert!(Arc::ptr_eq(&prev, &current2) || *prev == 15);
-    }
-
-    let atomic = AtomicRef::new(Arc::new(0));
-    test_atomic(&atomic);
 }
 
 #[test]
@@ -866,18 +746,6 @@ fn test_compare_and_set_failure_path() {
         Ok(_) => panic!("Should have failed"),
         Err(actual) => assert_eq!(*actual, 42),
     }
-    assert_eq!(*atomic.load(), 42);
-}
-
-#[test]
-fn test_compare_and_exchange_failure_path() {
-    let data1 = Arc::new(42);
-    let data2 = Arc::new(100);
-    let wrong = Arc::new(999);
-    let atomic = AtomicRef::new(data1);
-
-    let prev = atomic.compare_and_exchange(&wrong, data2);
-    assert_eq!(*prev, 42);
     assert_eq!(*atomic.load(), 42);
 }
 
@@ -927,88 +795,4 @@ fn test_concurrent_get_and_update_high_contention() {
 
     // Result should be 20 * 10 = 200
     assert_eq!(*atomic.load(), 200);
-}
-
-#[test]
-fn test_direct_compare_and_exchange_success() {
-    let data1 = Arc::new(TestData {
-        value: 42,
-        name: "first".to_string(),
-    });
-    let atomic = AtomicRef::new(data1.clone());
-
-    let current = atomic.load();
-    let data2 = Arc::new(TestData {
-        value: 100,
-        name: "second".to_string(),
-    });
-
-    // Directly call compare_and_exchange method (parameter is reference)
-    let prev = atomic.compare_and_exchange(&current, data2);
-    assert!(Arc::ptr_eq(&prev, &current));
-    assert_eq!(atomic.load().value, 100);
-    assert_eq!(atomic.load().name, "second");
-}
-
-#[test]
-fn test_direct_compare_and_exchange_failure() {
-    let data1 = Arc::new(TestData {
-        value: 42,
-        name: "first".to_string(),
-    });
-    let atomic = AtomicRef::new(data1.clone());
-
-    let wrong_ref = Arc::new(TestData {
-        value: 999,
-        name: "wrong".to_string(),
-    });
-    let data2 = Arc::new(TestData {
-        value: 100,
-        name: "second".to_string(),
-    });
-
-    // Directly call compare_and_exchange method with wrong reference
-    let prev = atomic.compare_and_exchange(&wrong_ref, data2);
-    assert_eq!(prev.value, 42);
-    assert_eq!(prev.name, "first");
-    assert_eq!(atomic.load().value, 42);
-}
-
-#[test]
-fn test_direct_compare_and_exchange_with_simple_type() {
-    let data1 = Arc::new(42);
-    let atomic = AtomicRef::new(data1.clone());
-
-    let current = atomic.load();
-    let data2 = Arc::new(100);
-
-    // Directly call compare_and_exchange method
-    let prev = atomic.compare_and_exchange(&current, data2);
-    assert!(Arc::ptr_eq(&prev, &current));
-    assert_eq!(*atomic.load(), 100);
-}
-
-#[test]
-fn test_direct_compare_and_exchange_in_loop() {
-    let data = Arc::new(TestData {
-        value: 0,
-        name: "counter".to_string(),
-    });
-    let atomic = AtomicRef::new(data);
-
-    // Use compare_set in loop for updates
-    let mut current = atomic.load();
-    loop {
-        let new_data = Arc::new(TestData {
-            value: current.value + 1,
-            name: "updated".to_string(),
-        });
-        match atomic.compare_set(&current, new_data) {
-            Ok(()) => break,
-            Err(actual) => current = actual,
-        }
-    }
-
-    assert_eq!(atomic.load().value, 1);
-    assert_eq!(atomic.load().name, "updated");
 }

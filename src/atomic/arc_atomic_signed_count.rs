@@ -60,7 +60,7 @@ impl ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A shared signed counter wrapper whose current value is zero.
-    #[inline(always)]
+    #[inline]
     pub fn zero() -> Self {
         Self::new(0)
     }
@@ -74,7 +74,7 @@ impl ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A shared signed counter wrapper owning `counter`.
-    #[inline(always)]
+    #[inline]
     pub fn from_count(counter: AtomicSignedCount) -> Self {
         Self {
             inner: Arc::new(counter),
@@ -90,7 +90,7 @@ impl ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A wrapper around `inner`.
-    #[inline(always)]
+    #[inline]
     pub fn from_arc(inner: Arc<AtomicSignedCount>) -> Self {
         Self { inner }
     }
@@ -101,7 +101,7 @@ impl ArcAtomicSignedCount {
     ///
     /// A shared reference to the underlying `Arc<AtomicSignedCount>`.
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn as_arc(&self) -> &Arc<AtomicSignedCount> {
         &self.inner
     }
@@ -111,7 +111,7 @@ impl ArcAtomicSignedCount {
     /// # Returns
     ///
     /// The underlying `Arc<AtomicSignedCount>`.
-    #[inline(always)]
+    #[inline]
     pub fn into_arc(self) -> Arc<AtomicSignedCount> {
         self.inner
     }
@@ -122,7 +122,7 @@ impl ArcAtomicSignedCount {
     ///
     /// The current strong reference count of the shared signed counter.
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn strong_count(&self) -> usize {
         Arc::strong_count(&self.inner)
     }
@@ -134,7 +134,7 @@ impl Clone for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A new wrapper pointing to the same underlying signed atomic counter.
-    #[inline(always)]
+    #[inline]
     fn clone(&self) -> Self {
         Self {
             inner: Arc::clone(&self.inner),
@@ -148,7 +148,7 @@ impl Default for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A shared signed counter wrapper whose current value is zero.
-    #[inline(always)]
+    #[inline]
     fn default() -> Self {
         Self::zero()
     }
@@ -162,7 +162,7 @@ impl Deref for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A shared reference to the signed atomic counter.
-    #[inline(always)]
+    #[inline]
     fn deref(&self) -> &Self::Target {
         self.inner.as_ref()
     }
@@ -178,7 +178,7 @@ impl From<isize> for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A shared signed counter wrapper initialized to `value`.
-    #[inline(always)]
+    #[inline]
     fn from(value: isize) -> Self {
         Self::new(value)
     }
@@ -194,7 +194,7 @@ impl From<AtomicSignedCount> for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A shared signed counter wrapper owning `counter`.
-    #[inline(always)]
+    #[inline]
     fn from(counter: AtomicSignedCount) -> Self {
         Self::from_count(counter)
     }
@@ -210,7 +210,7 @@ impl From<Arc<AtomicSignedCount>> for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A wrapper around `inner`.
-    #[inline(always)]
+    #[inline]
     fn from(inner: Arc<AtomicSignedCount>) -> Self {
         Self::from_arc(inner)
     }

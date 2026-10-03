@@ -6,6 +6,9 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+use std::f32::consts::PI as F32_PI;
+use std::f64::consts::PI as F64_PI;
+
 use qubit_atomic::Atomic;
 
 #[test]
@@ -28,8 +31,8 @@ fn test_atomic_value_from_trait() {
     let atomic_i32 = Atomic::<i32>::from(42);
     assert_eq!(atomic_i32.load(), 42);
 
-    let atomic_f32 = Atomic::<f32>::from(std::f32::consts::PI);
-    assert!((atomic_f32.load() - std::f32::consts::PI).abs() < 1e-6);
+    let atomic_f32 = Atomic::<f32>::from(F32_PI);
+    assert!((atomic_f32.load() - F32_PI).abs() < 1e-6);
 }
 
 #[test]
@@ -42,7 +45,7 @@ fn test_atomic_value_debug_display_traits() {
     assert!(format!("{:?}", atomic_i32).contains("42"));
     assert_eq!(format!("{}", atomic_i32), "42");
 
-    let atomic_f64 = Atomic::<f64>::new(std::f64::consts::PI);
+    let atomic_f64 = Atomic::<f64>::new(F64_PI);
     assert!(format!("{:?}", atomic_f64).contains("3.14"));
     assert!(format!("{}", atomic_f64).contains("3.14"));
 }

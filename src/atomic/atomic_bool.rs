@@ -53,11 +53,11 @@ use crate::atomic::atomic_ops::AtomicOps;
 /// # Examples
 ///
 /// ```rust
-/// use qubit_atomic::Atomic;
+/// use qubit_atomic::atomic::primitive::AtomicBool;
 /// use std::sync::Arc;
 /// use std::thread;
 ///
-/// let flag = Arc::new(Atomic::<bool>::new(false));
+/// let flag = Arc::new(AtomicBool::new(false));
 /// let flag_clone = flag.clone();
 ///
 /// let handle = thread::spawn(move || {
@@ -125,7 +125,7 @@ impl AtomicBool {
     /// assert_eq!(flag.load(), true);
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn load(&self) -> bool {
         self.inner.load(Ordering::Acquire)
     }
@@ -155,7 +155,7 @@ impl AtomicBool {
     /// flag.store(true);
     /// assert_eq!(flag.load(), true);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn store(&self, value: bool) {
         self.inner.store(value, Ordering::Release);
     }
@@ -191,7 +191,7 @@ impl AtomicBool {
     /// assert_eq!(flag.load(), true);
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn swap(&self, value: bool) -> bool {
         self.inner.swap(value, Ordering::AcqRel)
     }
@@ -238,7 +238,7 @@ impl AtomicBool {
     /// // Fails because current value is true, not false
     /// assert!(flag.compare_set(false, false).is_err());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn compare_set(&self, current: bool, new: bool) -> Result<(), bool> {
         self.inner
             .compare_exchange(current, new, Ordering::AcqRel, Ordering::Acquire)
@@ -282,7 +282,7 @@ impl AtomicBool {
     /// }
     /// assert_eq!(flag.load(), true);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn compare_set_weak(&self, current: bool, new: bool) -> Result<(), bool> {
         self.inner
             .compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire)
@@ -365,7 +365,7 @@ impl AtomicBool {
     /// }
     /// assert_eq!(flag.load(), true);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn compare_and_exchange_weak(&self, current: bool, new: bool) -> Result<bool, bool> {
         self.inner
             .compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Acquire)
@@ -393,7 +393,7 @@ impl AtomicBool {
     /// assert_eq!(old, false);
     /// assert_eq!(flag.load(), true);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_set(&self) -> bool {
         self.swap(true)
     }
@@ -420,7 +420,7 @@ impl AtomicBool {
     /// assert_eq!(old, true);
     /// assert_eq!(flag.load(), false);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_clear(&self) -> bool {
         self.swap(false)
     }
@@ -447,7 +447,7 @@ impl AtomicBool {
     /// assert_eq!(flag.fetch_not(), true);
     /// assert_eq!(flag.load(), false);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_not(&self) -> bool {
         self.inner.fetch_xor(true, Ordering::AcqRel)
     }
@@ -477,7 +477,7 @@ impl AtomicBool {
     /// assert_eq!(flag.fetch_and(false), true);
     /// assert_eq!(flag.load(), false);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_and(&self, value: bool) -> bool {
         self.inner.fetch_and(value, Ordering::AcqRel)
     }
@@ -507,7 +507,7 @@ impl AtomicBool {
     /// assert_eq!(flag.fetch_or(true), false);
     /// assert_eq!(flag.load(), true);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_or(&self, value: bool) -> bool {
         self.inner.fetch_or(value, Ordering::AcqRel)
     }
@@ -537,7 +537,7 @@ impl AtomicBool {
     /// assert_eq!(flag.fetch_xor(true), false);
     /// assert_eq!(flag.load(), true);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_xor(&self, value: bool) -> bool {
         self.inner.fetch_xor(value, Ordering::AcqRel)
     }
@@ -571,7 +571,7 @@ impl AtomicBool {
     /// // Second attempt fails
     /// assert!(flag.set_if_false(true).is_err());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn set_if_false(&self, new: bool) -> Result<(), bool> {
         self.compare_set(false, new)
     }
@@ -605,7 +605,7 @@ impl AtomicBool {
     /// // Second attempt fails
     /// assert!(flag.set_if_true(false).is_err());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn set_if_true(&self, new: bool) -> Result<(), bool> {
         self.compare_set(true, new)
     }
@@ -613,6 +613,11 @@ impl AtomicBool {
     /// Updates the value using a function, returning the old value.
     ///
     /// Internally uses a CAS loop until the update succeeds.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - An update closure that may be called multiple times during CAS
+    ///   retries under contention.
     ///
     /// # Parameters
     ///
@@ -653,6 +658,11 @@ impl AtomicBool {
     ///
     /// Internally uses a CAS loop until the update succeeds.
     ///
+    /// # Type Parameters
+    ///
+    /// * `F` - An update closure that may be called multiple times during CAS
+    ///   retries under contention.
+    ///
     /// # Parameters
     ///
     /// * `f` - A function that takes the current value and returns the new
@@ -692,6 +702,11 @@ impl AtomicBool {
     ///
     /// Internally uses a CAS loop until the update succeeds or the closure
     /// rejects the current value by returning `None`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - A conditional update closure that may be called multiple times
+    ///   during CAS retries under contention.
     ///
     /// # Parameters
     ///
@@ -736,6 +751,11 @@ impl AtomicBool {
     ///
     /// Internally uses a CAS loop until the update succeeds or the closure
     /// rejects the current value by returning `None`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - A conditional update closure that may be called multiple times
+    ///   during CAS retries under contention.
     ///
     /// # Parameters
     ///
@@ -808,7 +828,7 @@ impl AtomicBool {
     /// assert_eq!(flag.inner().load(Ordering::Relaxed), true);
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn inner(&self) -> &StdAtomicBool {
         &self.inner
     }
@@ -817,42 +837,42 @@ impl AtomicBool {
 impl AtomicOps for AtomicBool {
     type Value = bool;
 
-    #[inline(always)]
+    #[inline]
     fn load(&self) -> bool {
         self.load()
     }
 
-    #[inline(always)]
+    #[inline]
     fn store(&self, value: bool) {
         self.store(value);
     }
 
-    #[inline(always)]
+    #[inline]
     fn swap(&self, value: bool) -> bool {
         self.swap(value)
     }
 
-    #[inline(always)]
+    #[inline]
     fn compare_set(&self, current: bool, new: bool) -> Result<(), bool> {
         self.compare_set(current, new)
     }
 
-    #[inline(always)]
+    #[inline]
     fn compare_set_weak(&self, current: bool, new: bool) -> Result<(), bool> {
         self.compare_set_weak(current, new)
     }
 
-    #[inline(always)]
+    #[inline]
     fn compare_exchange(&self, current: bool, new: bool) -> bool {
         self.compare_and_exchange(current, new)
     }
 
-    #[inline(always)]
+    #[inline]
     fn compare_exchange_weak(&self, current: bool, new: bool) -> Result<bool, bool> {
         self.compare_and_exchange_weak(current, new)
     }
 
-    #[inline(always)]
+    #[inline]
     fn fetch_update<F>(&self, f: F) -> bool
     where
         F: FnMut(bool) -> bool,
@@ -860,7 +880,7 @@ impl AtomicOps for AtomicBool {
         self.fetch_update(f)
     }
 
-    #[inline(always)]
+    #[inline]
     fn update_and_get<F>(&self, f: F) -> bool
     where
         F: FnMut(bool) -> bool,
@@ -868,7 +888,7 @@ impl AtomicOps for AtomicBool {
         self.update_and_get(f)
     }
 
-    #[inline(always)]
+    #[inline]
     fn try_update<F>(&self, f: F) -> Option<bool>
     where
         F: FnMut(bool) -> Option<bool>,
@@ -876,7 +896,7 @@ impl AtomicOps for AtomicBool {
         self.try_update(f)
     }
 
-    #[inline(always)]
+    #[inline]
     fn try_update_and_get<F>(&self, f: F) -> Option<bool>
     where
         F: FnMut(bool) -> Option<bool>,

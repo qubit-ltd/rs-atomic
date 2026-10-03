@@ -11,6 +11,7 @@
 //! Provides an easy-to-use atomic 64-bit unsigned integer type with sensible
 //! default memory orderings.
 
+use std::sync::atomic::AtomicU64 as StdAtomicU64;
 use std::sync::atomic::Ordering;
 
-impl_atomic_number!(AtomicU64, std::sync::atomic::AtomicU64, u64, "64-bit unsigned integer");
+impl_atomic_number!(AtomicU64, StdAtomicU64, u64, "64-bit unsigned integer");

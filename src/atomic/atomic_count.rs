@@ -20,6 +20,12 @@ use std::sync::atomic::Ordering;
 /// This hidden test bridge lets Loom supply instrumented atomic operations
 /// while exercising the same retry core used by [`AtomicCount`].
 ///
+/// # Type Parameters
+///
+/// * `L` - Callback that loads the current counter value.
+/// * `C` - Callback that attempts a weak compare-exchange.
+/// * `F` - Callback that computes the next value or rejects the update.
+///
 /// # Parameters
 ///
 /// * `load_acquire` - Loads the current value with acquire ordering.
@@ -130,7 +136,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::zero();
     /// assert!(counter.is_zero());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub const fn zero() -> Self {
         Self::new(0)
     }
@@ -150,7 +156,7 @@ impl AtomicCount {
     /// assert_eq!(counter.get(), 7);
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn get(&self) -> usize {
         self.inner.load(Ordering::Acquire)
     }
@@ -179,7 +185,7 @@ impl AtomicCount {
     /// AtomicCount::zero().is_zero();
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn is_zero(&self) -> bool {
         self.get() == 0
     }
@@ -199,7 +205,7 @@ impl AtomicCount {
     /// assert!(counter.is_positive());
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn is_positive(&self) -> bool {
         self.get() > 0
     }
@@ -222,7 +228,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::zero();
     /// assert_eq!(counter.inc(), 1);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn inc(&self) -> usize {
         self.add(1)
     }
@@ -249,7 +255,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::new(2);
     /// assert_eq!(counter.add(3), 5);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn add(&self, delta: usize) -> usize {
         self.try_add(delta).expect("atomic counter overflow")
     }
@@ -273,7 +279,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::new(2);
     /// assert_eq!(counter.try_add(3), Some(5));
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn try_add(&self, delta: usize) -> Option<usize> {
         self.try_update(|current| current.checked_add(delta))
     }
@@ -298,7 +304,7 @@ impl AtomicCount {
     /// # Panics
     ///
     /// Panics if the current value is zero.
-    #[inline(always)]
+    #[inline]
     pub fn dec(&self) -> usize {
         self.try_dec().expect("atomic counter underflow")
     }
@@ -319,7 +325,7 @@ impl AtomicCount {
     /// assert_eq!(counter.try_dec(), Some(0));
     /// assert_eq!(counter.try_dec(), None);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn try_dec(&self) -> Option<usize> {
         self.try_sub(1)
     }
@@ -346,7 +352,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::new(5);
     /// assert_eq!(counter.sub(2), 3);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn sub(&self, delta: usize) -> usize {
         self.try_sub(delta).expect("atomic counter underflow")
     }
@@ -371,12 +377,17 @@ impl AtomicCount {
     /// assert_eq!(counter.try_sub(2), Some(1));
     /// assert_eq!(counter.try_sub(2), None);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn try_sub(&self, delta: usize) -> Option<usize> {
         self.try_update(|current| current.checked_sub(delta))
     }
 
     /// Applies a checked update with synchronization semantics.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - An update callback that may reject the current value; it can be
+    ///   invoked repeatedly when weak CAS retries under contention.
     ///
     /// # Parameters
     ///
@@ -410,7 +421,7 @@ impl Default for AtomicCount {
     /// # Returns
     ///
     /// A counter whose current value is zero.
-    #[inline(always)]
+    #[inline]
     fn default() -> Self {
         Self::zero()
     }
@@ -426,7 +437,7 @@ impl From<usize> for AtomicCount {
     /// # Returns
     ///
     /// A counter initialized to `value`.
-    #[inline(always)]
+    #[inline]
     fn from(value: usize) -> Self {
         Self::new(value)
     }

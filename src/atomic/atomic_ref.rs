@@ -130,7 +130,6 @@ impl<T> AtomicRef<T> {
     /// let atomic = AtomicRef::from_value(42);
     /// assert_eq!(*atomic.load(), 42);
     /// ```
-    #[inline(always)]
     pub fn from_value(value: T) -> Self {
         Self::new(Arc::new(value))
     }
@@ -152,7 +151,7 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*value, 42);
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn load(&self) -> Arc<T> {
         self.inner.load_full()
     }
@@ -177,7 +176,7 @@ impl<T> AtomicRef<T> {
     /// let guard = atomic.load_guard();
     /// assert_eq!(**guard, 42);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn load_guard(&self) -> Guard<Arc<T>> {
         self.inner.load()
     }
@@ -198,7 +197,7 @@ impl<T> AtomicRef<T> {
     /// atomic.store(Arc::new(100));
     /// assert_eq!(*atomic.load(), 100);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn store(&self, value: Arc<T>) {
         self.inner.store(value);
     }
@@ -226,7 +225,7 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*atomic.load(), 20);
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn swap(&self, value: Arc<T>) -> Arc<T> {
         self.inner.swap(value)
     }
@@ -267,7 +266,6 @@ impl<T> AtomicRef<T> {
     /// assert!(atomic.compare_set(&current, Arc::new(20)).is_ok());
     /// assert_eq!(*atomic.load(), 20);
     /// ```
-    #[inline(always)]
     pub fn compare_set(&self, current: &Arc<T>, new: Arc<T>) -> Result<(), Arc<T>> {
         let prev = Guard::into_inner(self.inner.compare_and_swap(current, new));
         if Arc::ptr_eq(&prev, current) { Ok(()) } else { Err(prev) }
@@ -511,7 +509,7 @@ impl<T> AtomicRef<T> {
     ///
     /// A reference to the underlying `arc_swap::ArcSwap<T>`.
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn inner(&self) -> &ArcSwap<T> {
         &self.inner
     }
@@ -550,7 +548,6 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*forked.load(), 1);
     /// ```
     #[must_use = "use fork() when you need a separate AtomicRef container"]
-    #[inline(always)]
     pub fn fork(&self) -> Self {
         Self::new(self.load())
     }

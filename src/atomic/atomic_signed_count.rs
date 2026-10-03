@@ -88,7 +88,7 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::zero();
     /// assert!(counter.is_zero());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub const fn zero() -> Self {
         Self::new(0)
     }
@@ -108,7 +108,7 @@ impl AtomicSignedCount {
     /// assert_eq!(counter.get(), -7);
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn get(&self) -> isize {
         self.inner.load(Ordering::Acquire)
     }
@@ -128,7 +128,7 @@ impl AtomicSignedCount {
     /// assert!(counter.is_zero());
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn is_zero(&self) -> bool {
         self.get() == 0
     }
@@ -148,7 +148,7 @@ impl AtomicSignedCount {
     /// assert!(counter.is_positive());
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn is_positive(&self) -> bool {
         self.get() > 0
     }
@@ -168,7 +168,7 @@ impl AtomicSignedCount {
     /// assert!(counter.is_negative());
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn is_negative(&self) -> bool {
         self.get() < 0
     }
@@ -191,7 +191,6 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::zero();
     /// assert_eq!(counter.inc(), 1);
     /// ```
-    #[inline(always)]
     pub fn inc(&self) -> isize {
         self.add(1)
     }
@@ -214,7 +213,6 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::zero();
     /// assert_eq!(counter.dec(), -1);
     /// ```
-    #[inline(always)]
     pub fn dec(&self) -> isize {
         self.sub(1)
     }
@@ -241,7 +239,6 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::new(2);
     /// assert_eq!(counter.add(-5), -3);
     /// ```
-    #[inline(always)]
     pub fn add(&self, delta: isize) -> isize {
         self.try_add(delta).expect("atomic signed counter out of range")
     }
@@ -266,7 +263,6 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::new(-2);
     /// assert_eq!(counter.try_add(5), Some(3));
     /// ```
-    #[inline(always)]
     pub fn try_add(&self, delta: isize) -> Option<isize> {
         self.try_update(|current| current.checked_add(delta))
     }
@@ -293,7 +289,6 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::new(2);
     /// assert_eq!(counter.sub(5), -3);
     /// ```
-    #[inline(always)]
     pub fn sub(&self, delta: isize) -> isize {
         self.try_sub(delta).expect("atomic signed counter out of range")
     }
@@ -318,7 +313,6 @@ impl AtomicSignedCount {
     /// let counter = AtomicSignedCount::new(2);
     /// assert_eq!(counter.try_sub(5), Some(-3));
     /// ```
-    #[inline(always)]
     pub fn try_sub(&self, delta: isize) -> Option<isize> {
         self.try_update(|current| current.checked_sub(delta))
     }
@@ -359,7 +353,7 @@ impl Default for AtomicSignedCount {
     /// # Returns
     ///
     /// A signed counter whose current value is zero.
-    #[inline(always)]
+    #[inline]
     fn default() -> Self {
         Self::zero()
     }
@@ -375,7 +369,7 @@ impl From<isize> for AtomicSignedCount {
     /// # Returns
     ///
     /// A signed counter initialized to `value`.
-    #[inline(always)]
+    #[inline]
     fn from(value: isize) -> Self {
         Self::new(value)
     }

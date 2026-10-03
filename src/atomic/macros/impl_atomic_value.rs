@@ -17,12 +17,12 @@ macro_rules! impl_atomic_value {
             type Primitive = $primitive_type;
             type Inner = $inner_type;
 
-            #[inline(always)]
+            #[inline]
             fn new_primitive(value: Self) -> Self::Primitive {
                 <$primitive_type>::new(value)
             }
 
-            #[inline(always)]
+            #[inline]
             fn inner(primitive: &Self::Primitive) -> &Self::Inner {
                 primitive.inner()
             }

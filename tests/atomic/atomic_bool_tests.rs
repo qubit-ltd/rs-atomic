@@ -7,6 +7,7 @@
 // =============================================================================
 
 use std::sync::Arc;
+use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::thread;
 
@@ -204,14 +205,14 @@ fn test_concurrent_toggle() {
 fn test_concurrent_set_once() {
     let flag = Arc::new(Atomic::<bool>::new(false));
     let mut handles = vec![];
-    let success_count = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let success_count = Arc::new(AtomicUsize::new(0));
 
     for _ in 0..10 {
         let flag = flag.clone();
         let success_count = success_count.clone();
         let handle = thread::spawn(move || {
             if flag.set_if_false(true).is_ok() {
-                success_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                success_count.fetch_add(1, Ordering::Relaxed);
             }
         });
         handles.push(handle);
@@ -223,7 +224,7 @@ fn test_concurrent_set_once() {
 
     // Only one thread should succeed
     assert!(flag.load());
-    assert_eq!(success_count.load(std::sync::atomic::Ordering::Relaxed), 1);
+    assert_eq!(success_count.load(Ordering::Relaxed), 1);
 }
 
 #[test]
@@ -438,7 +439,7 @@ fn test_trait_atomic_fetch_update() {
 fn test_concurrent_compare_and_set_weak() {
     let flag = Arc::new(Atomic::<bool>::new(false));
     let mut handles = vec![];
-    let success_count = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let success_count = Arc::new(AtomicUsize::new(0));
 
     for _ in 0..10 {
         let flag = flag.clone();
@@ -448,7 +449,7 @@ fn test_concurrent_compare_and_set_weak() {
             loop {
                 match flag.compare_set_weak(current, true) {
                     Ok(_) => {
-                        success_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                        success_count.fetch_add(1, Ordering::Relaxed);
                         break;
                     }
                     Err(actual) => current = actual,
@@ -464,5 +465,5 @@ fn test_concurrent_compare_and_set_weak() {
 
     assert!(flag.load());
     // At least one thread should succeed
-    assert!(success_count.load(std::sync::atomic::Ordering::Relaxed) >= 1);
+    assert!(success_count.load(Ordering::Relaxed) >= 1);
 }

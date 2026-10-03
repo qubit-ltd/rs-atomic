@@ -11,6 +11,7 @@
 //! Provides an easy-to-use atomic 16-bit unsigned integer type with sensible
 //! default memory orderings.
 
+use std::sync::atomic::AtomicU16 as StdAtomicU16;
 use std::sync::atomic::Ordering;
 
-impl_atomic_number!(AtomicU16, std::sync::atomic::AtomicU16, u16, "16-bit unsigned integer");
+impl_atomic_number!(AtomicU16, StdAtomicU16, u16, "16-bit unsigned integer");

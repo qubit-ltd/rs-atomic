@@ -25,6 +25,11 @@ use super::atomic_value::AtomicValue;
 /// still exposing the raw backend through [`inner`](Self::inner) for advanced
 /// use cases.
 ///
+/// # Type Parameters
+///
+/// * `T` - A supported value type whose `AtomicValue` implementation supplies
+///   the atomic backend.
+///
 /// Supported value types are:
 ///
 /// - `bool`
@@ -188,7 +193,7 @@ where
     /// assert_eq!(atomic.load(), 7);
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn load(&self) -> T {
         AtomicOps::load(&self.primitive)
     }
@@ -210,7 +215,7 @@ where
     /// atomic.store(2);
     /// assert_eq!(atomic.load(), 2);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn store(&self, value: T) {
         AtomicOps::store(&self.primitive, value);
     }
@@ -247,7 +252,7 @@ where
     /// assert_eq!(b.load(), 200);
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn swap(&self, value: T) -> T {
         AtomicOps::swap(&self.primitive, value)
     }
@@ -280,7 +285,7 @@ where
     /// assert_eq!(atomic.load(), 2);
     /// assert_eq!(atomic.compare_set(1, 3), Err(2));
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn compare_set(&self, current: T, new: T) -> Result<(), T> {
         AtomicOps::compare_set(&self.primitive, current, new)
     }
@@ -318,7 +323,7 @@ where
     /// }
     /// assert_eq!(atomic.load(), 2);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn compare_set_weak(&self, current: T, new: T) -> Result<(), T> {
         AtomicOps::compare_set_weak(&self.primitive, current, new)
     }
@@ -356,7 +361,7 @@ where
     /// assert_eq!(atomic.compare_and_exchange(5, 0), 10);
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn compare_and_exchange(&self, current: T, new: T) -> T {
         AtomicOps::compare_exchange(&self.primitive, current, new)
     }
@@ -374,6 +379,11 @@ where
     ///
     /// `Ok(previous)` when the value was replaced, or `Err(actual)` when the
     /// comparison failed, including possible spurious failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(actual)` with the observed value when the exchange fails.
+    /// A weak exchange may also return this error spuriously.
     ///
     /// For `Atomic<f32>` and `Atomic<f64>`, the same caveat applies to raw-bit
     /// equality: `0.0` and `-0.0` compare equal by [`PartialEq`] but are
@@ -401,7 +411,7 @@ where
     /// }
     /// assert_eq!(atomic.load(), 10);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn compare_and_exchange_weak(&self, current: T, new: T) -> Result<T, T> {
         AtomicOps::compare_exchange_weak(&self.primitive, current, new)
     }
@@ -410,6 +420,11 @@ where
     ///
     /// The update uses a CAS loop until it succeeds. The closure may be called
     /// more than once under contention.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - An update closure that may be called multiple times during CAS
+    ///   retries under contention.
     ///
     /// # Parameters
     ///
@@ -428,7 +443,7 @@ where
     /// assert_eq!(atomic.fetch_update(|x| x * 2), 3);
     /// assert_eq!(atomic.load(), 6);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_update<F>(&self, f: F) -> T
     where
         F: FnMut(T) -> T,
@@ -440,6 +455,11 @@ where
     ///
     /// The update uses a CAS loop until it succeeds. The closure may be called
     /// more than once under contention.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - An update closure that may be called multiple times during CAS
+    ///   retries under contention.
     ///
     /// # Parameters
     ///
@@ -458,7 +478,7 @@ where
     /// assert_eq!(atomic.update_and_get(|x| x * 2), 6);
     /// assert_eq!(atomic.load(), 6);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn update_and_get<F>(&self, f: F) -> T
     where
         F: FnMut(T) -> T,
@@ -471,6 +491,11 @@ where
     /// The update uses a CAS loop until it succeeds or the closure rejects the
     /// observed current value by returning `None`. The closure may be called
     /// more than once under contention.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - A conditional update closure that may be called multiple times
+    ///   during CAS retries under contention.
     ///
     /// # Parameters
     ///
@@ -493,7 +518,7 @@ where
     /// assert_eq!(atomic.try_update(|x| (x % 2 == 1).then_some(x + 1)), None);
     /// assert_eq!(atomic.load(), 4);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn try_update<F>(&self, f: F) -> Option<T>
     where
         F: FnMut(T) -> Option<T>,
@@ -507,6 +532,11 @@ where
     /// The update uses a CAS loop until it succeeds or the closure rejects the
     /// observed current value by returning `None`. The closure may be called
     /// more than once under contention.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - A conditional update closure that may be called multiple times
+    ///   during CAS retries under contention.
     ///
     /// # Parameters
     ///
@@ -535,7 +565,7 @@ where
     /// );
     /// assert_eq!(atomic.load(), 4);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn try_update_and_get<F>(&self, f: F) -> Option<T>
     where
         F: FnMut(T) -> Option<T>,
@@ -562,7 +592,7 @@ where
     /// assert_eq!(atomic.inner().load(Ordering::Relaxed), 0);
     /// ```
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn inner(&self) -> &T::Inner {
         T::inner(&self.primitive)
     }
@@ -596,7 +626,7 @@ where
     /// assert_eq!(atomic.fetch_add(3), 10);
     /// assert_eq!(atomic.load(), 13);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_add(&self, delta: T) -> T {
         AtomicNumberOps::fetch_add(&self.primitive, delta)
     }
@@ -624,7 +654,7 @@ where
     /// assert_eq!(atomic.fetch_sub(3), 10);
     /// assert_eq!(atomic.load(), 7);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_sub(&self, delta: T) -> T {
         AtomicNumberOps::fetch_sub(&self.primitive, delta)
     }
@@ -651,7 +681,7 @@ where
     /// assert_eq!(atomic.fetch_mul(4), 3);
     /// assert_eq!(atomic.load(), 12);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_mul(&self, factor: T) -> T {
         AtomicNumberOps::fetch_mul(&self.primitive, factor)
     }
@@ -684,7 +714,7 @@ where
     /// assert_eq!(atomic.fetch_div(4), 20);
     /// assert_eq!(atomic.load(), 5);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_div(&self, divisor: T) -> T {
         AtomicNumberOps::fetch_div(&self.primitive, divisor)
     }
@@ -709,7 +739,7 @@ where
     /// assert_eq!(atomic.fetch_inc(), 0);
     /// assert_eq!(atomic.load(), 1);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_inc(&self) -> T {
         T::fetch_inc(&self.primitive)
     }
@@ -738,7 +768,7 @@ where
     /// assert_eq!(atomic.fetch_inc_with_ordering(Ordering::AcqRel), 0);
     /// assert_eq!(atomic.load(), 1);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_inc_with_ordering(&self, ordering: Ordering) -> T {
         T::fetch_inc_with_ordering(&self.primitive, ordering)
     }
@@ -758,7 +788,7 @@ where
     /// assert_eq!(atomic.fetch_dec(), 1);
     /// assert_eq!(atomic.load(), 0);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_dec(&self) -> T {
         T::fetch_dec(&self.primitive)
     }
@@ -787,7 +817,7 @@ where
     /// assert_eq!(atomic.fetch_dec_with_ordering(Ordering::AcqRel), 1);
     /// assert_eq!(atomic.load(), 0);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_dec_with_ordering(&self, ordering: Ordering) -> T {
         T::fetch_dec_with_ordering(&self.primitive, ordering)
     }
@@ -818,7 +848,7 @@ where
     /// assert_eq!(atomic.fetch_add_with_ordering(5, Ordering::AcqRel), 10);
     /// assert_eq!(atomic.load(), 15);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_add_with_ordering(&self, delta: T, ordering: Ordering) -> T {
         T::fetch_add_with_ordering(&self.primitive, delta, ordering)
     }
@@ -849,7 +879,7 @@ where
     /// assert_eq!(atomic.fetch_sub_with_ordering(3, Ordering::AcqRel), 10);
     /// assert_eq!(atomic.load(), 7);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_sub_with_ordering(&self, delta: T, ordering: Ordering) -> T {
         T::fetch_sub_with_ordering(&self.primitive, delta, ordering)
     }
@@ -873,7 +903,7 @@ where
     /// assert_eq!(atomic.fetch_and(0b1010), 0b1111);
     /// assert_eq!(atomic.load(), 0b1010);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_and(&self, value: T) -> T {
         T::fetch_and(&self.primitive, value)
     }
@@ -897,7 +927,7 @@ where
     /// assert_eq!(atomic.fetch_or(0b0011), 0b1000);
     /// assert_eq!(atomic.load(), 0b1011);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_or(&self, value: T) -> T {
         T::fetch_or(&self.primitive, value)
     }
@@ -921,7 +951,7 @@ where
     /// assert_eq!(atomic.fetch_xor(0b1010), 0b1111);
     /// assert_eq!(atomic.load(), 0b0101);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_xor(&self, value: T) -> T {
         T::fetch_xor(&self.primitive, value)
     }
@@ -941,12 +971,17 @@ where
     /// assert_eq!(atomic.fetch_not(), 0);
     /// assert_eq!(atomic.load(), !0);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_not(&self) -> T {
         T::fetch_not(&self.primitive)
     }
 
     /// Updates the value by accumulating it with `value`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - An accumulator closure that may be called multiple times during
+    ///   CAS retries under contention.
     ///
     /// # Parameters
     ///
@@ -969,7 +1004,7 @@ where
     /// assert_eq!(atomic.fetch_accumulate(5, |a, b| a + b), 10);
     /// assert_eq!(atomic.load(), 15);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_accumulate<F>(&self, value: T, f: F) -> T
     where
         F: FnMut(T, T) -> T,
@@ -979,6 +1014,11 @@ where
 
     /// Updates the value by accumulating it with `value` and returns the new
     /// value.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - An accumulator closure that may be called multiple times during
+    ///   CAS retries under contention.
     ///
     /// # Parameters
     ///
@@ -1001,7 +1041,7 @@ where
     /// assert_eq!(atomic.accumulate_and_get(5, |a, b| a + b), 15);
     /// assert_eq!(atomic.load(), 15);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn accumulate_and_get<F>(&self, value: T, f: F) -> T
     where
         F: FnMut(T, T) -> T,
@@ -1028,7 +1068,7 @@ where
     /// assert_eq!(atomic.fetch_max(10), 3);
     /// assert_eq!(atomic.load(), 10);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_max(&self, value: T) -> T {
         T::fetch_max(&self.primitive, value)
     }
@@ -1052,7 +1092,7 @@ where
     /// assert_eq!(atomic.fetch_min(3), 10);
     /// assert_eq!(atomic.load(), 3);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_min(&self, value: T) -> T {
         T::fetch_min(&self.primitive, value)
     }
@@ -1074,7 +1114,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_set(), false);
     /// assert!(flag.load());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_set(&self) -> bool {
         self.primitive.fetch_set()
     }
@@ -1094,7 +1134,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_clear(), true);
     /// assert!(!flag.load());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_clear(&self) -> bool {
         self.primitive.fetch_clear()
     }
@@ -1114,7 +1154,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_not(), false);
     /// assert!(flag.load());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_not(&self) -> bool {
         self.primitive.fetch_not()
     }
@@ -1138,7 +1178,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_and(false), true);
     /// assert!(!flag.load());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_and(&self, value: bool) -> bool {
         self.primitive.fetch_and(value)
     }
@@ -1162,7 +1202,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_or(true), false);
     /// assert!(flag.load());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_or(&self, value: bool) -> bool {
         self.primitive.fetch_or(value)
     }
@@ -1186,7 +1226,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_xor(true), true);
     /// assert!(!flag.load());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn fetch_xor(&self, value: bool) -> bool {
         self.primitive.fetch_xor(value)
     }
@@ -1216,7 +1256,7 @@ impl Atomic<bool> {
     /// assert!(flag.load());
     /// assert!(flag.set_if_false(false).is_err());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn set_if_false(&self, new: bool) -> Result<(), bool> {
         self.primitive.set_if_false(new)
     }
@@ -1246,7 +1286,7 @@ impl Atomic<bool> {
     /// assert!(!flag.load());
     /// assert!(flag.set_if_true(true).is_err());
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn set_if_true(&self, new: bool) -> Result<(), bool> {
         self.primitive.set_if_true(new)
     }
@@ -1266,7 +1306,7 @@ where
     /// let atomic = Atomic::<i32>::default();
     /// assert_eq!(atomic.load(), 0);
     /// ```
-    #[inline(always)]
+    #[inline]
     fn default() -> Self {
         Self::new(T::default())
     }
@@ -1286,7 +1326,7 @@ where
     /// let atomic = Atomic::from(42i32);
     /// assert_eq!(atomic.load(), 42);
     /// ```
-    #[inline(always)]
+    #[inline]
     fn from(value: T) -> Self {
         Self::new(value)
     }

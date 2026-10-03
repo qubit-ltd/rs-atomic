@@ -681,25 +681,9 @@ fn test_concurrent_get_and_update_contention() {
 // ============================================================================
 
 #[test]
-fn test_atomic_number_fetch_add() {
-    let atomic = Atomic::<f32>::new(10.0);
-    let old = atomic.fetch_add(5.0);
-    assert!((old - 10.0).abs() < EPSILON);
-    assert!((atomic.load() - 15.0).abs() < EPSILON);
-}
-
-#[test]
 fn test_atomic_number_fetch_add_negative() {
     let atomic = Atomic::<f32>::new(10.0);
     let old = atomic.fetch_add(-3.0);
-    assert!((old - 10.0).abs() < EPSILON);
-    assert!((atomic.load() - 7.0).abs() < EPSILON);
-}
-
-#[test]
-fn test_atomic_number_fetch_sub() {
-    let atomic = Atomic::<f32>::new(10.0);
-    let old = atomic.fetch_sub(3.0);
     assert!((old - 10.0).abs() < EPSILON);
     assert!((atomic.load() - 7.0).abs() < EPSILON);
 }
@@ -710,14 +694,6 @@ fn test_atomic_number_fetch_sub_negative() {
     let old = atomic.fetch_sub(-5.0);
     assert!((old - 10.0).abs() < EPSILON);
     assert!((atomic.load() - 15.0).abs() < EPSILON);
-}
-
-#[test]
-fn test_atomic_number_fetch_mul() {
-    let atomic = Atomic::<f32>::new(3.0);
-    let old = atomic.fetch_mul(4.0);
-    assert!((old - 3.0).abs() < EPSILON);
-    assert!((atomic.load() - 12.0).abs() < EPSILON);
 }
 
 #[test]
@@ -734,14 +710,6 @@ fn test_atomic_number_fetch_mul_by_negative() {
     let old = atomic.fetch_mul(-2.0);
     assert!((old - 3.0).abs() < EPSILON);
     assert!((atomic.load() - (-6.0)).abs() < EPSILON);
-}
-
-#[test]
-fn test_atomic_number_fetch_div() {
-    let atomic = Atomic::<f32>::new(12.0);
-    let old = atomic.fetch_div(4.0);
-    assert!((old - 12.0).abs() < EPSILON);
-    assert!((atomic.load() - 3.0).abs() < EPSILON);
 }
 
 #[test]
