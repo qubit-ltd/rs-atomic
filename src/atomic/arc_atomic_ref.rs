@@ -26,6 +26,10 @@ use super::atomic_ref::AtomicRef;
 /// This is different from [`AtomicRef::fork`], which explicitly creates a new
 /// independent atomic container that initially points to the same value.
 ///
+/// # Type Parameters
+///
+/// * `T` - The value type stored in the atomic reference container.
+///
 /// # Examples
 ///
 /// ```rust
@@ -54,6 +58,7 @@ impl<T> ArcAtomicRef<T> {
     /// # Returns
     ///
     /// A shared atomic reference wrapper initialized to `value`.
+    #[must_use]
     #[inline]
     pub fn new(value: Arc<T>) -> Self {
         Self::from_atomic_ref(AtomicRef::new(value))
@@ -68,6 +73,7 @@ impl<T> ArcAtomicRef<T> {
     /// # Returns
     ///
     /// A shared atomic reference wrapper initialized to `Arc::new(value)`.
+    #[must_use]
     #[inline]
     pub fn from_value(value: T) -> Self {
         Self::from_atomic_ref(AtomicRef::from_value(value))
@@ -82,6 +88,7 @@ impl<T> ArcAtomicRef<T> {
     /// # Returns
     ///
     /// A shared atomic reference wrapper owning `atomic_ref`.
+    #[must_use]
     #[inline]
     pub fn from_atomic_ref(atomic_ref: AtomicRef<T>) -> Self {
         Self {
@@ -98,6 +105,7 @@ impl<T> ArcAtomicRef<T> {
     /// # Returns
     ///
     /// A wrapper around `inner`.
+    #[must_use]
     #[inline]
     pub fn from_arc(inner: Arc<AtomicRef<T>>) -> Self {
         Self { inner }
@@ -119,6 +127,7 @@ impl<T> ArcAtomicRef<T> {
     /// # Returns
     ///
     /// The underlying `Arc<AtomicRef<T>>`.
+    #[must_use]
     #[inline]
     pub fn into_arc(self) -> Arc<AtomicRef<T>> {
         self.inner

@@ -37,9 +37,10 @@
 //! ## Example
 //!
 //! ```rust
-//! use qubit_atomic::Atomic;
 //! use std::sync::Arc;
 //! use std::thread;
+//!
+//! use qubit_atomic::Atomic;
 //!
 //! // Basic usage
 //! let counter = Atomic::new(0);

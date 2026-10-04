@@ -136,10 +136,11 @@ macro_rules! impl_atomic_number {
             /// # Memory Ordering
             ///
             /// Uses `Acquire` ordering to ensure that:
-            /// - This load operation happens-before any subsequent memory
-            ///   operations in the current thread.
-            /// - If another thread performed a `Release` store, all writes
-            ///   before that store are visible after this load.
+            /// - Subsequent memory operations in the current thread cannot
+            ///   be reordered before this load.
+            /// - If this load observes a value written by a `Release` store,
+            ///   writes sequenced before that store are visible after this
+            ///   load.
             ///
             /// This is the standard choice for reading shared state that
             /// may have been modified by other threads.

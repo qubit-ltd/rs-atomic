@@ -11,6 +11,7 @@
 //! Provides an easy-to-use atomic 8-bit signed integer type with sensible
 //! default memory orderings.
 
+use std::sync::atomic::AtomicI8 as StdAtomicI8;
 use std::sync::atomic::Ordering;
 
-impl_atomic_number!(AtomicI8, std::sync::atomic::AtomicI8, i8, "8-bit signed integer");
+impl_atomic_number!(AtomicI8, StdAtomicI8, i8, "8-bit signed integer");

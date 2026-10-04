@@ -28,7 +28,8 @@ use super::sealed;
 /// surface.
 #[doc(hidden)]
 pub trait AtomicValue: sealed::Sealed + Copy {
-    /// Internal primitive wrapper type.
+    /// Primitive wrapper that implements the atomic operations for this value
+    /// type and exposes its corresponding backend storage.
     type Primitive: AtomicOps<Value = Self>;
 
     /// Raw backend atomic type returned by [`crate::Atomic::inner`].
@@ -43,6 +44,7 @@ pub trait AtomicValue: sealed::Sealed + Copy {
     /// # Returns
     ///
     /// A primitive wrapper initialized to `value`.
+    #[must_use]
     fn new_primitive(value: Self) -> Self::Primitive;
 
     /// Returns the raw backend atomic type from the primitive wrapper.

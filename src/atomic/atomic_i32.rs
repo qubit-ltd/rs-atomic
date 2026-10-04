@@ -11,6 +11,7 @@
 //! Provides an easy-to-use atomic 32-bit signed integer type with sensible
 //! default memory orderings.
 
+use std::sync::atomic::AtomicI32 as StdAtomicI32;
 use std::sync::atomic::Ordering;
 
-impl_atomic_number!(AtomicI32, std::sync::atomic::AtomicI32, i32, "32-bit signed integer");
+impl_atomic_number!(AtomicI32, StdAtomicI32, i32, "32-bit signed integer");

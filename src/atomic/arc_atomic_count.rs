@@ -50,7 +50,6 @@ impl ArcAtomicCount {
     /// # Returns
     ///
     /// A shared counter wrapper initialized to `value`.
-    #[inline]
     pub fn new(value: usize) -> Self {
         Self::from_count(AtomicCount::new(value))
     }
@@ -60,7 +59,6 @@ impl ArcAtomicCount {
     /// # Returns
     ///
     /// A shared counter wrapper whose current value is zero.
-    #[inline]
     pub fn zero() -> Self {
         Self::new(0)
     }
@@ -74,7 +72,6 @@ impl ArcAtomicCount {
     /// # Returns
     ///
     /// A shared counter wrapper owning `counter`.
-    #[inline]
     pub fn from_count(counter: AtomicCount) -> Self {
         Self {
             inner: Arc::new(counter),
@@ -148,7 +145,6 @@ impl Default for ArcAtomicCount {
     /// # Returns
     ///
     /// A shared counter wrapper whose current value is zero.
-    #[inline]
     fn default() -> Self {
         Self::zero()
     }
@@ -178,7 +174,6 @@ impl From<usize> for ArcAtomicCount {
     /// # Returns
     ///
     /// A shared counter wrapper initialized to `value`.
-    #[inline]
     fn from(value: usize) -> Self {
         Self::new(value)
     }
@@ -194,7 +189,6 @@ impl From<AtomicCount> for ArcAtomicCount {
     /// # Returns
     ///
     /// A shared counter wrapper owning `counter`.
-    #[inline]
     fn from(counter: AtomicCount) -> Self {
         Self::from_count(counter)
     }

@@ -101,6 +101,7 @@ impl<T> AtomicRef<T> {
     /// let atomic = AtomicRef::new(data);
     /// assert_eq!(*atomic.load(), 42);
     /// ```
+    #[must_use]
     #[inline]
     pub fn new(value: Arc<T>) -> Self {
         Self {
@@ -130,6 +131,7 @@ impl<T> AtomicRef<T> {
     /// let atomic = AtomicRef::from_value(42);
     /// assert_eq!(*atomic.load(), 42);
     /// ```
+    #[must_use]
     pub fn from_value(value: T) -> Self {
         Self::new(Arc::new(value))
     }
@@ -176,6 +178,7 @@ impl<T> AtomicRef<T> {
     /// let guard = atomic.load_guard();
     /// assert_eq!(**guard, 42);
     /// ```
+    #[must_use]
     #[inline]
     pub fn load_guard(&self) -> Guard<Arc<T>> {
         self.inner.load()

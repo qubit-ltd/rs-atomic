@@ -86,6 +86,9 @@ fn benchmark_reference_load(c: &mut Criterion) {
 }
 
 /// Increments `counter` without wrapping and returns the committed new value.
+///
+/// The compare-and-exchange loop mirrors a checked atomic increment while
+/// retrying when another operation changes the counter.
 fn checked_increment(counter: &AtomicUsize) -> usize {
     let mut current = counter.load(Ordering::Acquire);
     loop {

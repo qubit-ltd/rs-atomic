@@ -640,6 +640,7 @@ impl AtomicBool {
     /// assert_eq!(flag.fetch_update(|current| !current), false);
     /// assert_eq!(flag.load(), true);
     /// ```
+    #[must_use]
     pub fn fetch_update<F>(&self, mut f: F) -> bool
     where
         F: FnMut(bool) -> bool,
@@ -684,6 +685,7 @@ impl AtomicBool {
     /// assert_eq!(flag.update_and_get(|current| !current), true);
     /// assert_eq!(flag.load(), true);
     /// ```
+    #[must_use]
     pub fn update_and_get<F>(&self, mut f: F) -> bool
     where
         F: FnMut(bool) -> bool,
@@ -732,6 +734,7 @@ impl AtomicBool {
     /// assert_eq!(flag.try_update(|current| (!current).then_some(true)), None);
     /// assert_eq!(flag.load(), true);
     /// ```
+    #[must_use]
     pub fn try_update<F>(&self, mut f: F) -> Option<bool>
     where
         F: FnMut(bool) -> Option<bool>,
@@ -787,6 +790,7 @@ impl AtomicBool {
     /// );
     /// assert_eq!(flag.load(), true);
     /// ```
+    #[must_use]
     pub fn try_update_and_get<F>(&self, mut f: F) -> Option<bool>
     where
         F: FnMut(bool) -> Option<bool>,

@@ -26,6 +26,11 @@ use super::atomic_value::AtomicValue;
 /// Use [`Atomic<T>`] when ownership stays local, and use [`ArcAtomic<T>`] when
 /// the same atomic value must be shared across threads or components.
 ///
+/// # Type Parameters
+///
+/// * `T` - The value type managed by [`Atomic<T>`]. It must implement the
+///   crate's internal atomic value trait.
+///
 /// # Examples
 ///
 /// ```rust
@@ -59,6 +64,7 @@ where
     /// # Returns
     ///
     /// A shared atomic wrapper initialized to `value`.
+    #[must_use]
     #[inline]
     pub fn new(value: T) -> Self {
         Self::from_atomic(Atomic::new(value))
@@ -73,6 +79,7 @@ where
     /// # Returns
     ///
     /// A shared atomic wrapper owning `atomic`.
+    #[must_use]
     #[inline]
     pub fn from_atomic(atomic: Atomic<T>) -> Self {
         Self {
@@ -89,6 +96,7 @@ where
     /// # Returns
     ///
     /// A wrapper around `inner`.
+    #[must_use]
     #[inline]
     pub fn from_arc(inner: Arc<Atomic<T>>) -> Self {
         Self { inner }
@@ -110,6 +118,7 @@ where
     /// # Returns
     ///
     /// The underlying `Arc<Atomic<T>>`.
+    #[must_use]
     #[inline]
     pub fn into_arc(self) -> Arc<Atomic<T>> {
         self.inner
