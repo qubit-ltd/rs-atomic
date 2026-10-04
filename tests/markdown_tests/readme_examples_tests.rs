@@ -33,7 +33,7 @@ fn test_readme_rust_examples_compile() {
 /// Verifies that each test process uses an isolated markdown doctest directory.
 #[test]
 fn test_markdown_doctest_output_dir_is_process_scoped() {
-    let manifest_dir = Path::new("/workspace/rs-atomic");
+    let manifest_dir = Path::new("project-root");
 
     assert_eq!(
         markdown_doctest_output_dir(manifest_dir, 42),

@@ -122,6 +122,10 @@ fn test_concurrent_swap() {
     // The final value should be one of the thread IDs
     let final_value = atomic.load();
     assert!(final_value >= 1 && final_value <= NUM_THREADS as i32);
+    assert_eq!(
+        sum.load(Ordering::Relaxed),
+        (NUM_THREADS * (NUM_THREADS + 1) / 2) - final_value as usize,
+    );
 }
 
 // Test concurrent boolean flag operations
