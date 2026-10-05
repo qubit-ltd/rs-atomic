@@ -14,22 +14,22 @@ cargo install cargo-llvm-cov
 
 ### 使用便捷脚本（推荐）
 
-我们提供了一个便捷脚本 `coverage.sh`，可以快速生成各种格式的覆盖率报告：
+我们提供了一个便捷脚本 `.infra/bin/coverage.sh`，可以快速生成各种格式的覆盖率报告：
 
 ```bash
 # 生成 HTML 报告并在浏览器中打开（默认）
-./coverage.sh
+./.infra/bin/coverage.sh
 
 # 或指定格式
-./coverage.sh html       # HTML 报告（在浏览器中打开）
-./coverage.sh text       # 终端文本报告
-./coverage.sh lcov       # LCOV 格式
-./coverage.sh json       # JSON 格式
-./coverage.sh cobertura  # Cobertura XML 格式
-./coverage.sh all        # 生成所有格式
+./.infra/bin/coverage.sh html       # HTML 报告（在浏览器中打开）
+./.infra/bin/coverage.sh text       # 终端文本报告
+./.infra/bin/coverage.sh lcov       # LCOV 格式
+./.infra/bin/coverage.sh json       # JSON 格式
+./.infra/bin/coverage.sh cobertura  # Cobertura XML 格式
+./.infra/bin/coverage.sh all        # 生成所有格式
 
 # 查看帮助
-./coverage.sh help
+./.infra/bin/coverage.sh help
 ```
 
 ### 使用 cargo 命令

@@ -14,22 +14,22 @@ cargo install cargo-llvm-cov
 
 ### Using Convenience Script (Recommended)
 
-We provide a convenience script `coverage.sh` that can quickly generate coverage reports in various formats:
+We provide a convenience script `.infra/bin/coverage.sh` that can quickly generate coverage reports in various formats:
 
 ```bash
 # Generate HTML report and open in browser (default)
-./coverage.sh
+./.infra/bin/coverage.sh
 
 # Or specify format
-./coverage.sh html       # HTML report (opens in browser)
-./coverage.sh text       # Terminal text report
-./coverage.sh lcov       # LCOV format
-./coverage.sh json       # JSON format
-./coverage.sh cobertura  # Cobertura XML format
-./coverage.sh all        # Generate all formats
+./.infra/bin/coverage.sh html       # HTML report (opens in browser)
+./.infra/bin/coverage.sh text       # Terminal text report
+./.infra/bin/coverage.sh lcov       # LCOV format
+./.infra/bin/coverage.sh json       # JSON format
+./.infra/bin/coverage.sh cobertura  # Cobertura XML format
+./.infra/bin/coverage.sh all        # Generate all formats
 
 # View help
-./coverage.sh help
+./.infra/bin/coverage.sh help
 ```
 
 ### Using cargo Commands
