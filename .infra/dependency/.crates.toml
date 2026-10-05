@@ -1,2 +1,0 @@
-[v1]
-"qubit-infra-dependency 0.1.0 (git+https://github.com/qubit-ltd/rs-infra-dependency.git?rev=4c3816e1bf2366be56948832060f3a51a3417311#4c3816e1bf2366be56948832060f3a51a3417311)" = ["rs-infra-dependency"]
