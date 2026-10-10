@@ -35,6 +35,7 @@ use super::atomic_count::AtomicCount;
 /// assert_eq!(counter.get(), 1);
 /// assert_eq!(counter.strong_count(), 2);
 /// ```
+#[must_use]
 pub struct ArcAtomicCount {
     /// Shared owner of the underlying atomic counter.
     inner: Arc<AtomicCount>,

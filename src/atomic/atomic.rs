@@ -169,6 +169,7 @@ where
     /// let b: Atomic<isize> = Atomic::new(0);
     /// assert_eq!(b.load(), 0isize);
     /// ```
+    #[must_use]
     #[inline]
     pub fn new(value: T) -> Self {
         Self {
@@ -192,6 +193,7 @@ where
     /// let atomic = Atomic::new(7);
     /// assert_eq!(atomic.load(), 7);
     /// ```
+    #[must_use]
     #[must_use]
     #[inline]
     pub fn load(&self) -> T {
@@ -251,6 +253,7 @@ where
     /// assert_eq!(b.swap(200), 100);
     /// assert_eq!(b.load(), 200);
     /// ```
+    #[must_use]
     #[must_use]
     #[inline]
     pub fn swap(&self, value: T) -> T {
@@ -361,6 +364,7 @@ where
     /// assert_eq!(atomic.compare_and_exchange(5, 0), 10);
     /// ```
     #[must_use]
+    #[must_use]
     #[inline]
     pub fn compare_and_exchange(&self, current: T, new: T) -> T {
         AtomicOps::compare_exchange(&self.primitive, current, new)
@@ -443,6 +447,7 @@ where
     /// assert_eq!(atomic.fetch_update(|x| x * 2), 3);
     /// assert_eq!(atomic.load(), 6);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_update<F>(&self, f: F) -> T
     where
@@ -478,6 +483,7 @@ where
     /// assert_eq!(atomic.update_and_get(|x| x * 2), 6);
     /// assert_eq!(atomic.load(), 6);
     /// ```
+    #[must_use]
     #[inline]
     pub fn update_and_get<F>(&self, f: F) -> T
     where
@@ -626,6 +632,7 @@ where
     /// assert_eq!(atomic.fetch_add(3), 10);
     /// assert_eq!(atomic.load(), 13);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_add(&self, delta: T) -> T {
         AtomicNumberOps::fetch_add(&self.primitive, delta)
@@ -654,6 +661,7 @@ where
     /// assert_eq!(atomic.fetch_sub(3), 10);
     /// assert_eq!(atomic.load(), 7);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_sub(&self, delta: T) -> T {
         AtomicNumberOps::fetch_sub(&self.primitive, delta)
@@ -681,6 +689,7 @@ where
     /// assert_eq!(atomic.fetch_mul(4), 3);
     /// assert_eq!(atomic.load(), 12);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_mul(&self, factor: T) -> T {
         AtomicNumberOps::fetch_mul(&self.primitive, factor)
@@ -714,6 +723,7 @@ where
     /// assert_eq!(atomic.fetch_div(4), 20);
     /// assert_eq!(atomic.load(), 5);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_div(&self, divisor: T) -> T {
         AtomicNumberOps::fetch_div(&self.primitive, divisor)
@@ -739,6 +749,7 @@ where
     /// assert_eq!(atomic.fetch_inc(), 0);
     /// assert_eq!(atomic.load(), 1);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_inc(&self) -> T {
         T::fetch_inc(&self.primitive)
@@ -768,6 +779,7 @@ where
     /// assert_eq!(atomic.fetch_inc_with_ordering(Ordering::AcqRel), 0);
     /// assert_eq!(atomic.load(), 1);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_inc_with_ordering(&self, ordering: Ordering) -> T {
         T::fetch_inc_with_ordering(&self.primitive, ordering)
@@ -788,6 +800,7 @@ where
     /// assert_eq!(atomic.fetch_dec(), 1);
     /// assert_eq!(atomic.load(), 0);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_dec(&self) -> T {
         T::fetch_dec(&self.primitive)
@@ -817,6 +830,7 @@ where
     /// assert_eq!(atomic.fetch_dec_with_ordering(Ordering::AcqRel), 1);
     /// assert_eq!(atomic.load(), 0);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_dec_with_ordering(&self, ordering: Ordering) -> T {
         T::fetch_dec_with_ordering(&self.primitive, ordering)
@@ -848,6 +862,7 @@ where
     /// assert_eq!(atomic.fetch_add_with_ordering(5, Ordering::AcqRel), 10);
     /// assert_eq!(atomic.load(), 15);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_add_with_ordering(&self, delta: T, ordering: Ordering) -> T {
         T::fetch_add_with_ordering(&self.primitive, delta, ordering)
@@ -879,6 +894,7 @@ where
     /// assert_eq!(atomic.fetch_sub_with_ordering(3, Ordering::AcqRel), 10);
     /// assert_eq!(atomic.load(), 7);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_sub_with_ordering(&self, delta: T, ordering: Ordering) -> T {
         T::fetch_sub_with_ordering(&self.primitive, delta, ordering)
@@ -903,6 +919,7 @@ where
     /// assert_eq!(atomic.fetch_and(0b1010), 0b1111);
     /// assert_eq!(atomic.load(), 0b1010);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_and(&self, value: T) -> T {
         T::fetch_and(&self.primitive, value)
@@ -927,6 +944,7 @@ where
     /// assert_eq!(atomic.fetch_or(0b0011), 0b1000);
     /// assert_eq!(atomic.load(), 0b1011);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_or(&self, value: T) -> T {
         T::fetch_or(&self.primitive, value)
@@ -951,6 +969,7 @@ where
     /// assert_eq!(atomic.fetch_xor(0b1010), 0b1111);
     /// assert_eq!(atomic.load(), 0b0101);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_xor(&self, value: T) -> T {
         T::fetch_xor(&self.primitive, value)
@@ -971,6 +990,7 @@ where
     /// assert_eq!(atomic.fetch_not(), 0);
     /// assert_eq!(atomic.load(), !0);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_not(&self) -> T {
         T::fetch_not(&self.primitive)
@@ -1004,6 +1024,7 @@ where
     /// assert_eq!(atomic.fetch_accumulate(5, |a, b| a + b), 10);
     /// assert_eq!(atomic.load(), 15);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_accumulate<F>(&self, value: T, f: F) -> T
     where
@@ -1041,6 +1062,7 @@ where
     /// assert_eq!(atomic.accumulate_and_get(5, |a, b| a + b), 15);
     /// assert_eq!(atomic.load(), 15);
     /// ```
+    #[must_use]
     #[inline]
     pub fn accumulate_and_get<F>(&self, value: T, f: F) -> T
     where
@@ -1068,6 +1090,7 @@ where
     /// assert_eq!(atomic.fetch_max(10), 3);
     /// assert_eq!(atomic.load(), 10);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_max(&self, value: T) -> T {
         T::fetch_max(&self.primitive, value)
@@ -1092,6 +1115,7 @@ where
     /// assert_eq!(atomic.fetch_min(3), 10);
     /// assert_eq!(atomic.load(), 3);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_min(&self, value: T) -> T {
         T::fetch_min(&self.primitive, value)
@@ -1114,6 +1138,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_set(), false);
     /// assert!(flag.load());
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_set(&self) -> bool {
         self.primitive.fetch_set()
@@ -1134,6 +1159,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_clear(), true);
     /// assert!(!flag.load());
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_clear(&self) -> bool {
         self.primitive.fetch_clear()
@@ -1154,6 +1180,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_not(), false);
     /// assert!(flag.load());
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_not(&self) -> bool {
         self.primitive.fetch_not()
@@ -1178,6 +1205,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_and(false), true);
     /// assert!(!flag.load());
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_and(&self, value: bool) -> bool {
         self.primitive.fetch_and(value)
@@ -1202,6 +1230,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_or(true), false);
     /// assert!(flag.load());
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_or(&self, value: bool) -> bool {
         self.primitive.fetch_or(value)
@@ -1226,6 +1255,7 @@ impl Atomic<bool> {
     /// assert_eq!(flag.fetch_xor(true), true);
     /// assert!(!flag.load());
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_xor(&self, value: bool) -> bool {
         self.primitive.fetch_xor(value)
