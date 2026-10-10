@@ -35,6 +35,10 @@ use arc_swap::Guard;
 /// - Functional update operations
 /// - Inline convenience API over `ArcSwap` operations
 ///
+/// # Type Parameters
+///
+/// * `T` - The value type shared through the stored `Arc<T>` references.
+///
 /// `AtomicRef<T>` deliberately does not implement [`Clone`]. Use
 /// [`AtomicRef::fork`] to create an independent container explicitly, or use
 /// [`crate::ArcAtomicRef`] when owners must share one atomic container.

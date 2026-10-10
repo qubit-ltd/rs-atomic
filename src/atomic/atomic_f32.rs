@@ -108,9 +108,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(3.14);
+    /// let atomic = AtomicF32::new(3.14);
     /// assert_eq!(atomic.load(), 3.14);
     /// ```
     #[inline]
@@ -135,9 +135,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(3.14);
+    /// let atomic = AtomicF32::new(3.14);
     /// assert_eq!(atomic.load(), 3.14);
     /// ```
     #[must_use]
@@ -161,9 +161,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(0.0);
+    /// let atomic = AtomicF32::new(0.0);
     /// atomic.store(3.14);
     /// assert_eq!(atomic.load(), 3.14);
     /// ```
@@ -190,9 +190,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(1.0);
+    /// let atomic = AtomicF32::new(1.0);
     /// let old = atomic.swap(2.0);
     /// assert_eq!(old, 1.0);
     /// assert_eq!(atomic.load(), 2.0);
@@ -241,9 +241,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(1.0);
+    /// let atomic = AtomicF32::new(1.0);
     /// assert!(atomic.compare_set(1.0, 2.0).is_ok());
     /// assert_eq!(atomic.load(), 2.0);
     /// ```
@@ -282,9 +282,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(1.0);
+    /// let atomic = AtomicF32::new(1.0);
     /// let mut current = atomic.load();
     /// loop {
     ///     match atomic.compare_set_weak(current, current + 1.0) {
@@ -324,9 +324,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(1.0);
+    /// let atomic = AtomicF32::new(1.0);
     /// let prev = atomic.compare_and_exchange(1.0, 2.0);
     /// assert_eq!(prev, 1.0);
     /// assert_eq!(atomic.load(), 2.0);
@@ -369,9 +369,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(1.0);
+    /// let atomic = AtomicF32::new(1.0);
     /// let mut current = atomic.load();
     /// loop {
     ///     match atomic.compare_and_exchange_weak(current, current + 1.0) {
@@ -413,9 +413,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(10.0);
+    /// let atomic = AtomicF32::new(10.0);
     /// let old = atomic.fetch_add(5.5);
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 15.5);
@@ -443,9 +443,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(10.0);
+    /// let atomic = AtomicF32::new(10.0);
     /// let old = atomic.fetch_sub(3.5);
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 6.5);
@@ -473,9 +473,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(10.0);
+    /// let atomic = AtomicF32::new(10.0);
     /// let old = atomic.fetch_mul(2.5);
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 25.0);
@@ -503,9 +503,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(10.0);
+    /// let atomic = AtomicF32::new(10.0);
     /// let old = atomic.fetch_div(2.0);
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 5.0);
@@ -542,9 +542,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(10.0);
+    /// let atomic = AtomicF32::new(10.0);
     /// let old = atomic.fetch_update(|x| x * 2.0);
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 20.0);
@@ -587,9 +587,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(10.0);
+    /// let atomic = AtomicF32::new(10.0);
     /// let new = atomic.update_and_get(|x| x * 2.0);
     /// assert_eq!(new, 20.0);
     /// assert_eq!(atomic.load(), 20.0);
@@ -634,9 +634,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(1.5);
+    /// let atomic = AtomicF32::new(1.5);
     /// assert_eq!(atomic.try_update(|x| (x > 0.0).then_some(x * 2.0)), Some(1.5));
     /// assert_eq!(atomic.load(), 3.0);
     /// assert_eq!(atomic.try_update(|x| (x < 0.0).then_some(x * 2.0)), None);
@@ -683,9 +683,9 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     ///
-    /// let atomic = Atomic::<f32>::new(1.5);
+    /// let atomic = AtomicF32::new(1.5);
     /// assert_eq!(
     ///     atomic.try_update_and_get(|x| (x > 0.0).then_some(x * 2.0)),
     ///     Some(3.0),
@@ -730,10 +730,10 @@ impl AtomicF32 {
     /// # Examples
     ///
     /// ```rust
-    /// use qubit_atomic::Atomic;
+    /// use qubit_atomic::atomic::primitive::AtomicF32;
     /// use std::sync::atomic::Ordering;
     ///
-    /// let atomic = Atomic::<f32>::new(0.0);
+    /// let atomic = AtomicF32::new(0.0);
     /// atomic.inner().store(3.14_f32.to_bits(), Ordering::Relaxed);
     /// let bits = atomic.inner().load(Ordering::Relaxed);
     /// assert_eq!(f32::from_bits(bits), 3.14);
