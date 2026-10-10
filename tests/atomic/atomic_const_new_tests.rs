@@ -9,17 +9,17 @@
 use qubit_atomic::atomic::primitive::AtomicBool;
 use qubit_atomic::atomic::primitive::AtomicF32;
 use qubit_atomic::atomic::primitive::AtomicF64;
+use qubit_atomic::atomic::primitive::AtomicI128;
 use qubit_atomic::atomic::primitive::AtomicI8;
 use qubit_atomic::atomic::primitive::AtomicI16;
 use qubit_atomic::atomic::primitive::AtomicI32;
 use qubit_atomic::atomic::primitive::AtomicI64;
-use qubit_atomic::atomic::primitive::AtomicI128;
 use qubit_atomic::atomic::primitive::AtomicIsize;
+use qubit_atomic::atomic::primitive::AtomicU128;
 use qubit_atomic::atomic::primitive::AtomicU8;
 use qubit_atomic::atomic::primitive::AtomicU16;
 use qubit_atomic::atomic::primitive::AtomicU32;
 use qubit_atomic::atomic::primitive::AtomicU64;
-use qubit_atomic::atomic::primitive::AtomicU128;
 use qubit_atomic::atomic::primitive::AtomicUsize;
 
 static BOOL_ATOMIC: AtomicBool = AtomicBool::new(true);

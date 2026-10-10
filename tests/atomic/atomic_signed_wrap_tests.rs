@@ -14,8 +14,16 @@ macro_rules! test_signed_fetch_div_min_by_negative_one_wraps {
         fn $test_name() {
             let atomic = Atomic::<$value_type>::new(<$value_type>::MIN);
             let old = atomic.fetch_div(-1);
-            assert_eq!(old, <$value_type>::MIN);
-            assert_eq!(atomic.load(), <$value_type>::MIN);
+            assert_eq!(
+                old,
+                <$value_type>::MIN,
+                "fetch_div should return the original minimum value"
+            );
+            assert_eq!(
+                atomic.load(),
+                <$value_type>::MIN,
+                "fetch_div should wrap the stored minimum value"
+            );
         }
     };
 }
