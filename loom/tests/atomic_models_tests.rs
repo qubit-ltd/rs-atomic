@@ -20,7 +20,7 @@ fn increment_once(counter: &AtomicUsize) {
     assert!(
         try_update_atomic_count(
             || counter.load(Ordering::Acquire),
-            |current, next| { counter.compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire,) },
+            |current, next| { counter.compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire) },
             |current| current.checked_add(1),
         )
         .is_some()

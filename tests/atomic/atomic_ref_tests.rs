@@ -133,7 +133,7 @@ fn test_compare_and_set_with_struct_failure() {
     });
 
     match atomic.compare_set(&wrong_ref, data2) {
-        Ok(_) => panic!("Should fail"),
+        Ok(_) => panic!("compare_set should reject a non-current reference"),
         Err(actual) => {
             assert_eq!(actual.value, 42);
             assert_eq!(actual.name, "first");
@@ -743,7 +743,7 @@ fn test_compare_and_set_failure_path() {
     let atomic = AtomicRef::new(data1);
 
     match atomic.compare_set(&wrong, data2) {
-        Ok(_) => panic!("Should have failed"),
+        Ok(_) => panic!("compare_set should reject a non-current reference"),
         Err(actual) => assert_eq!(*actual, 42),
     }
     assert_eq!(*atomic.load(), 42);

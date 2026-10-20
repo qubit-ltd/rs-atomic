@@ -83,7 +83,7 @@ fn test_compare_and_set_success() {
 fn test_compare_and_set_failure() {
     let atomic = Atomic::<bool>::new(false);
     match atomic.compare_set(true, false) {
-        Ok(_) => panic!("Should fail"),
+        Ok(_) => panic!("compare_set unexpectedly succeeded"),
         Err(actual) => assert!(!actual),
     }
     assert!(!atomic.load());
@@ -194,7 +194,7 @@ fn test_concurrent_toggle() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("toggle worker thread panicked");
     }
 
     // After 1000 toggles, should be false (even number)
@@ -219,7 +219,7 @@ fn test_concurrent_set_once() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("set-once worker thread panicked");
     }
 
     // Only one thread should succeed
@@ -260,7 +260,7 @@ fn test_compare_and_set_weak_success() {
 fn test_compare_and_set_weak_failure() {
     let atomic = Atomic::<bool>::new(false);
     match atomic.compare_set_weak(true, false) {
-        Ok(_) => panic!("Should fail"),
+        Ok(_) => panic!("weak compare_set unexpectedly succeeded"),
         Err(actual) => assert!(!actual),
     }
     assert!(!atomic.load());
@@ -357,7 +357,7 @@ fn test_get_and_logical_xor_true_false() {
 fn test_compare_and_set_if_false_already_true() {
     let atomic = Atomic::<bool>::new(true);
     match atomic.set_if_false(false) {
-        Ok(_) => panic!("Should fail"),
+        Ok(_) => panic!("set_if_false unexpectedly succeeded for a true value"),
         Err(actual) => assert!(actual),
     }
     assert!(atomic.load());
@@ -367,7 +367,7 @@ fn test_compare_and_set_if_false_already_true() {
 fn test_compare_and_set_if_true_already_false() {
     let atomic = Atomic::<bool>::new(false);
     match atomic.set_if_true(true) {
-        Ok(_) => panic!("Should fail"),
+        Ok(_) => panic!("set_if_true unexpectedly succeeded for a false value"),
         Err(actual) => assert!(!actual),
     }
     assert!(!atomic.load());
@@ -460,7 +460,7 @@ fn test_concurrent_compare_and_set_weak() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("compare_set worker thread panicked");
     }
 
     assert!(flag.load());

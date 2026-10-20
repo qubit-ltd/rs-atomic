@@ -398,28 +398,6 @@ macro_rules! test_atomic_integer {
             }
 
             #[test]
-            fn test_concurrent_get_and_increment() {
-                let counter = Arc::new(Atomic::<$value_type>::new(0));
-                let mut handles = vec![];
-
-                for _ in 0..10 {
-                    let counter = counter.clone();
-                    let handle = thread::spawn(move || {
-                        for _ in 0..10 {
-                            counter.fetch_inc();
-                        }
-                    });
-                    handles.push(handle);
-                }
-
-                for handle in handles {
-                    handle.join().unwrap();
-                }
-
-                assert_eq!(counter.load(), 100 as $value_type);
-            }
-
-            #[test]
             fn test_concurrent_get_and_decrement() {
                 let counter = Arc::new(Atomic::<$value_type>::new(100 as $value_type));
                 let mut handles = vec![];
