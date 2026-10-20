@@ -218,7 +218,7 @@ fn test_try_update_success_and_reject() {
         }))
     });
 
-    assert_eq!(old.unwrap().value, 42);
+    assert_eq!(old.expect("positive value should update").value, 42);
     assert_eq!(atomic.load().value, 84);
     assert_eq!(atomic.load().name, "test_updated");
 
@@ -279,7 +279,7 @@ fn test_try_update_retry_path() {
         Some(Arc::new(**current * 2))
     });
 
-    assert_eq!(*old.unwrap(), 11);
+    assert_eq!(*old.expect("retry should eventually update"), 11);
     assert_eq!(*atomic.load(), 22);
 }
 
@@ -379,7 +379,7 @@ fn test_fetch_update_applies_all_concurrent_updates() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("update thread should complete");
     }
 
     assert_eq!(atomic.load().value, 10);
@@ -412,7 +412,7 @@ fn test_compare_set_retries_concurrent_updates() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("compare-and-set thread should complete");
     }
 
     assert_eq!(*atomic.load(), 10);
@@ -642,7 +642,7 @@ fn test_load_observes_shared_value_concurrently() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("load thread should complete");
     }
 }
 
@@ -661,7 +661,7 @@ fn test_swap_updates_value_concurrently() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("swap thread should complete");
     }
 
     // Final value should be one of 0-9
@@ -790,7 +790,7 @@ fn test_concurrent_get_and_update_high_contention() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("update thread should complete");
     }
 
     // Result should be 20 * 10 = 200

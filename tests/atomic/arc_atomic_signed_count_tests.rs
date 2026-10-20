@@ -16,7 +16,7 @@ fn test_arc_atomic_signed_count_shared_owner() {
     let counter = ArcAtomicSignedCount::zero();
     let shared = counter.clone();
 
-    shared.sub(3);
+    let _ = shared.sub(3);
 
     assert_eq!(counter.get(), -3);
     assert_eq!(counter.strong_count(), 2);
@@ -53,7 +53,7 @@ fn test_arc_atomic_signed_count_from_trait_conversions() {
 #[test]
 fn test_arc_atomic_signed_count_default_debug_display() {
     let counter = ArcAtomicSignedCount::default();
-    counter.sub(42);
+    let _ = counter.sub(42);
 
     assert_eq!(format!("{counter}"), "-42");
     assert_eq!(

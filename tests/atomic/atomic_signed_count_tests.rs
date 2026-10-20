@@ -131,14 +131,14 @@ fn test_try_add_underflow_keeps_value() {
 #[should_panic(expected = "atomic signed counter out of range")]
 fn test_add_overflow_panics() {
     let counter = AtomicSignedCount::new(isize::MAX);
-    counter.inc();
+    let _ = counter.inc();
 }
 
 #[test]
 #[should_panic(expected = "atomic signed counter out of range")]
 fn test_add_underflow_panics() {
     let counter = AtomicSignedCount::new(isize::MIN);
-    counter.add(-1);
+    let _ = counter.add(-1);
 }
 
 #[test]
@@ -185,14 +185,14 @@ fn test_try_sub_underflow_keeps_value() {
 #[should_panic(expected = "atomic signed counter out of range")]
 fn test_sub_overflow_panics() {
     let counter = AtomicSignedCount::new(isize::MAX);
-    counter.sub(-1);
+    let _ = counter.sub(-1);
 }
 
 #[test]
 #[should_panic(expected = "atomic signed counter out of range")]
 fn test_sub_underflow_panics() {
     let counter = AtomicSignedCount::new(isize::MIN);
-    counter.dec();
+    let _ = counter.dec();
 }
 
 #[test]
@@ -221,7 +221,7 @@ fn test_concurrent_add() {
         let counter = Arc::clone(&counter);
         handles.push(thread::spawn(move || {
             for _ in 0..ITERATIONS {
-                counter.add(1);
+                let _ = counter.add(1);
             }
         }));
     }
@@ -245,7 +245,7 @@ fn test_concurrent_add_and_sub() {
         let counter = Arc::clone(&counter);
         handles.push(thread::spawn(move || {
             for _ in 0..ITERATIONS {
-                counter.add(1);
+                let _ = counter.add(1);
             }
         }));
     }
@@ -254,7 +254,7 @@ fn test_concurrent_add_and_sub() {
         let counter = Arc::clone(&counter);
         handles.push(thread::spawn(move || {
             for _ in 0..ITERATIONS {
-                counter.sub(1);
+                let _ = counter.sub(1);
             }
         }));
     }

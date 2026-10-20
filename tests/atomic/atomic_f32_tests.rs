@@ -82,7 +82,7 @@ fn test_compare_and_set_success() {
 fn test_compare_and_set_failure() {
     let atomic = Atomic::<f32>::new(1.0);
     match atomic.compare_set(1.5, 2.0) {
-        Ok(_) => panic!("Should fail"),
+        Ok(_) => panic!("compare_set should fail when the current value does not match"),
         Err(actual) => assert!((actual - 1.0).abs() < EPSILON),
     }
     assert!((atomic.load() - 1.0).abs() < EPSILON);
@@ -152,7 +152,7 @@ fn test_concurrent_add() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("worker thread should complete without panicking");
     }
 
     // Due to floating point precision, result may not be exactly 10.0
@@ -278,7 +278,7 @@ fn test_inner_cas() {
     atomic
         .inner()
         .compare_exchange(current_bits, new_bits, Ordering::AcqRel, Ordering::Acquire)
-        .unwrap();
+        .expect("compare_exchange should succeed with the observed current value");
 
     assert!((atomic.load() - 2.0).abs() < EPSILON);
 }
@@ -317,7 +317,7 @@ fn test_div_by_zero() {
 fn test_compare_and_set_failure_returns_actual() {
     let atomic = Atomic::<f32>::new(1.0);
     match atomic.compare_set(2.0, 3.0) {
-        Ok(_) => panic!("Should fail"),
+        Ok(_) => panic!("compare_set should fail when the current value does not match"),
         Err(actual) => assert!((actual - 1.0).abs() < EPSILON),
     }
 }
@@ -336,7 +336,7 @@ fn test_concurrent_mul() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("worker thread should complete without panicking");
     }
 
     // Result should be 2^5 = 32
@@ -358,7 +358,7 @@ fn test_concurrent_div() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("worker thread should complete without panicking");
     }
 
     // Result should be 1024 / 2^5 = 32
@@ -477,7 +477,7 @@ fn test_compare_and_set_failure_path() {
     let atomic = Atomic::<f32>::new(10.0);
     // Try to CAS with wrong current value
     match atomic.compare_set(5.0, 15.0) {
-        Ok(_) => panic!("Should have failed"),
+        Ok(_) => panic!("compare_set should fail when the current value does not match"),
         Err(actual) => assert!((actual - 10.0).abs() < EPSILON),
     }
     assert!((atomic.load() - 10.0).abs() < EPSILON);
@@ -495,7 +495,7 @@ fn test_compare_and_exchange_failure_path() {
 fn test_compare_and_set_weak_failure_path() {
     let atomic = Atomic::<f32>::new(10.0);
     match atomic.compare_set_weak(5.0, 15.0) {
-        Ok(_) => panic!("Should have failed"),
+        Ok(_) => panic!("compare_set_weak should fail when the current value does not match"),
         Err(actual) => assert!((actual - 10.0).abs() < EPSILON),
     }
     assert!((atomic.load() - 10.0).abs() < EPSILON);
@@ -542,7 +542,7 @@ fn test_concurrent_add_high_contention() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("worker thread should complete without panicking");
     }
 
     // Result should be around 100.0 (20 * 50 * 0.1)
@@ -567,7 +567,7 @@ fn test_concurrent_sub_high_contention() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("worker thread should complete without panicking");
     }
 
     // Result should be around 800.0 (1000 - 20 * 10)
@@ -594,7 +594,7 @@ fn test_concurrent_mul_and_div() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("worker thread should complete without panicking");
     }
 
     // Result should be close to original (5 muls and 5 divs)
@@ -619,7 +619,7 @@ fn test_concurrent_mul_extreme_contention() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("worker thread should complete without panicking");
     }
 
     // Result should be greater than 1.0
@@ -644,7 +644,7 @@ fn test_concurrent_div_extreme_contention() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("worker thread should complete without panicking");
     }
 
     // Result should be less than original
@@ -668,7 +668,7 @@ fn test_concurrent_get_and_update_contention() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("worker thread should complete without panicking");
     }
 
     // Result should be 10 * 20 * 0.5 = 100.0
@@ -768,7 +768,7 @@ fn test_atomic_number_concurrent_operations() {
     }
 
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().expect("worker thread should complete without panicking");
     }
 
     // 5 threads add 1.0, 5 threads subtract 0.5, result should be 5.0 - 2.5 =
