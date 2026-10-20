@@ -274,6 +274,7 @@ impl<T> AtomicRef<T> {
     /// assert!(atomic.compare_set(&current, Arc::new(20)).is_ok());
     /// assert_eq!(*atomic.load(), 20);
     /// ```
+    #[inline]
     pub fn compare_set(&self, current: &Arc<T>, new: Arc<T>) -> Result<(), Arc<T>> {
         let prev = Guard::into_inner(self.inner.compare_and_swap(current, new));
         if Arc::ptr_eq(&prev, current) { Ok(()) } else { Err(prev) }

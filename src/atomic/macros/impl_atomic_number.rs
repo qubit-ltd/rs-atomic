@@ -75,11 +75,11 @@ macro_rules! impl_atomic_number {
         /// # Examples
         ///
         /// ```rust
-        /// use qubit_atomic::Atomic;
+        #[doc = concat!("use qubit_atomic::atomic::primitive::", stringify!($name), ";")]
         /// use std::sync::Arc;
         /// use std::thread;
         ///
-        #[doc = concat!("let counter = Arc::new(Atomic::<", stringify!($value_type), ">::new(0));")]
+        #[doc = concat!("let counter = Arc::new(", stringify!($name), "::new(0));")]
         /// let mut handles = vec![];
         ///
         /// for _ in 0..10 {

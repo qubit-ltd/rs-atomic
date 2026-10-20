@@ -8,7 +8,11 @@
 
 //! Sealing support for internal marker traits.
 
-/// Marker trait used to seal atomic value implementations.
+/// Prevents downstream crates from implementing the internal atomic value
+/// traits.
+///
+/// Only value types supported by this crate's atomic wrappers implement this
+/// trait, keeping the set of atomic backends under the crate's control.
 pub trait Sealed {
     // empty
 }

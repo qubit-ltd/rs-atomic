@@ -51,6 +51,7 @@ impl ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A shared signed counter wrapper initialized to `value`.
+    #[inline]
     pub fn new(value: isize) -> Self {
         Self::from_count(AtomicSignedCount::new(value))
     }
@@ -60,6 +61,7 @@ impl ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A shared signed counter wrapper whose current value is zero.
+    #[inline]
     pub fn zero() -> Self {
         Self::new(0)
     }
@@ -109,6 +111,7 @@ impl ArcAtomicSignedCount {
     /// # Returns
     ///
     /// The underlying `Arc<AtomicSignedCount>`.
+    #[must_use]
     #[inline]
     pub fn into_arc(self) -> Arc<AtomicSignedCount> {
         self.inner
@@ -132,6 +135,7 @@ impl Clone for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A new wrapper pointing to the same underlying signed atomic counter.
+    #[inline]
     fn clone(&self) -> Self {
         Self {
             inner: Arc::clone(&self.inner),
@@ -145,6 +149,7 @@ impl Default for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A shared signed counter wrapper whose current value is zero.
+    #[inline]
     fn default() -> Self {
         Self::zero()
     }
@@ -174,6 +179,7 @@ impl From<isize> for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A shared signed counter wrapper initialized to `value`.
+    #[inline]
     fn from(value: isize) -> Self {
         Self::new(value)
     }
@@ -189,6 +195,7 @@ impl From<AtomicSignedCount> for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A shared signed counter wrapper owning `counter`.
+    #[inline]
     fn from(counter: AtomicSignedCount) -> Self {
         Self::from_count(counter)
     }
@@ -204,6 +211,7 @@ impl From<Arc<AtomicSignedCount>> for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A wrapper around `inner`.
+    #[inline]
     fn from(inner: Arc<AtomicSignedCount>) -> Self {
         Self::from_arc(inner)
     }
@@ -219,6 +227,7 @@ impl fmt::Debug for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A formatting result from the formatter.
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ArcAtomicSignedCount")
             .field("value", &self.get())
@@ -237,6 +246,7 @@ impl fmt::Display for ArcAtomicSignedCount {
     /// # Returns
     ///
     /// A formatting result from the formatter.
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get())
     }

@@ -393,6 +393,7 @@ impl AtomicBool {
     /// assert_eq!(old, false);
     /// assert_eq!(flag.load(), true);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_set(&self) -> bool {
         self.swap(true)
@@ -420,6 +421,7 @@ impl AtomicBool {
     /// assert_eq!(old, true);
     /// assert_eq!(flag.load(), false);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_clear(&self) -> bool {
         self.swap(false)
@@ -447,6 +449,7 @@ impl AtomicBool {
     /// assert_eq!(flag.fetch_not(), true);
     /// assert_eq!(flag.load(), false);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_not(&self) -> bool {
         self.inner.fetch_xor(true, Ordering::AcqRel)
@@ -477,6 +480,7 @@ impl AtomicBool {
     /// assert_eq!(flag.fetch_and(false), true);
     /// assert_eq!(flag.load(), false);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_and(&self, value: bool) -> bool {
         self.inner.fetch_and(value, Ordering::AcqRel)
@@ -507,6 +511,7 @@ impl AtomicBool {
     /// assert_eq!(flag.fetch_or(true), false);
     /// assert_eq!(flag.load(), true);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_or(&self, value: bool) -> bool {
         self.inner.fetch_or(value, Ordering::AcqRel)
@@ -537,6 +542,7 @@ impl AtomicBool {
     /// assert_eq!(flag.fetch_xor(true), false);
     /// assert_eq!(flag.load(), true);
     /// ```
+    #[must_use]
     #[inline]
     pub fn fetch_xor(&self, value: bool) -> bool {
         self.inner.fetch_xor(value, Ordering::AcqRel)
