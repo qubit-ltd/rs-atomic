@@ -94,6 +94,7 @@ impl AtomicF64 {
     /// let atomic = Atomic::<f64>::new(3.14159);
     /// assert_eq!(atomic.load(), 3.14159);
     /// ```
+    #[must_use]
     #[inline]
     pub const fn new(value: f64) -> Self {
         Self {

@@ -136,6 +136,7 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*atomic.load(), 42);
     /// ```
     #[must_use]
+    #[inline]
     pub fn from_value(value: T) -> Self {
         Self::new(Arc::new(value))
     }

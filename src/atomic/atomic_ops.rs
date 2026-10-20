@@ -153,6 +153,10 @@ pub trait AtomicOps {
     ///
     /// Internally uses a CAS loop until the update succeeds.
     ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to compute each candidate value.
+    ///
     /// # Parameters
     ///
     /// * `f` - A function that takes the current value and returns the new
@@ -172,6 +176,10 @@ pub trait AtomicOps {
     /// Updates the value using a function, returning the new value.
     ///
     /// Internally uses a CAS loop until the update succeeds.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to compute each candidate value.
     ///
     /// # Parameters
     ///
@@ -194,6 +202,10 @@ pub trait AtomicOps {
     /// Internally uses a CAS loop until the update succeeds or the closure
     /// rejects the current value by returning `None`.
     ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to accept or reject each candidate value.
+    ///
     /// # Parameters
     ///
     /// * `f` - A function that takes the current value and returns either the
@@ -204,7 +216,6 @@ pub trait AtomicOps {
     /// `Some(old_value)` when the update succeeds, or `None` when `f` rejects
     /// the observed current value. The closure may be called more than once
     /// when concurrent updates cause CAS retries.
-    #[must_use]
     fn try_update<F>(&self, f: F) -> Option<Self::Value>
     where
         F: FnMut(Self::Value) -> Option<Self::Value>;
@@ -214,6 +225,10 @@ pub trait AtomicOps {
     ///
     /// Internally uses a CAS loop until the update succeeds or the closure
     /// rejects the current value by returning `None`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to accept or reject each candidate value.
     ///
     /// # Parameters
     ///
@@ -225,7 +240,6 @@ pub trait AtomicOps {
     /// `Some(new_value)` when the update succeeds, or `None` when `f` rejects
     /// the observed current value. The closure may be called more than once
     /// when concurrent updates cause CAS retries.
-    #[must_use]
     fn try_update_and_get<F>(&self, f: F) -> Option<Self::Value>
     where
         F: FnMut(Self::Value) -> Option<Self::Value>;

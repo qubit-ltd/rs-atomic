@@ -42,6 +42,7 @@ pub trait AtomicNumberOps: AtomicOps {
     /// # Returns
     ///
     /// The old value before adding.
+    #[must_use]
     fn fetch_add(&self, delta: Self::Value) -> Self::Value;
 
     /// Subtracts a delta from the value, returning the old value.
@@ -57,6 +58,7 @@ pub trait AtomicNumberOps: AtomicOps {
     /// # Returns
     ///
     /// The old value before subtracting.
+    #[must_use]
     fn fetch_sub(&self, delta: Self::Value) -> Self::Value;
 
     /// Multiplies the value by a factor, returning the old value.
@@ -71,6 +73,7 @@ pub trait AtomicNumberOps: AtomicOps {
     /// # Returns
     ///
     /// The old value before multiplying.
+    #[must_use]
     fn fetch_mul(&self, factor: Self::Value) -> Self::Value;
 
     /// Divides the value by a divisor, returning the old value.
@@ -90,5 +93,6 @@ pub trait AtomicNumberOps: AtomicOps {
     ///
     /// Integer implementations panic if `divisor` is zero. Floating-point
     /// implementations follow IEEE-754 division semantics.
+    #[must_use]
     fn fetch_div(&self, divisor: Self::Value) -> Self::Value;
 }
