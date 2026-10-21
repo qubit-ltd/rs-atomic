@@ -115,6 +115,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::new(3);
     /// assert_eq!(counter.get(), 3);
     /// ```
+    #[must_use]
     #[inline]
     pub const fn new(value: usize) -> Self {
         Self {
@@ -136,6 +137,7 @@ impl AtomicCount {
     /// let counter = AtomicCount::zero();
     /// assert!(counter.is_zero());
     /// ```
+    #[must_use]
     #[inline]
     pub const fn zero() -> Self {
         Self::new(0)

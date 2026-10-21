@@ -11,11 +11,7 @@
 //! Provides an easy-to-use atomic pointer-sized signed integer type with
 //! sensible default memory orderings.
 
+use std::sync::atomic::AtomicIsize as StdAtomicIsize;
 use std::sync::atomic::Ordering;
 
-impl_atomic_number!(
-    AtomicIsize,
-    std::sync::atomic::AtomicIsize,
-    isize,
-    "pointer-sized signed integer"
-);
+impl_atomic_number!(AtomicIsize, StdAtomicIsize, isize, "pointer-sized signed integer");

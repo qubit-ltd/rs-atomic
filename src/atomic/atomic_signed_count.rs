@@ -192,6 +192,7 @@ impl AtomicSignedCount {
     /// assert_eq!(counter.inc(), 1);
     /// ```
     #[must_use]
+    #[inline]
     pub fn inc(&self) -> isize {
         self.add(1)
     }
@@ -215,6 +216,7 @@ impl AtomicSignedCount {
     /// assert_eq!(counter.dec(), -1);
     /// ```
     #[must_use]
+    #[inline]
     pub fn dec(&self) -> isize {
         self.sub(1)
     }
@@ -242,6 +244,7 @@ impl AtomicSignedCount {
     /// assert_eq!(counter.add(-5), -3);
     /// ```
     #[must_use]
+    #[inline]
     pub fn add(&self, delta: isize) -> isize {
         self.try_add(delta).expect("atomic signed counter out of range")
     }
@@ -293,6 +296,7 @@ impl AtomicSignedCount {
     /// assert_eq!(counter.sub(5), -3);
     /// ```
     #[must_use]
+    #[inline]
     pub fn sub(&self, delta: isize) -> isize {
         self.try_sub(delta).expect("atomic signed counter out of range")
     }

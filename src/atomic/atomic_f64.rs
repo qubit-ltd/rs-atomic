@@ -314,6 +314,7 @@ impl AtomicF64 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 15.5);
     /// ```
+    #[inline]
     pub fn fetch_add(&self, delta: f64) -> f64 {
         self.fetch_update(|current| current + delta)
     }
@@ -344,6 +345,7 @@ impl AtomicF64 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 6.5);
     /// ```
+    #[inline]
     pub fn fetch_sub(&self, delta: f64) -> f64 {
         self.fetch_update(|current| current - delta)
     }
@@ -374,6 +376,7 @@ impl AtomicF64 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 25.0);
     /// ```
+    #[inline]
     pub fn fetch_mul(&self, factor: f64) -> f64 {
         self.fetch_update(|current| current * factor)
     }
@@ -404,6 +407,7 @@ impl AtomicF64 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 5.0);
     /// ```
+    #[inline]
     pub fn fetch_div(&self, divisor: f64) -> f64 {
         self.fetch_update(|current| current / divisor)
     }

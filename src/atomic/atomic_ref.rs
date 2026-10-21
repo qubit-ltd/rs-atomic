@@ -141,6 +141,44 @@ impl<T> AtomicRef<T> {
         Self::new(Arc::new(value))
     }
 
+    /// Creates an independent atomic container from the currently observed
+    /// reference.
+    ///
+    /// The returned container initially stores an [`Arc`] pointing to the same
+    /// `T`; this method does not clone `T`. Subsequent `store`, `swap`, and CAS
+    /// operations on either container are independent and are not observed by
+    /// the other container.
+    ///
+    /// If this method races with a writer, the new container captures the value
+    /// observed by this method's acquire load. It does not guarantee the
+    /// globally latest value.
+    ///
+    /// Use [`crate::ArcAtomicRef`] or `Arc<AtomicRef<T>>` when multiple owners
+    /// must operate on the same atomic container.
+    ///
+    /// # Returns
+    ///
+    /// A new independent atomic container initialized with the currently
+    /// observed shared reference.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use qubit_atomic::AtomicRef;
+    /// use std::sync::Arc;
+    ///
+    /// let original = AtomicRef::from_value(1usize);
+    /// let forked = original.fork();
+    /// original.store(Arc::new(2));
+    ///
+    /// assert_eq!(*original.load(), 2);
+    /// assert_eq!(*forked.load(), 1);
+    /// ```
+    #[must_use = "use fork() when you need a separate AtomicRef container"]
+    pub fn fork(&self) -> Self {
+        Self::new(self.load())
+    }
+
     /// Gets the current reference.
     ///
     /// # Returns
@@ -187,6 +225,20 @@ impl<T> AtomicRef<T> {
     #[inline]
     pub fn load_guard(&self) -> Guard<Arc<T>> {
         self.inner.load()
+    }
+
+    /// Gets a reference to the underlying `ArcSwap`.
+    ///
+    /// This allows advanced users to access lower-level `ArcSwap` APIs for
+    /// custom synchronization strategies.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the underlying `arc_swap::ArcSwap<T>`.
+    #[must_use]
+    #[inline]
+    pub fn inner(&self) -> &ArcSwap<T> {
+        &self.inner
     }
 
     /// Sets a new reference.
@@ -507,58 +559,6 @@ impl<T> AtomicRef<T> {
                 Err(actual) => current = actual,
             }
         }
-    }
-
-    /// Gets a reference to the underlying `ArcSwap`.
-    ///
-    /// This allows advanced users to access lower-level `ArcSwap` APIs for
-    /// custom synchronization strategies.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the underlying `arc_swap::ArcSwap<T>`.
-    #[must_use]
-    #[inline]
-    pub fn inner(&self) -> &ArcSwap<T> {
-        &self.inner
-    }
-
-    /// Creates an independent atomic container from the currently observed
-    /// reference.
-    ///
-    /// The returned container initially stores an [`Arc`] pointing to the same
-    /// `T`; this method does not clone `T`. Subsequent `store`, `swap`, and CAS
-    /// operations on either container are independent and are not observed by
-    /// the other container.
-    ///
-    /// If this method races with a writer, the new container captures the value
-    /// observed by this method's acquire load. It does not guarantee the
-    /// globally latest value.
-    ///
-    /// Use [`crate::ArcAtomicRef`] or `Arc<AtomicRef<T>>` when multiple owners
-    /// must operate on the same atomic container.
-    ///
-    /// # Returns
-    ///
-    /// A new independent atomic container initialized with the currently
-    /// observed shared reference.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use qubit_atomic::AtomicRef;
-    /// use std::sync::Arc;
-    ///
-    /// let original = AtomicRef::from_value(1usize);
-    /// let forked = original.fork();
-    /// original.store(Arc::new(2));
-    ///
-    /// assert_eq!(*original.load(), 2);
-    /// assert_eq!(*forked.load(), 1);
-    /// ```
-    #[must_use = "use fork() when you need a separate AtomicRef container"]
-    pub fn fork(&self) -> Self {
-        Self::new(self.load())
     }
 }
 
