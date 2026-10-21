@@ -82,7 +82,7 @@ fn test_compare_and_set_success() {
 fn test_compare_and_set_failure() {
     let atomic = Atomic::<f64>::new(1.0);
     match atomic.compare_set(1.5, 2.0) {
-        Ok(_) => panic!("Should fail"),
+        Ok(()) => panic!("compare_and_set succeeded with a mismatched current value"),
         Err(actual) => assert!((actual - 1.0).abs() < EPSILON),
     }
     assert!((atomic.load() - 1.0).abs() < EPSILON);
@@ -323,7 +323,7 @@ fn test_div_by_zero() {
 fn test_compare_and_set_failure_returns_actual() {
     let atomic = Atomic::<f64>::new(1.0);
     match atomic.compare_set(2.0, 3.0) {
-        Ok(_) => panic!("Should fail"),
+        Ok(()) => panic!("compare_set succeeded with a mismatched current value"),
         Err(actual) => assert!((actual - 1.0).abs() < EPSILON),
     }
 }
@@ -505,7 +505,7 @@ fn test_compare_and_set_failure_path() {
     let atomic = Atomic::<f64>::new(10.0);
     // Try to CAS with wrong current value
     match atomic.compare_set(5.0, 15.0) {
-        Ok(_) => panic!("Should have failed"),
+        Ok(()) => panic!("compare_set succeeded with a mismatched current value"),
         Err(actual) => assert!((actual - 10.0).abs() < EPSILON),
     }
     assert!((atomic.load() - 10.0).abs() < EPSILON);
@@ -523,7 +523,7 @@ fn test_compare_and_exchange_failure_path() {
 fn test_compare_and_set_weak_failure_path() {
     let atomic = Atomic::<f64>::new(10.0);
     match atomic.compare_set_weak(5.0, 15.0) {
-        Ok(_) => panic!("Should have failed"),
+        Ok(()) => panic!("compare_set_weak succeeded with a mismatched current value"),
         Err(actual) => assert!((actual - 10.0).abs() < EPSILON),
     }
     assert!((atomic.load() - 10.0).abs() < EPSILON);

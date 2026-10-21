@@ -38,14 +38,14 @@ fn test_atomic_value_from_trait() {
 #[test]
 fn test_atomic_value_debug_display_traits() {
     let atomic_bool = Atomic::<bool>::new(true);
-    assert!(format!("{:?}", atomic_bool).contains("true"));
+    assert_eq!(format!("{:?}", atomic_bool), "Atomic { value: true }");
     assert_eq!(format!("{}", atomic_bool), "true");
 
     let atomic_i32 = Atomic::<i32>::new(42);
-    assert!(format!("{:?}", atomic_i32).contains("42"));
+    assert_eq!(format!("{:?}", atomic_i32), "Atomic { value: 42 }");
     assert_eq!(format!("{}", atomic_i32), "42");
 
     let atomic_f64 = Atomic::<f64>::new(F64_PI);
-    assert!(format!("{:?}", atomic_f64).contains("3.14"));
-    assert!(format!("{}", atomic_f64).contains("3.14"));
+    assert_eq!(format!("{:?}", atomic_f64), "Atomic { value: 3.141592653589793 }");
+    assert_eq!(format!("{}", atomic_f64), "3.141592653589793");
 }

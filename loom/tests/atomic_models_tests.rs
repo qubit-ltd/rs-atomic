@@ -23,7 +23,8 @@ fn increment_once(counter: &AtomicUsize) {
             |current, next| { counter.compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire) },
             |current| current.checked_add(1),
         )
-        .is_some()
+        .is_some(),
+        "counter increment should not overflow"
     );
 }
 
