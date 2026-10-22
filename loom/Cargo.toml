@@ -8,4 +8,4 @@ publish = false
 qubit-atomic = { path = ".." }
 
 [dev-dependencies]
-loom = "0.7"
+loom = "^0.7"
