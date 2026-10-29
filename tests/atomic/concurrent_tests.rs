@@ -215,7 +215,7 @@ fn test_concurrent_ref_update() {
         let atomic = atomic.clone();
         let handle = thread::spawn(move || {
             for _ in 0..100 {
-                atomic.fetch_update(|current| {
+                let _ = atomic.fetch_update(|current| {
                     let value = **current;
                     Arc::new(value + 1)
                 });

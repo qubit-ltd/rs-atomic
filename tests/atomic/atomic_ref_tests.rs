@@ -368,7 +368,7 @@ fn test_fetch_update_applies_all_concurrent_updates() {
     for i in 0..10 {
         let atomic = atomic.clone();
         let handle = thread::spawn(move || {
-            atomic.fetch_update(|current| {
+            let _ = atomic.fetch_update(|current| {
                 Arc::new(TestData {
                     value: current.value + 1,
                     name: format!("thread_{}", i),
@@ -783,7 +783,7 @@ fn test_concurrent_get_and_update_high_contention() {
         let atomic = atomic.clone();
         let handle = thread::spawn(move || {
             for _ in 0..10 {
-                atomic.fetch_update(|current| Arc::new(**current + 1));
+                let _ = atomic.fetch_update(|current| Arc::new(**current + 1));
             }
         });
         handles.push(handle);

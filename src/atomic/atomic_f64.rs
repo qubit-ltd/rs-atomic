@@ -506,6 +506,7 @@ impl AtomicF64 {
     ///
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
+    #[must_use]
     pub fn try_update<F>(&self, mut f: F) -> Option<f64>
     where
         F: FnMut(f64) -> Option<f64>,
@@ -543,6 +544,7 @@ impl AtomicF64 {
     ///
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
+    #[must_use]
     pub fn try_update_and_get<F>(&self, mut f: F) -> Option<f64>
     where
         F: FnMut(f64) -> Option<f64>,

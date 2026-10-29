@@ -175,6 +175,7 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*forked.load(), 1);
     /// ```
     #[must_use = "use fork() when you need a separate AtomicRef container"]
+    #[inline]
     pub fn fork(&self) -> Self {
         Self::new(self.load())
     }
@@ -401,6 +402,7 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*old, 10);
     /// assert_eq!(*atomic.load(), 20);
     /// ```
+    #[must_use]
     pub fn fetch_update<F>(&self, mut f: F) -> Arc<T>
     where
         F: FnMut(&Arc<T>) -> Arc<T>,
@@ -442,6 +444,7 @@ impl<T> AtomicRef<T> {
     /// assert_eq!(*new, 20);
     /// assert_eq!(*atomic.load(), 20);
     /// ```
+    #[must_use]
     pub fn update_and_get<F>(&self, mut f: F) -> Arc<T>
     where
         F: FnMut(&Arc<T>) -> Arc<T>,

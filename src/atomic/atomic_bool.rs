@@ -92,6 +92,7 @@ impl AtomicBool {
     /// let flag = Atomic::<bool>::new(false);
     /// assert_eq!(flag.load(), false);
     /// ```
+    #[must_use]
     #[inline]
     pub const fn new(value: bool) -> Self {
         Self {

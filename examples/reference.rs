@@ -99,7 +99,7 @@ fn main() {
         let atomic_config = atomic_config.clone();
         let handle = thread::spawn(move || {
             for _ in 0..10 {
-                atomic_config.fetch_update(|current| {
+                let _ = atomic_config.fetch_update(|current| {
                     Arc::new(Config {
                         version: current.version + 1,
                         name: current.name.clone(),

@@ -17,6 +17,8 @@ macro_rules! test_atomic_integer {
 
             use qubit_atomic::Atomic;
 
+            /// Retries weak compare-and-set after spurious failures, up to a fixed
+            /// limit.
             fn compare_set_weak_until_success(atomic: &Atomic<$value_type>, current: $value_type, new: $value_type) {
                 for _ in 0..128 {
                     match atomic.compare_set_weak(current, new) {
@@ -28,6 +30,8 @@ macro_rules! test_atomic_integer {
                 panic!("weak compare_set did not succeed after bounded retries");
             }
 
+            /// Retries weak compare-and-exchange after spurious failures, up to a fixed
+            /// limit.
             fn compare_exchange_weak_until_success(
                 atomic: &Atomic<$value_type>,
                 current: $value_type,

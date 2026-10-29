@@ -113,6 +113,7 @@ impl AtomicF32 {
     /// let atomic = AtomicF32::new(3.14);
     /// assert_eq!(atomic.load(), 3.14);
     /// ```
+    #[must_use]
     #[inline]
     pub const fn new(value: f32) -> Self {
         Self {
@@ -420,6 +421,7 @@ impl AtomicF32 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 15.5);
     /// ```
+    #[must_use]
     pub fn fetch_add(&self, delta: f32) -> f32 {
         self.fetch_update(|current| current + delta)
     }
@@ -450,6 +452,7 @@ impl AtomicF32 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 6.5);
     /// ```
+    #[must_use]
     pub fn fetch_sub(&self, delta: f32) -> f32 {
         self.fetch_update(|current| current - delta)
     }
@@ -480,6 +483,7 @@ impl AtomicF32 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 25.0);
     /// ```
+    #[must_use]
     pub fn fetch_mul(&self, factor: f32) -> f32 {
         self.fetch_update(|current| current * factor)
     }
@@ -510,6 +514,7 @@ impl AtomicF32 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 5.0);
     /// ```
+    #[must_use]
     pub fn fetch_div(&self, divisor: f32) -> f32 {
         self.fetch_update(|current| current / divisor)
     }
@@ -549,6 +554,7 @@ impl AtomicF32 {
     /// assert_eq!(old, 10.0);
     /// assert_eq!(atomic.load(), 20.0);
     /// ```
+    #[must_use]
     pub fn fetch_update<F>(&self, mut f: F) -> f32
     where
         F: FnMut(f32) -> f32,
@@ -594,6 +600,7 @@ impl AtomicF32 {
     /// assert_eq!(new, 20.0);
     /// assert_eq!(atomic.load(), 20.0);
     /// ```
+    #[must_use]
     pub fn update_and_get<F>(&self, mut f: F) -> f32
     where
         F: FnMut(f32) -> f32,
