@@ -156,6 +156,7 @@ impl Default for ArcAtomicSignedCount {
 }
 
 impl Deref for ArcAtomicSignedCount {
+    /// The signed atomic counter shared by this wrapper and its clones.
     type Target = AtomicSignedCount;
 
     /// Dereferences to the underlying [`AtomicSignedCount`].

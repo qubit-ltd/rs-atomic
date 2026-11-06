@@ -327,6 +327,10 @@ impl AtomicSignedCount {
 
     /// Applies a checked update with synchronization semantics.
     ///
+    /// # Type Parameters
+    ///
+    /// * `F` - A callback that computes the next value from the current value.
+    ///
     /// # Parameters
     ///
     /// * `update` - A function that maps the current value to the next value,

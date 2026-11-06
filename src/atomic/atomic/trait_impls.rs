@@ -39,6 +39,10 @@ where
 {
     /// Converts `value` into an [`Atomic`] via [`Atomic::new`].
     ///
+    /// # Parameters
+    ///
+    /// * `value` - The value used to initialize the atomic.
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -58,6 +62,10 @@ where
     T: AtomicValue + fmt::Debug,
 {
     /// Formats the loaded value as `Atomic { value: ... }`.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - The formatter that receives the formatted representation.
     ///
     /// # Examples
     ///
@@ -79,6 +87,10 @@ where
 {
     /// Formats the loaded value using its [`Display`](fmt::Display)
     /// implementation.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - The formatter that receives the displayed value.
     ///
     /// # Examples
     ///

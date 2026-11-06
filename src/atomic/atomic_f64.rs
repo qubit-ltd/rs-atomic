@@ -63,9 +63,9 @@ use crate::atomic::atomic_ops::AtomicOps;
 /// # Examples
 ///
 /// ```rust
-/// use qubit_atomic::Atomic;
+/// use qubit_atomic::atomic::primitive::AtomicF64;
 ///
-/// let atomic = Atomic::<f64>::new(3.14159);
+/// let atomic = AtomicF64::new(3.14159);
 /// atomic.fetch_add(1.0);
 /// assert_eq!(atomic.load(), 4.14159);
 /// ```
@@ -117,6 +117,27 @@ impl AtomicF64 {
     #[inline]
     pub fn load(&self) -> f64 {
         f64::from_bits(self.inner.load(Ordering::Acquire))
+    }
+
+    /// Gets a reference to the underlying standard library atomic type.
+    ///
+    /// This allows direct access to the standard library's atomic operations
+    /// for advanced use cases that require fine-grained control over memory
+    /// ordering.
+    ///
+    /// # Memory Ordering
+    ///
+    /// When using the returned reference, you have full control over memory
+    /// ordering. Remember to use `f64::to_bits()` and `f64::from_bits()` for
+    /// conversions.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the underlying `std::sync::atomic::AtomicU64`.
+    #[must_use]
+    #[inline]
+    pub fn inner(&self) -> &AtomicU64 {
+        &self.inner
     }
 
     /// Sets a new value.
@@ -558,67 +579,148 @@ impl AtomicF64 {
             }
         }
     }
-
-    /// Gets a reference to the underlying standard library atomic type.
-    ///
-    /// This allows direct access to the standard library's atomic operations
-    /// for advanced use cases that require fine-grained control over memory
-    /// ordering.
-    ///
-    /// # Memory Ordering
-    ///
-    /// When using the returned reference, you have full control over memory
-    /// ordering. Remember to use `f64::to_bits()` and `f64::from_bits()` for
-    /// conversions.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the underlying `std::sync::atomic::AtomicU64`.
-    #[must_use]
-    #[inline]
-    pub fn inner(&self) -> &AtomicU64 {
-        &self.inner
-    }
 }
 
 impl AtomicOps for AtomicF64 {
+    /// Floating-point value type stored by this atomic backend.
     type Value = f64;
 
+    /// Loads the current value using acquire ordering.
+    ///
+    /// # Returns
+    ///
+    /// The value currently stored in the atomic.
     #[inline]
     fn load(&self) -> f64 {
         self.load()
     }
 
+    /// Stores a value using release ordering.
+    ///
+    /// # Parameters
+    ///
+    /// * `value` - The value to store.
     #[inline]
     fn store(&self, value: f64) {
         self.store(value);
     }
 
+    /// Replaces the current value and returns the previous value.
+    ///
+    /// # Parameters
+    ///
+    /// * `value` - The value to store.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before replacement.
     #[inline]
     fn swap(&self, value: f64) -> f64 {
         self.swap(value)
     }
 
+    /// Replaces the value only when its raw bits match `current`.
+    ///
+    /// Returns `Err(actual)` if the comparison fails; floating-point equality
+    /// follows the exact bit representation rather than `PartialEq`.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value, compared by its raw bits.
+    /// * `new` - The value to store if the comparison succeeds.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` on success, or `Err(actual)` with the observed value on
+    /// failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(actual)` when the raw-bit comparison fails.
     #[inline]
     fn compare_set(&self, current: f64, new: f64) -> Result<(), f64> {
         self.compare_set(current, new)
     }
 
+    /// Weakly replaces the value when its raw bits match `current`.
+    ///
+    /// The operation may fail spuriously, so callers generally retry it in a
+    /// loop. Returns the observed value on failure.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value, compared by its raw bits.
+    /// * `new` - The value to store if the comparison succeeds.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` on success, or `Err(actual)` with the observed value on
+    /// failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(actual)` when the comparison fails or the operation fails
+    /// spuriously.
     #[inline]
     fn compare_set_weak(&self, current: f64, new: f64) -> Result<(), f64> {
         self.compare_set_weak(current, new)
     }
 
+    /// Compares raw bits and returns the value observed by the exchange.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value, compared by its raw bits.
+    /// * `new` - The value to store if the comparison succeeds.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before the operation completed.
     #[inline]
     fn compare_exchange(&self, current: f64, new: f64) -> f64 {
         self.compare_and_exchange(current, new)
     }
 
+    /// Weakly compares raw bits and returns whether the exchange succeeded.
+    ///
+    /// The operation may fail spuriously; the result preserves the observed
+    /// floating-point bit pattern.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value, compared by its raw bits.
+    /// * `new` - The value to store if the comparison succeeds.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(previous)` on success, or `Err(actual)` on failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(actual)` if the comparison fails or the operation fails
+    /// spuriously.
     #[inline]
     fn compare_exchange_weak(&self, current: f64, new: f64) -> Result<f64, f64> {
         self.compare_and_exchange_weak(current, new)
     }
 
+    /// Applies an update closure atomically and returns the previous value.
+    ///
+    /// The closure may run multiple times when concurrent updates cause
+    /// compare-and-set retries.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to calculate a candidate value.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A closure that receives the current value and returns a
+    ///   replacement.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before the successful update.
     #[inline]
     fn fetch_update<F>(&self, f: F) -> f64
     where
@@ -627,6 +729,23 @@ impl AtomicOps for AtomicF64 {
         self.fetch_update(f)
     }
 
+    /// Applies an update closure atomically and returns the committed value.
+    ///
+    /// The closure may run multiple times when concurrent updates cause
+    /// compare-and-set retries.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to calculate a candidate value.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A closure that receives the current value and returns a
+    ///   replacement.
+    ///
+    /// # Returns
+    ///
+    /// The value committed by the successful update.
     #[inline]
     fn update_and_get<F>(&self, f: F) -> f64
     where
@@ -635,6 +754,22 @@ impl AtomicOps for AtomicF64 {
         self.update_and_get(f)
     }
 
+    /// Applies an update unless the closure rejects the observed value.
+    ///
+    /// Returns the previous value on success and `None` on rejection. The
+    /// closure may run multiple times during compare-and-set retries.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to accept or reject a candidate value.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A closure that returns a replacement or `None` to reject it.
+    ///
+    /// # Returns
+    ///
+    /// `Some(previous)` on success, or `None` when the closure rejects a value.
     #[inline]
     fn try_update<F>(&self, f: F) -> Option<f64>
     where
@@ -643,6 +778,23 @@ impl AtomicOps for AtomicF64 {
         self.try_update(f)
     }
 
+    /// Applies an update unless the closure rejects the observed value.
+    ///
+    /// Returns the committed value on success and `None` on rejection. The
+    /// closure may run multiple times during compare-and-set retries.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to accept or reject a candidate value.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A closure that returns a replacement or `None` to reject it.
+    ///
+    /// # Returns
+    ///
+    /// `Some(committed)` on success, or `None` when the closure rejects a
+    /// value.
     #[inline]
     fn try_update_and_get<F>(&self, f: F) -> Option<f64>
     where
@@ -653,21 +805,61 @@ impl AtomicOps for AtomicF64 {
 }
 
 impl AtomicNumberOps for AtomicF64 {
+    /// Adds `delta` atomically and returns the previous value.
+    ///
+    /// # Parameters
+    ///
+    /// * `delta` - The value to add.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before addition.
     #[inline]
     fn fetch_add(&self, delta: f64) -> f64 {
         self.fetch_add(delta)
     }
 
+    /// Subtracts `delta` atomically and returns the previous value.
+    ///
+    /// # Parameters
+    ///
+    /// * `delta` - The value to subtract.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before subtraction.
     #[inline]
     fn fetch_sub(&self, delta: f64) -> f64 {
         self.fetch_sub(delta)
     }
 
+    /// Multiplies the value by `factor` atomically and returns the previous
+    /// value.
+    ///
+    /// # Parameters
+    ///
+    /// * `factor` - The multiplier.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before multiplication.
     #[inline]
     fn fetch_mul(&self, factor: f64) -> f64 {
         self.fetch_mul(factor)
     }
 
+    /// Divides the value by `divisor` atomically and returns the previous
+    /// value.
+    ///
+    /// Division follows IEEE-754 semantics, including division by zero.
+    ///
+    /// # Parameters
+    ///
+    /// * `divisor` - The divisor.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before division.
     #[inline]
     fn fetch_div(&self, divisor: f64) -> f64 {
         self.fetch_div(divisor)

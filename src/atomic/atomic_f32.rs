@@ -422,6 +422,7 @@ impl AtomicF32 {
     /// assert_eq!(atomic.load(), 15.5);
     /// ```
     #[must_use]
+    #[inline]
     pub fn fetch_add(&self, delta: f32) -> f32 {
         self.fetch_update(|current| current + delta)
     }
@@ -453,6 +454,7 @@ impl AtomicF32 {
     /// assert_eq!(atomic.load(), 6.5);
     /// ```
     #[must_use]
+    #[inline]
     pub fn fetch_sub(&self, delta: f32) -> f32 {
         self.fetch_update(|current| current - delta)
     }
@@ -484,6 +486,7 @@ impl AtomicF32 {
     /// assert_eq!(atomic.load(), 25.0);
     /// ```
     #[must_use]
+    #[inline]
     pub fn fetch_mul(&self, factor: f32) -> f32 {
         self.fetch_update(|current| current * factor)
     }
@@ -515,6 +518,7 @@ impl AtomicF32 {
     /// assert_eq!(atomic.load(), 5.0);
     /// ```
     #[must_use]
+    #[inline]
     pub fn fetch_div(&self, divisor: f32) -> f32 {
         self.fetch_update(|current| current / divisor)
     }
@@ -753,43 +757,134 @@ impl AtomicF32 {
 }
 
 impl AtomicOps for AtomicF32 {
+    /// The primitive value type stored by this floating-point backend.
     type Value = f32;
 
+    /// Forwards trait loads to the acquire-ordered inherent method.
+    ///
+    /// # Returns
+    ///
+    /// The value currently stored in the atomic.
     #[inline]
     fn load(&self) -> f32 {
         self.load()
     }
 
+    /// Forwards trait stores to the release-ordered inherent method.
+    ///
+    /// # Parameters
+    ///
+    /// * `value` - The value to store.
     #[inline]
     fn store(&self, value: f32) {
         self.store(value);
     }
 
+    /// Forwards trait swaps to the acquire-release inherent method.
+    ///
+    /// # Parameters
+    ///
+    /// * `value` - The value to store.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before replacement.
     #[inline]
     fn swap(&self, value: f32) -> f32 {
         self.swap(value)
     }
 
+    /// Forwards compare-and-set while preserving the backend's raw-bit
+    /// comparison.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value, compared by its raw bits.
+    /// * `new` - The value to store if the comparison succeeds.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` on success, or `Err(actual)` with the observed value on
+    /// failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(actual)` when the raw-bit comparison fails.
     #[inline]
     fn compare_set(&self, current: f32, new: f32) -> Result<(), f32> {
         self.compare_set(current, new)
     }
 
+    /// Forwards weak compare-and-set, including its possible spurious failure.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value, compared by its raw bits.
+    /// * `new` - The value to store if the comparison succeeds.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` on success, or `Err(actual)` with the observed value on
+    /// failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(actual)` when the comparison fails or the operation fails
+    /// spuriously.
     #[inline]
     fn compare_set_weak(&self, current: f32, new: f32) -> Result<(), f32> {
         self.compare_set_weak(current, new)
     }
 
+    /// Forwards compare-and-exchange with the floating-point backend semantics.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value, compared by its raw bits.
+    /// * `new` - The value to store if the comparison succeeds.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before the operation completed.
     #[inline]
     fn compare_exchange(&self, current: f32, new: f32) -> f32 {
         self.compare_and_exchange(current, new)
     }
 
+    /// Forwards weak compare-and-exchange, including possible spurious failure.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value, compared by its raw bits.
+    /// * `new` - The value to store if the comparison succeeds.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(previous)` on success, or `Err(actual)` on failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(actual)` if the comparison fails or the operation fails
+    /// spuriously.
     #[inline]
     fn compare_exchange_weak(&self, current: f32, new: f32) -> Result<f32, f32> {
         self.compare_and_exchange_weak(current, new)
     }
 
+    /// Forwards functional updates to the inherent CAS-loop implementation.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to calculate a candidate value.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A closure that receives the current value and returns a
+    ///   replacement.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before the successful update.
     #[inline]
     fn fetch_update<F>(&self, f: F) -> f32
     where
@@ -798,6 +893,20 @@ impl AtomicOps for AtomicF32 {
         self.fetch_update(f)
     }
 
+    /// Forwards updates that return the committed value.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to calculate a candidate value.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A closure that receives the current value and returns a
+    ///   replacement.
+    ///
+    /// # Returns
+    ///
+    /// The value committed by the successful update.
     #[inline]
     fn update_and_get<F>(&self, f: F) -> f32
     where
@@ -806,6 +915,19 @@ impl AtomicOps for AtomicF32 {
         self.update_and_get(f)
     }
 
+    /// Forwards conditional updates to the inherent CAS-loop implementation.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to accept or reject a candidate value.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A closure that returns a replacement or `None` to reject it.
+    ///
+    /// # Returns
+    ///
+    /// `Some(previous)` on success, or `None` when the closure rejects a value.
     #[inline]
     fn try_update<F>(&self, f: F) -> Option<f32>
     where
@@ -814,6 +936,20 @@ impl AtomicOps for AtomicF32 {
         self.try_update(f)
     }
 
+    /// Forwards conditional updates that return the committed value.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to accept or reject a candidate value.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - A closure that returns a replacement or `None` to reject it.
+    ///
+    /// # Returns
+    ///
+    /// `Some(committed)` on success, or `None` when the closure rejects a
+    /// value.
     #[inline]
     fn try_update_and_get<F>(&self, f: F) -> Option<f32>
     where
@@ -824,21 +960,57 @@ impl AtomicOps for AtomicF32 {
 }
 
 impl AtomicNumberOps for AtomicF32 {
+    /// Forwards addition to the inherent atomic floating-point operation.
+    ///
+    /// # Parameters
+    ///
+    /// * `delta` - The value to add.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before addition.
     #[inline]
     fn fetch_add(&self, delta: f32) -> f32 {
         self.fetch_add(delta)
     }
 
+    /// Forwards subtraction to the inherent atomic floating-point operation.
+    ///
+    /// # Parameters
+    ///
+    /// * `delta` - The value to subtract.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before subtraction.
     #[inline]
     fn fetch_sub(&self, delta: f32) -> f32 {
         self.fetch_sub(delta)
     }
 
+    /// Forwards multiplication to the inherent atomic floating-point operation.
+    ///
+    /// # Parameters
+    ///
+    /// * `factor` - The multiplier.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before multiplication.
     #[inline]
     fn fetch_mul(&self, factor: f32) -> f32 {
         self.fetch_mul(factor)
     }
 
+    /// Forwards division to the inherent atomic floating-point operation.
+    ///
+    /// # Parameters
+    ///
+    /// * `divisor` - The divisor.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before division.
     #[inline]
     fn fetch_div(&self, divisor: f32) -> f32 {
         self.fetch_div(divisor)

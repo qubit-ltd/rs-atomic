@@ -391,6 +391,10 @@ impl<T> AtomicRef<T> {
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
     ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to compute each candidate reference.
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -432,6 +436,10 @@ impl<T> AtomicRef<T> {
     ///
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to compute each candidate reference.
     ///
     /// # Examples
     ///
@@ -477,6 +485,11 @@ impl<T> AtomicRef<T> {
     ///
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to compute each candidate reference or
+    ///   reject the update.
     ///
     /// # Examples
     ///
@@ -529,6 +542,11 @@ impl<T> AtomicRef<T> {
     ///
     /// The closure may be called more than once when concurrent updates cause
     /// CAS retries.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The closure type used to compute each candidate reference or
+    ///   reject the update.
     ///
     /// # Examples
     ///

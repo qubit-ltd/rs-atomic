@@ -846,43 +846,129 @@ impl AtomicBool {
 }
 
 impl AtomicOps for AtomicBool {
+    /// The boolean value stored by this atomic wrapper.
     type Value = bool;
 
+    /// Loads the current boolean using this wrapper's acquire ordering.
+    ///
+    /// # Returns
+    ///
+    /// The value observed by the load.
     #[inline]
     fn load(&self) -> bool {
         self.load()
     }
 
+    /// Stores a boolean using this wrapper's release ordering.
+    ///
+    /// # Parameters
+    ///
+    /// * `value` - The boolean value to store.
     #[inline]
     fn store(&self, value: bool) {
         self.store(value);
     }
 
+    /// Replaces the value atomically and returns the previous value.
+    ///
+    /// # Parameters
+    ///
+    /// * `value` - The value to store.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before the replacement.
     #[inline]
     fn swap(&self, value: bool) -> bool {
         self.swap(value)
     }
 
+    /// Replaces the value only when it equals `current`, reporting failure
+    /// with the observed value.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value.
+    /// * `new` - The value to store when the expectation matches.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` when the replacement succeeds.
+    ///
+    /// # Errors
+    ///
+    /// Returns the observed value if it differs from `current`.
     #[inline]
     fn compare_set(&self, current: bool, new: bool) -> Result<(), bool> {
         self.compare_set(current, new)
     }
 
+    /// Performs a weak conditional replacement, which may fail spuriously.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value.
+    /// * `new` - The value to store when the expectation matches.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` when the replacement succeeds.
+    ///
+    /// # Errors
+    ///
+    /// Returns the observed value when the comparison fails, including a
+    /// possible spurious failure.
     #[inline]
     fn compare_set_weak(&self, current: bool, new: bool) -> Result<(), bool> {
         self.compare_set_weak(current, new)
     }
 
+    /// Replaces the value conditionally and returns the value observed by
+    /// the operation.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value.
+    /// * `new` - The value to store when the expectation matches.
+    ///
+    /// # Returns
+    ///
+    /// The value observed before the operation completed.
     #[inline]
     fn compare_exchange(&self, current: bool, new: bool) -> bool {
         self.compare_and_exchange(current, new)
     }
 
+    /// Performs a weak conditional exchange, which may fail spuriously.
+    ///
+    /// # Parameters
+    ///
+    /// * `current` - The expected value.
+    /// * `new` - The value to store when the expectation matches.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(previous)` when the replacement succeeds, or `Err(actual)` when
+    /// the comparison fails, including a possible spurious failure.
     #[inline]
     fn compare_exchange_weak(&self, current: bool, new: bool) -> Result<bool, bool> {
         self.compare_and_exchange_weak(current, new)
     }
 
+    /// Applies an update closure and returns the value that was replaced.
+    /// The closure may run multiple times if concurrent updates cause retries.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The update closure type.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - Computes a candidate value from the observed value.
+    ///
+    /// # Returns
+    ///
+    /// The value replaced by the successful update.
     #[inline]
     fn fetch_update<F>(&self, f: F) -> bool
     where
@@ -891,6 +977,21 @@ impl AtomicOps for AtomicBool {
         self.fetch_update(f)
     }
 
+    /// Applies an update closure and returns the value committed by the
+    /// operation. The closure may run multiple times if concurrent updates
+    /// cause retries.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The update closure type.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - Computes a candidate value from the observed value.
+    ///
+    /// # Returns
+    ///
+    /// The value committed by the successful update.
     #[inline]
     fn update_and_get<F>(&self, f: F) -> bool
     where
@@ -899,6 +1000,20 @@ impl AtomicOps for AtomicBool {
         self.update_and_get(f)
     }
 
+    /// Applies an update only when the closure accepts the observed value.
+    /// The closure may run multiple times if concurrent updates cause retries.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The conditional update closure type.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - Computes a candidate value, or returns `None` to reject it.
+    ///
+    /// # Returns
+    ///
+    /// `Some(old_value)` when an update succeeds, or `None` when rejected.
     #[inline]
     fn try_update<F>(&self, f: F) -> Option<bool>
     where
@@ -907,6 +1022,21 @@ impl AtomicOps for AtomicBool {
         self.try_update(f)
     }
 
+    /// Conditionally updates the value and returns the committed value when
+    /// successful. The closure may run multiple times if concurrent updates
+    /// cause retries.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `F` - The conditional update closure type.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - Computes a candidate value, or returns `None` to reject it.
+    ///
+    /// # Returns
+    ///
+    /// `Some(new_value)` when an update succeeds, or `None` when rejected.
     #[inline]
     fn try_update_and_get<F>(&self, f: F) -> Option<bool>
     where

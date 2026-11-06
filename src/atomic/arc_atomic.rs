@@ -157,6 +157,7 @@ impl<T> Deref for ArcAtomic<T>
 where
     T: AtomicValue,
 {
+    /// The atomic container exposed through dereferencing.
     type Target = Atomic<T>;
 
     /// Dereferences to the underlying [`Atomic<T>`].

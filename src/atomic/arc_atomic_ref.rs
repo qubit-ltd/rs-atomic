@@ -162,6 +162,7 @@ impl<T> Clone for ArcAtomicRef<T> {
 }
 
 impl<T> Deref for ArcAtomicRef<T> {
+    /// The atomic reference container exposed by dereferencing this wrapper.
     type Target = AtomicRef<T>;
 
     /// Dereferences to the underlying [`AtomicRef<T>`].
