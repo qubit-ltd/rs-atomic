@@ -5,7 +5,7 @@ edition = "2024"
 publish = false
 
 [dependencies]
-qubit-atomic = { version = "^0.17" }
+qubit-atomic = { path = ".." }
 
 [dev-dependencies]
 loom = "^0.7"
