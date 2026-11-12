@@ -419,15 +419,6 @@ dependencies = [
 [[package]]
 name = "qubit-atomic"
 version = "0.17.7"
-dependencies = [
- "arc-swap",
- "criterion",
- "portable-atomic",
-]
-
-[[package]]
-name = "qubit-atomic"
-version = "0.17.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d5df025ab5e5ed8970f3863494315fb5218ab025701efdbe8866e825f318e3e"
 dependencies = [
@@ -436,11 +427,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "qubit-atomic"
+version = "0.17.8"
+dependencies = [
+ "arc-swap",
+ "criterion",
+ "portable-atomic",
+]
+
+[[package]]
 name = "qubit-atomic-loom"
 version = "0.0.0"
 dependencies = [
  "loom",
- "qubit-atomic 0.17.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "qubit-atomic 0.17.7",
 ]
 
 [[package]]
