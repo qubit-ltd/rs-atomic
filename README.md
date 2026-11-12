@@ -449,15 +449,15 @@ fn main() {
 | Method | Description | Memory Ordering |
 |--------|-------------|-----------------|
 | `new(value)` | Create new atomic | - |
-| `load()` | Load current value | Acquire |
-| `store(value)` | Store new value | Release |
-| `swap(value)` | Swap value, return old | AcqRel |
-| `compare_set(current, new)` | CAS operation, return explicit success/failure | AcqRel/Acquire |
-| `compare_and_exchange(current, new)` | CAS operation, return observed value | AcqRel/Acquire |
-| `fetch_update(f)` | Functional update, return old | AcqRel/Acquire |
-| `update_and_get(f)` | Functional update, return new | AcqRel/Acquire |
-| `try_update(f)` | Conditional functional update, return `Option<old>` | AcqRel/Acquire |
-| `try_update_and_get(f)` | Conditional functional update, return `Option<new>` | AcqRel/Acquire |
+| `load()` | Load current value | Primitive atomics: Acquire; `AtomicRef<T>`: ArcSwap default strategy |
+| `store(value)` | Store new value | Primitive atomics: Release; `AtomicRef<T>`: ArcSwap default strategy |
+| `swap(value)` | Swap value, return old | Primitive atomics: AcqRel; `AtomicRef<T>`: ArcSwap default strategy |
+| `compare_set(current, new)` | CAS operation, return explicit success/failure | Primitive atomics: AcqRel/Acquire; `AtomicRef<T>`: ArcSwap default strategy |
+| `compare_and_exchange(current, new)` | CAS operation, return observed value | Primitive atomics: AcqRel/Acquire; `AtomicRef<T>`: ArcSwap default strategy |
+| `fetch_update(f)` | Functional update, return old | Primitive atomics: AcqRel/Acquire; `AtomicRef<T>`: ArcSwap default strategy |
+| `update_and_get(f)` | Functional update, return new | Primitive atomics: AcqRel/Acquire; `AtomicRef<T>`: ArcSwap default strategy |
+| `try_update(f)` | Conditional functional update, return `Option<old>` | Primitive atomics: AcqRel/Acquire; `AtomicRef<T>`: ArcSwap default strategy |
+| `try_update_and_get(f)` | Conditional functional update, return `Option<new>` | Primitive atomics: AcqRel/Acquire; `AtomicRef<T>`: ArcSwap default strategy |
 | `inner()` | Access underlying backend type | - |
 
 ### Primitive Weak CAS Operations
@@ -575,6 +575,27 @@ or compare `to_bits()` values yourself.
 
 ## Memory Ordering Strategy
 
+The ordering values in the tables below describe primitive `Atomic<T>` and
+`AtomicCount` / `AtomicSignedCount` operations only. `AtomicRef<T>` delegates
+synchronization to the default `arc-swap` strategy; do not infer its exact
+ordering from these tables. In the
+locked `arc-swap` 1.9.3 source, each concurrently callable default-strategy
+operation contains at least one `SeqCst` atomic read-modify-write operation
+([upstream documentation](https://docs.rs/arc-swap/1.9.3/arc_swap/docs/index.html)).
+This version-specific implementation detail is not a promise about exact
+instructions in future versions. Reference loads provide a coherent snapshot,
+not a guarantee of the globally newest value.
+
+`AtomicRef<T>` compares `Arc` pointer identity. For example, a caller can keep
+an `Arc` A snapshot while the stored reference changes A → B → A by
+reinstalling that same `Arc`. A CAS using the old A snapshot can then succeed:
+the pointer matches, even though an intervening update occurred. The retained
+`Arc` prevents its allocation from being reused, but pointer identity does not
+record history and does not compare mutable data inside `T`. Use a fresh
+allocation for each state version, or a separate monotonic version protocol
+when intervening changes must be detected. No downstream misuse is implied by
+this semantic boundary.
+
 | Operation Type | Default Ordering | Reason |
 |---------------|------------------|--------|
 | **Pure Read** (`load()`) | `Acquire` | If the load observes a release sequence, subsequent operations observe data published before that release; it does not guarantee the globally newest value |
@@ -674,12 +695,18 @@ Runtime dependencies are intentionally small:
 
 ## Testing
 
-```bash
-# Core API with the default empty feature set
-cargo test --no-default-features
+This workspace currently defines no Cargo features, so `--all-features` and
+`--no-default-features` do not select different functionality.
 
-# Core API plus regex validation
-cargo test --all-features
+```bash
+# Core API and reference wrappers
+cargo test -p qubit-atomic
+
+# Loom concurrency models
+cargo test -p qubit-atomic-loom
+
+# Both packages (plus any other workspace members)
+cargo test --workspace
 
 # Project CI checks
 ./.infra/bin/ci-check.sh

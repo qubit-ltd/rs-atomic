@@ -56,14 +56,21 @@ weak CAS 允许虚假失败。因此 `compare_and_exchange_weak` 不应返回裸
 
 | 操作类别 | 默认内存序 | 理由 |
 | --- | --- | --- |
-| `load` | `Acquire` | 当 load 观察到 release sequence 时，让后续操作看到该 release 之前发布的数据；这不保证读到全局最新值。 |
-| `store` | `Release` | 向 acquire 读取方发布之前的写入。 |
-| `swap` 与 CAS | 成功 `AcqRel`，失败 `Acquire` | 标准读-改-写同步语义。 |
+| 基础值 `Atomic<T>` `load` | `Acquire` | 当 load 观察到 release sequence 时，让后续操作看到该 release 之前发布的数据；这不保证读到全局最新值。 |
+| 基础值 `Atomic<T>` `store` | `Release` | 向 acquire 读取方发布之前的写入。 |
+| 基础值 `Atomic<T>` `swap` 与 CAS | 成功 `AcqRel`，失败 `Acquire` | 标准读-改-写同步语义。 |
 | 整数 `fetch_add/sub/inc/dec` | `Relaxed` | 常用于纯指标和计数。 |
 | 整数有序 helper | 调用方指定 | 计数值同时作为同步信号时使用。 |
 | CAS-loop 算术和更新 | 成功 `AcqRel`，失败 `Acquire` | 在重试循环中保留同步语义。 |
 | 位运算和 max/min | `AcqRel` | 常用于标志、阈值或共享状态。 |
 | `AtomicCount` 操作 | 成功 `AcqRel`，失败 `Acquire` | 计数被视为并发状态信号。 |
+
+本表描述基础值 atomic 与 checked counter。`AtomicRef<T>` 的同步由 `arc-swap`
+默认策略提供，可能使用更强的内存序。锁定的 `arc-swap 1.9.3` 文档说明，默认策略下
+每个可并发调用的操作至少包含一个 `SeqCst` 原子读-改-写操作
+（[带版本的上游文档](https://docs.rs/arc-swap/1.9.3/arc_swap/docs/index.html)）。
+这是特定版本的实现信息，不保证未来版本使用精确相同的指令。引用操作返回一致的快照，
+但不保证是全局最新值。
 
 这是易用性默认值，不表示所有工作负载都必须使用这些内存序。性能敏感场景可以使用有序
 整数 helper 或 `inner()`。
@@ -109,13 +116,17 @@ lock-free 保证。
 ## 引用语义
 
 `AtomicRef<T>` 基于 `arc_swap::ArcSwap<T>`，存储 `Arc<T>`。CAS 比较的是指针身份，
-不是 `T: Eq` 的值相等。
+不是 `T: Eq` 的值相等，也不检查版本或历史。例如，存储引用从 A 变为 B、再重新安装同一个
+`Arc` A 后，使用旧 A 快照的 CAS 仍可能成功。保留 A 会避免其分配被复用，但无法检测中间
+更新，也不比较内部可变数据。若必须检测中间状态变化，应为每个状态版本分配新快照，或
+单独设计单调递增的版本协议。这里只说明语义边界，不表示下游代码已发生误用。
 它只暴露强指针 CAS。weak 别名在 `arc_swap` 后端上没有独立语义，反而会让调用方以为
 这里存在 weak CAS 的重试规则。
 
 `AtomicRef<T>` 刻意不实现 `Clone`。显式的 `fork()` 方法会创建一个新的 atomic
-container，并用一次 acquire load 观察到的 `Arc<T>` 初始化。两个容器最初共享同一个
-`T`，但后续原子操作彼此独立。与并发写入竞争时，`fork()` 可能观察到较旧的值，不保证
+container，并用 `ArcSwap::load_full()` 按后端默认策略取得的快照初始化；这不等同于指定
+单次 Acquire load。两个容器最初共享同一个 `T`，但后续原子操作彼此独立。与并发写入竞争时，
+`fork()` 可能观察到较旧的值，不保证
 获得全局最新值。多个所有者需要共享同一 atomic container 时，应使用
 `ArcAtomicRef<T>` 或 `Arc<AtomicRef<T>>`。
 

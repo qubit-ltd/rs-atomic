@@ -8,8 +8,9 @@
 
 //! # Atomic Reference
 //!
-//! Provides an easy-to-use atomic reference type with sensible default memory
-//! orderings. Uses `Arc<T>` for thread-safe reference counting.
+//! Provides an easy-to-use atomic reference type whose synchronization follows
+//! the default strategy of `ArcSwap`. This backend may use stronger ordering
+//! than primitive atomics and does not promise a globally newest snapshot.
 
 use std::fmt;
 use std::sync::Arc;
@@ -19,18 +20,27 @@ use arc_swap::Guard;
 
 /// Atomic reference type.
 ///
-/// Provides easy-to-use atomic operations on references with automatic memory
-/// ordering selection. Uses `Arc<T>` for thread-safe reference counting.
+/// Provides easy-to-use atomic operations on references. Synchronization is
+/// delegated to the default strategy of `arc_swap::ArcSwap<T>`, whose ordering
+/// may be stronger than the primitive ordering defaults in this crate. This
+/// API does not promise particular atomic instructions or a globally newest
+/// snapshot.
 ///
 /// # Implementation Details
 ///
-/// This type is backed by `arc_swap::ArcSwap<T>`, which provides lock-free,
-/// memory-safe atomic replacement and loading of `Arc<T>` values without
-/// exposing raw-pointer lifetime hazards.
+/// This type is backed by `arc_swap::ArcSwap<T>`, which provides atomic,
+/// memory-safe replacement and loading of `Arc<T>` values without exposing
+/// raw-pointer lifetime hazards. In the currently locked `arc-swap` 1.9.3,
+/// each concurrently callable operation using the default strategy contains
+/// at least one `SeqCst` atomic read-modify-write operation. That is a detail
+/// of this backend version, not an instruction-level guarantee of `AtomicRef`.
+/// The primitive ordering table does not describe these reference operations.
+/// A load returns a coherent snapshot, but does not promise the globally
+/// newest value.
 ///
 /// # Features
 ///
-/// - Automatic memory ordering selection
+/// - Synchronization through the ArcSwap default strategy
 /// - Thread-safe reference counting via `Arc`
 /// - Functional update operations
 /// - Inline convenience API over `ArcSwap` operations
@@ -150,8 +160,9 @@ impl<T> AtomicRef<T> {
     /// the other container.
     ///
     /// If this method races with a writer, the new container captures the value
-    /// observed by this method's acquire load. It does not guarantee the
-    /// globally latest value.
+    /// observed by its `ArcSwap::load_full()` snapshot. Synchronization follows
+    /// the ArcSwap default strategy; it is not specified as a single Acquire
+    /// load and does not guarantee the globally latest value.
     ///
     /// Use [`crate::ArcAtomicRef`] or `Arc<AtomicRef<T>>` when multiple owners
     /// must operate on the same atomic container.
@@ -313,7 +324,14 @@ impl<T> AtomicRef<T> {
     ///
     /// # Note
     ///
-    /// Comparison uses pointer equality (`Arc::ptr_eq`), not value equality.
+    /// Comparison uses pointer equality (`Arc::ptr_eq`), not value equality or
+    /// a history/version check. If a writer changes the stored pointer from A
+    /// to B and later reinstalls the same `Arc` A, a compare-and-set using an
+    /// older snapshot of A can succeed. Keeping that `Arc` alive prevents its
+    /// allocation from being reused, but does not detect the intervening
+    /// update. Mutable data inside `T` is not compared. Use a newly allocated
+    /// snapshot for each state version or a separate monotonic version protocol
+    /// when intervening changes must be detected.
     ///
     /// # Examples
     ///

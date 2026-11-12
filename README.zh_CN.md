@@ -446,15 +446,15 @@ fn main() {
 | 方法 | 描述 | 内存序 |
 |-----|------|--------|
 | `new(value)` | 创建新的原子值 | - |
-| `load()` | 加载当前值 | Acquire |
-| `store(value)` | 存储新值 | Release |
-| `swap(value)` | 交换值，返回旧值 | AcqRel |
-| `compare_set(current, new)` | CAS 操作，显式返回成功或失败 | AcqRel/Acquire |
-| `compare_and_exchange(current, new)` | CAS 操作，返回观察值 | AcqRel/Acquire |
-| `fetch_update(f)` | 函数式更新，返回旧值 | AcqRel/Acquire |
-| `update_and_get(f)` | 函数式更新，返回新值 | AcqRel/Acquire |
-| `try_update(f)` | 条件函数式更新，返回 `Option<旧值>` | AcqRel/Acquire |
-| `try_update_and_get(f)` | 条件函数式更新，返回 `Option<新值>` | AcqRel/Acquire |
+| `load()` | 加载当前值 | 基础值 atomic：Acquire；`AtomicRef<T>`：ArcSwap 默认策略 |
+| `store(value)` | 存储新值 | 基础值 atomic：Release；`AtomicRef<T>`：ArcSwap 默认策略 |
+| `swap(value)` | 交换值，返回旧值 | 基础值 atomic：AcqRel；`AtomicRef<T>`：ArcSwap 默认策略 |
+| `compare_set(current, new)` | CAS 操作，显式返回成功或失败 | 基础值 atomic：AcqRel/Acquire；`AtomicRef<T>`：ArcSwap 默认策略 |
+| `compare_and_exchange(current, new)` | CAS 操作，返回观察值 | 基础值 atomic：AcqRel/Acquire；`AtomicRef<T>`：ArcSwap 默认策略 |
+| `fetch_update(f)` | 函数式更新，返回旧值 | 基础值 atomic：AcqRel/Acquire；`AtomicRef<T>`：ArcSwap 默认策略 |
+| `update_and_get(f)` | 函数式更新，返回新值 | 基础值 atomic：AcqRel/Acquire；`AtomicRef<T>`：ArcSwap 默认策略 |
+| `try_update(f)` | 条件函数式更新，返回 `Option<旧值>` | 基础值 atomic：AcqRel/Acquire；`AtomicRef<T>`：ArcSwap 默认策略 |
+| `try_update_and_get(f)` | 条件函数式更新，返回 `Option<新值>` | 基础值 atomic：AcqRel/Acquire；`AtomicRef<T>`：ArcSwap 默认策略 |
 | `inner()` | 访问底层后端类型 | - |
 
 ### 基础值 weak CAS 操作
@@ -566,6 +566,19 @@ fn main() {
 
 ## 内存序策略
 
+下表中的内存序只描述基础值 `Atomic<T>`、`AtomicCount` 与 `AtomicSignedCount` 操作。
+`AtomicRef<T>` 的同步由 `arc-swap` 默认策略提供，不能从这些表格推断它的精确内存序。锁定的
+`arc-swap 1.9.3` 源码说明，默认策略下每个可并发调用的操作至少包含一个
+`SeqCst` 原子读-改-写操作（[上游文档](https://docs.rs/arc-swap/1.9.3/arc_swap/docs/index.html)）。
+这是该版本的实现细节，不构成未来版本精确指令的保证。引用读取返回一致的快照，
+但不保证是全局最新值。
+
+`AtomicRef<T>` 按 `Arc` 指针身份比较。例如，调用方保留对 A 的快照，而存储引用经历
+A → B → A 并重新安装同一个 `Arc` A；此时使用旧 A 快照的 CAS 仍可能成功，因为指针匹配，
+尽管期间发生过更新。保留该 `Arc` 会避免其分配被复用，但指针身份不记录历史，也不比较
+`T` 内部可变数据。若必须检测中间状态变化，应为每个状态版本分配新的快照，或单独设计
+单调递增的版本协议。这里描述语义边界，不意味着下游已经发生误用。
+
 | 操作类型 | 默认内存序 | 原因 |
 |---------|-----------|------|
 | **纯读操作** (`load()`) | `Acquire` | 当读取观察到 release sequence 时，后续操作可观察该 release 之前发布的数据；不保证读到全局最新值 |
@@ -660,12 +673,18 @@ Criterion 基准会把代表性的 wrapper 操作与等价的 `std`、`arc-swap`
 
 ## 测试
 
-```bash
-# 使用默认的空 feature 集测试核心 API
-cargo test --no-default-features
+当前 workspace 未定义 Cargo feature，因此 `--all-features` 与
+`--no-default-features` 不会选择不同的功能集合。
 
-# 测试核心 API 和正则校验
-cargo test --all-features
+```bash
+# 测试核心 API 和引用封装
+cargo test -p qubit-atomic
+
+# 测试 Loom 并发模型
+cargo test -p qubit-atomic-loom
+
+# 测试两个包（以及 workspace 中其他成员）
+cargo test --workspace
 
 # 运行项目 CI 检查
 ./.infra/bin/ci-check.sh

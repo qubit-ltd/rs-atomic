@@ -18,6 +18,18 @@ use super::support::DropTracked;
 use super::support::TestData;
 
 #[test]
+fn test_compare_set_accepts_reinstalled_same_arc() {
+    let a = Arc::new(1usize);
+    let state = AtomicRef::new(Arc::clone(&a));
+    let snapshot = state.load();
+    state.store(Arc::new(2));
+    state.store(Arc::clone(&a));
+    let c = Arc::new(3);
+    assert!(state.compare_set(&snapshot, Arc::clone(&c)).is_ok());
+    assert!(Arc::ptr_eq(&state.load(), &c));
+}
+
+#[test]
 fn test_new_loads_initial_value() {
     let data = Arc::new(TestData {
         value: 42,

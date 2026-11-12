@@ -63,14 +63,23 @@ The default memory ordering policy is deliberately simple:
 
 | Operation class | Default ordering | Rationale |
 | --- | --- | --- |
-| `load` | `Acquire` | When the load observes a release sequence, make data published before that release visible to subsequent operations; this does not promise the newest global value. |
-| `store` | `Release` | Publish prior writes to acquire readers. |
-| `swap` and CAS | success `AcqRel`, failure `Acquire` | Standard read-modify-write synchronization. |
+| Primitive `Atomic<T>` `load` | `Acquire` | When the load observes a release sequence, make data published before that release visible to subsequent operations; this does not promise the newest global value. |
+| Primitive `Atomic<T>` `store` | `Release` | Publish prior writes to acquire readers. |
+| Primitive `Atomic<T>` `swap` and CAS | success `AcqRel`, failure `Acquire` | Standard read-modify-write synchronization. |
 | Integer `fetch_add/sub/inc/dec` | `Relaxed` | Commonly used for pure metrics and counters. |
 | Integer ordered helpers | caller-provided | Use when the counter value is also a synchronization signal. |
 | CAS-loop arithmetic and updates | success `AcqRel`, failure `Acquire` | Preserve synchronization across retry loops. |
 | Bitwise and max/min operations | `AcqRel` | Often model flags, thresholds, or shared state. |
 | `AtomicCount` operations | success `AcqRel`, failure `Acquire` | Counts are treated as concurrent state signals. |
+
+This table describes primitive atomics and checked counters. `AtomicRef<T>`
+delegates synchronization to the `arc-swap` default strategy, which may use
+stronger ordering. The locked `arc-swap` 1.9.3 documentation states that each
+concurrently callable default-strategy operation contains at least one
+`SeqCst` atomic read-modify-write operation ([versioned upstream documentation](https://docs.rs/arc-swap/1.9.3/arc_swap/docs/index.html)).
+This is version-specific implementation information, not a promise of exact
+instructions in future versions. Reference operations return coherent
+snapshots without promising the globally newest value.
 
 This policy is a usability default, not a claim that every workload needs these
 orderings. Performance-sensitive users can use ordered integer helpers or
@@ -125,16 +134,24 @@ guarantee.
 ## Reference Semantics
 
 `AtomicRef<T>` is backed by `arc_swap::ArcSwap<T>` and stores `Arc<T>` values.
-Its CAS operations compare pointer identity, not `T: Eq` value equality.
+Its CAS operations compare pointer identity, not `T: Eq` value equality or a
+version/history token. For example, if a stored reference changes A → B → A by
+reinstalling the same `Arc` A, a CAS using an older snapshot of A can succeed.
+Keeping A alive prevents allocation reuse, but cannot detect the intervening
+update and does not compare interior mutable data. Use a newly allocated
+snapshot for each state version, or a separate monotonic version protocol when
+intervening changes must be detected. This documents a semantic boundary; it
+does not assert that downstream code has misused the API.
 It exposes strong pointer CAS only. A weak alias would not provide distinct
 semantics over the `arc_swap` backend and would make weak-CAS retry rules look
 available where they are not.
 
 `AtomicRef<T>` deliberately does not implement `Clone`. Its explicit `fork()`
-method creates a new atomic container initialized with the `Arc<T>` observed by
-an acquire load. The two containers initially share the same `T`, but subsequent
-atomic operations are independent. A racing writer may mean `fork()` observes
-an older value; it does not guarantee the globally latest value. Use
+method creates a new atomic container initialized with the owned snapshot from
+`ArcSwap::load_full()` using the backend default strategy, not a specified
+single Acquire load. The two containers initially share the same `T`, but
+subsequent atomic operations are independent. A racing writer may mean `fork()`
+observes an older value; it does not guarantee the globally latest value. Use
 `ArcAtomicRef<T>` or `Arc<AtomicRef<T>>` when owners should share one atomic
 container.
 
