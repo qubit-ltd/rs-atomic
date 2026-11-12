@@ -266,6 +266,119 @@ fn test_compare_and_exchange_weak() {
 }
 
 #[test]
+fn test_nan_payload_storage_and_strong_cas() {
+    let a = f64::from_bits(0x7ff8_0000_0000_0001);
+    let b = f64::from_bits(0x7ff8_0000_0000_0002);
+    assert!(a.is_nan() && b.is_nan());
+    let atomic = Atomic::<f64>::new(a);
+    assert_eq!(atomic.load().to_bits(), a.to_bits());
+    atomic.store(b);
+    assert_eq!(atomic.load().to_bits(), b.to_bits());
+    assert_eq!(atomic.swap(a).to_bits(), b.to_bits());
+    assert_eq!(atomic.load().to_bits(), a.to_bits());
+    let actual = atomic.compare_set(b, 1.0).expect_err("different NaN payload must fail");
+    assert_eq!(actual.to_bits(), a.to_bits());
+    assert_eq!(atomic.load().to_bits(), a.to_bits());
+    assert!(atomic.compare_set(a, b).is_ok());
+    assert_eq!(atomic.load().to_bits(), b.to_bits());
+    assert_eq!(atomic.compare_and_exchange(a, 1.0).to_bits(), b.to_bits());
+    assert_eq!(atomic.load().to_bits(), b.to_bits());
+    assert_eq!(atomic.compare_and_exchange(b, 1.0).to_bits(), b.to_bits());
+    assert_eq!(atomic.load(), 1.0);
+}
+
+#[test]
+fn test_nan_payload_weak_cas_allows_spurious_failure() {
+    let a = f64::from_bits(0x7ff8_0000_0000_0001);
+    let b = f64::from_bits(0x7ff8_0000_0000_0002);
+    let atomic = Atomic::<f64>::new(a);
+    let actual = atomic
+        .compare_set_weak(b, 1.0)
+        .expect_err("different payload must fail");
+    assert_eq!(actual.to_bits(), a.to_bits());
+    assert_eq!(atomic.load().to_bits(), a.to_bits());
+    match atomic.compare_set_weak(a, b) {
+        Ok(()) => assert_eq!(atomic.load().to_bits(), b.to_bits()),
+        Err(actual) => {
+            assert_eq!(actual.to_bits(), a.to_bits());
+            assert_eq!(atomic.load().to_bits(), a.to_bits());
+        }
+    }
+    atomic.store(a);
+    let actual = atomic
+        .compare_and_exchange_weak(b, 1.0)
+        .expect_err("different payload must fail");
+    assert_eq!(actual.to_bits(), a.to_bits());
+    assert_eq!(atomic.load().to_bits(), a.to_bits());
+    match atomic.compare_and_exchange_weak(a, b) {
+        Ok(previous) => {
+            assert_eq!(previous.to_bits(), a.to_bits());
+            assert_eq!(atomic.load().to_bits(), b.to_bits());
+        }
+        Err(actual) => {
+            assert_eq!(actual.to_bits(), a.to_bits());
+            assert_eq!(atomic.load().to_bits(), a.to_bits());
+        }
+    }
+}
+
+#[test]
+fn test_nan_functional_updates_and_rejection() {
+    let a = f64::from_bits(0x7ff8_0000_0000_0001);
+    let atomic = Atomic::<f64>::new(a);
+    let old = atomic.fetch_update(|current| {
+        assert_eq!(current.to_bits(), a.to_bits());
+        1.0
+    });
+    assert_eq!(old.to_bits(), a.to_bits());
+    assert_eq!(atomic.load(), 1.0);
+    atomic.store(a);
+    let new = atomic.update_and_get(|current| {
+        assert_eq!(current.to_bits(), a.to_bits());
+        2.0
+    });
+    assert_eq!(new, 2.0);
+    assert_eq!(atomic.load(), 2.0);
+    atomic.store(a);
+    let old = atomic
+        .try_update(|current| {
+            assert_eq!(current.to_bits(), a.to_bits());
+            Some(3.0)
+        })
+        .expect("NaN update must be accepted");
+    assert_eq!(old.to_bits(), a.to_bits());
+    assert_eq!(atomic.load(), 3.0);
+    atomic.store(a);
+    let new = atomic
+        .try_update_and_get(|current| {
+            assert_eq!(current.to_bits(), a.to_bits());
+            Some(4.0)
+        })
+        .expect("NaN update must be accepted");
+    assert_eq!(new, 4.0);
+    assert_eq!(atomic.load(), 4.0);
+    atomic.store(a);
+    assert!(
+        atomic
+            .try_update(|current| {
+                assert_eq!(current.to_bits(), a.to_bits());
+                None
+            })
+            .is_none()
+    );
+    assert_eq!(atomic.load().to_bits(), a.to_bits());
+    assert!(
+        atomic
+            .try_update_and_get(|current| {
+                assert_eq!(current.to_bits(), a.to_bits());
+                None
+            })
+            .is_none()
+    );
+    assert_eq!(atomic.load().to_bits(), a.to_bits());
+}
+
+#[test]
 fn test_inner() {
     let atomic = Atomic::<f64>::new(1.0);
     let bits = atomic.inner().load(Ordering::Relaxed);
