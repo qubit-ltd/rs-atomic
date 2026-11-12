@@ -55,6 +55,7 @@ pub use atomic_signed_count::AtomicSignedCount;
 pub mod testing {
 
     pub use super::atomic_count::try_update_atomic_count;
+    pub use super::atomic_count::try_update_atomic_count_with_ordering;
 }
 
 /// Concrete primitive atomic wrappers for const initialization use cases.

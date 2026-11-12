@@ -7,12 +7,50 @@
 // =============================================================================
 
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::thread;
 
 use qubit_atomic::AtomicCount;
+use qubit_atomic::atomic::testing::try_update_atomic_count_with_ordering;
 
 static CONST_INITIALIZED_COUNTER: AtomicCount = AtomicCount::new(42);
 static CONST_INITIALIZED_ZERO_COUNTER: AtomicCount = AtomicCount::zero();
+
+#[test]
+fn test_try_update_atomic_count_with_ordering_retries_actual_value() {
+    let mut attempts = 0;
+    let result = try_update_atomic_count_with_ordering(
+        |order| {
+            assert_eq!(order, Ordering::Acquire);
+            1
+        },
+        |current, next, success, failure| {
+            assert_eq!(success, Ordering::AcqRel);
+            assert_eq!(failure, Ordering::Acquire);
+            attempts += 1;
+            if attempts == 1 {
+                assert_eq!((current, next), (1, 2));
+                Err(2)
+            } else {
+                assert_eq!((current, next), (2, 3));
+                Ok(current)
+            }
+        },
+        |current| current.checked_add(1),
+    );
+    assert_eq!(result, Some(3));
+    assert_eq!(attempts, 2);
+}
+
+#[test]
+fn test_try_update_atomic_count_with_ordering_rejects_without_cas() {
+    let result = try_update_atomic_count_with_ordering(
+        |_| 0,
+        |_, _, _, _| panic!("CAS must not run for a rejected update"),
+        |current| current.checked_sub(1),
+    );
+    assert_eq!(result, None);
+}
 
 #[test]
 fn test_new_get() {

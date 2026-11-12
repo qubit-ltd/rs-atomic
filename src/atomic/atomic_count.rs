@@ -50,10 +50,57 @@ where
     C: FnMut(usize, usize) -> Result<usize, usize>,
     F: FnMut(usize) -> Option<usize>,
 {
-    let mut current = load_acquire();
+    try_update_atomic_count_with_ordering(
+        |_| load_acquire(),
+        |current, next, _, _| compare_exchange_weak_acqrel_acquire(current, next),
+        &mut update,
+    )
+}
+
+/// Applies a checked update through the production weak-CAS retry loop.
+///
+/// This hidden bridge lets instrumented atomics exercise the same ordering
+/// strategy and retry core used by [`AtomicCount`]. It is intended for
+/// integration and model tests, not downstream application code.
+///
+/// # Type Parameters
+///
+/// * `L` - Callback that loads the current counter value using the supplied
+///   ordering.
+/// * `C` - Callback that attempts weak compare-exchange with supplied success
+///   and failure orderings.
+/// * `F` - Callback that computes the next value or rejects the update.
+///
+/// # Parameters
+///
+/// * `load` - Loads the initial counter value with the requested ordering.
+/// * `compare_exchange_weak` - Attempts to replace the observed value with the
+///   proposed value using the requested success and failure orderings.
+/// * `update` - Computes the proposed value from the current value, or returns
+///   `None` to reject the update.
+///
+/// # Returns
+///
+/// `Some(new_value)` after a successful update, or `None` when `update`
+/// rejects the observed value. On CAS failure, the returned actual value is
+/// used for the next update attempt. The load callback runs once; the update
+/// callback and compare-exchange callback may run repeatedly after CAS
+/// failures, so they should not rely on being called exactly once.
+#[doc(hidden)]
+pub fn try_update_atomic_count_with_ordering<L, C, F>(
+    mut load: L,
+    mut compare_exchange_weak: C,
+    mut update: F,
+) -> Option<usize>
+where
+    L: FnMut(Ordering) -> usize,
+    C: FnMut(usize, usize, Ordering, Ordering) -> Result<usize, usize>,
+    F: FnMut(usize) -> Option<usize>,
+{
+    let mut current = load(Ordering::Acquire);
     loop {
         let next = update(current)?;
-        match compare_exchange_weak_acqrel_acquire(current, next) {
+        match compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire) {
             Ok(_) => return Some(next),
             Err(actual) => current = actual,
         }
@@ -406,12 +453,9 @@ impl AtomicCount {
     where
         F: FnMut(usize) -> Option<usize>,
     {
-        try_update_atomic_count(
-            || self.inner.load(Ordering::Acquire),
-            |current, next| {
-                self.inner
-                    .compare_exchange_weak(current, next, Ordering::AcqRel, Ordering::Acquire)
-            },
+        try_update_atomic_count_with_ordering(
+            |ordering| self.inner.load(ordering),
+            |current, next, success, failure| self.inner.compare_exchange_weak(current, next, success, failure),
             update,
         )
     }
